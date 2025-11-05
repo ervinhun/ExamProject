@@ -7,7 +7,7 @@ on:
       - 'client/**'
   push:
     branches:
-      - main
+      - master
 
 jobs:
   backend:
