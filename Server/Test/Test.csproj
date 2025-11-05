@@ -9,6 +9,7 @@
 
   <ItemGroup>
     <PackageReference Include="MSTest" Version="4.0.0-preview.25465.3" />
+    <PackageReference Include="Testcontainers.PostgreSql" Version="4.8.1" />
   </ItemGroup>
 
   <ItemGroup>
