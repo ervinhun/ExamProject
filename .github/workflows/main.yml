@@ -3,40 +3,59 @@ name: FullStack CI
 on:
   pull_request:
     paths:
-      - 'server/**'
-      - 'client/**'
+      - 'Server/**'
+      - 'Client/**'
   push:
     branches:
       - master
+  workflow_dispatch:
 
 jobs:
+  frontend:
+    name: Frontend CI
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+
+      - name: Install dependencies
+        working-directory: Client
+        run: npm ci
+
+      - name: Lint
+        working-directory: Client
+        run: npm run lint
+
+      - name: Build frontend
+        working-directory: Client
+        run: npm run build
+
   backend:
     name: Backend CI
     runs-on: ubuntu-latest
-    
     steps:
-      # 1. Checkout code
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
-      # 2. Setup .NET SDK
       - name: Setup .NET
-        uses: actions/setup-dotnet@v3
+        uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '9.0.x'
+          dotnet-version: '10.0.x'
 
-      # 3. Restore solution dependencies
-      - name: Restore dependencies
-        run: dotnet restore server/server.sln
+      - name: Restore solution dependencies
+        run: dotnet restore Server/Server.sln
 
-      # 4. Build solution (Debug, no tests)
       - name: Build solution
-        run: dotnet build server/server.sln --configuration Debug --no-restore
+        run: dotnet build Server/Server.sln --no-restore
 
-      # 5. Generate appsettings.json from GitHub Secret
       - name: Generate appsettings.json
         run: |
-          cat <<EOF > server/Api/appsettings.json
+          cat <<EOF > Server/Api/appsettings.json
           {
             "Logging": {
               "LogLevel": {
@@ -49,50 +68,70 @@ jobs:
           }
           EOF
 
-      # 6. Run tests (Debug mode)
-      #- name: Run tests
-      #  run: dotnet test server/tests/tests.csproj --configuration Debug --no-build --logger "trx;LogFileName=test_results.trx"
+      - name: Run tests
+        run: dotnet test Server/Test/Test.csproj --no-build --logger "trx;LogFileName=test_results.trx"
 
-      # 7. Publish API (Release mode, optimized for deployment)
       - name: Publish API
-        run: dotnet publish server/Api/Api.csproj -c Release -o ./publish
+        run: dotnet publish Server/Api/Api.csproj -c Release -o ./publish
 
-      # 8. Docker build
       - name: Build Docker image
-        working-directory: server
+        working-directory: Server
         run: docker build -t ExamProject-backend/server .
 
-  frontend:
-    name: Frontend CI
+  sonarcloud:
+    name: SonarCloud Analysis
     runs-on: ubuntu-latest
-    
+    needs: [frontend, backend]
     steps:
-      # 1. Checkout code
       - name: Checkout code
         uses: actions/checkout@v4
-
-      # 2. Setup Node.js
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
         with:
-          node-version: '20.x'
+          fetch-depth: 0  # Required for SonarCloud analysis
 
-      # 3. Install dependencies
-      - name: Install dependencies
-        working-directory: client
-        run: npm ci
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
 
-      # 4. Run code style check (optional, e.g., ESLint)
-      - name: Lint
-        working-directory: client
-        run: npm run lint
+      - name: Cache SonarScanner
+        id: cache-sonar-scanner
+        uses: actions/cache@v3
+        with:
+          path: ./.sonar/scanner
+          key: ${{ runner.os }}-sonar-scanner
+          restore-keys: ${{ runner.os }}-sonar-scanner
 
-      # 5. Build frontend
-      - name: Build frontend
-        working-directory: client
-        run: npm run build
+      - name: Install SonarScanner
+        if: steps.cache-sonar-scanner.outputs.cache-hit != 'true'
+        run: dotnet tool install --global dotnet-sonarscanner
 
-      # 6. Run frontend tests (optional, uncomment if needed)
-      # - name: Run tests
-      #   working-directory: client
-      #   run: npm test
+      - name: Begin SonarCloud Scan
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: |
+          dotnet sonarscanner begin \
+            /k:"YOUR_PROJECT_KEY" \
+            /o:"YOUR_ORGANIZATION_KEY" \
+            /d:sonar.login="${{ secrets.SONAR_TOKEN }}" \
+            /d:sonar.host.url="https://sonarcloud.io" \
+            /d:sonar.sources="Server,Client/src" \
+            /d:sonar.tests="Server/Test" \
+            /d:sonar.test.inclusions="Server/Test/**/*.cs,Client/src/**/*.test.tsx,Client/src/**/*.test.ts" \
+            /d:sonar.exclusions="Client/node_modules/**,Client/public/**,Client/dist/**,**/*.csproj" \
+            /d:sonar.cs.vstest.reportsPaths="**/test_results.trx" \
+            /d:sonar.cs.opencover.reportsPaths="**/coverage.opencover.xml"
+
+      - name: Restore solution dependencies
+        run: dotnet restore Server/Server.sln
+
+      - name: Build solution
+        run: dotnet build Server/Server.sln --no-restore
+
+      - name: Run tests and collect coverage
+        run: dotnet test Server/Test/Test.csproj --no-build --logger "trx;LogFileName=test_results.trx" --collect:"XPlat Code Coverage" /p:CoverletOutputFormat=opencover
+
+      - name: End SonarCloud Scan
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: dotnet sonarscanner end /d:sonar.login="${{ secrets.SONAR_TOKEN }}"
