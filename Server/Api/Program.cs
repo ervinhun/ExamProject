@@ -1,7 +1,7 @@
-using Dataaccess;
+using DataAccess;
 using Microsoft.EntityFrameworkCore;
 
-namespace Api, DataAccess;
+namespace Api;
 
 public static class Program
 {
