@@ -12,4 +12,8 @@
     <PackageReference Include="NSwag.AspNetCore" Version="14.6.1" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Dataaccess\Dataaccess.csproj" />
+  </ItemGroup>
+
 </Project>

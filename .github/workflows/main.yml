@@ -111,12 +111,11 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: |
           dotnet sonarscanner begin \
-            /k:"ervinhun" \
-            /o:"ervinhun_ExamProject" \
+            /k:"ervinhun_ExamProject" \
+            /o:"ervinhun" \
             /d:sonar.login="${{ secrets.SONAR_TOKEN }}" \
             /d:sonar.host.url="https://sonarcloud.io" \
-            /d:sonar.sources="Server,Client/src" \
-            /d:sonar.tests="Server/Test" \
+            /d:sonar.solution="Server/Server.sln" \
             /d:sonar.test.inclusions="Server/Test/**/*.cs,Client/src/**/*.test.tsx,Client/src/**/*.test.ts" \
             /d:sonar.exclusions="Client/node_modules/**,Client/public/**,Client/dist/**,**/*.csproj" \
             /d:sonar.cs.vstest.reportsPaths="**/test_results.trx" \

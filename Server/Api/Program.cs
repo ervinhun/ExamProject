@@ -1,3 +1,6 @@
+using Dataaccess;
+using Microsoft.EntityFrameworkCore;
+
 namespace  Api;
 
 public static class Program
@@ -14,11 +17,12 @@ public static class Program
         // services.AddScoped<>();
 
         // Adds db context 
-        // services.AddDbContext<MyDbContext>((services, options) =>
-        // {
-        //     options.UseNpgsql(services.GetRequiredService<IConfiguration>()
-        //         .GetValue<string>("Db"));
-        // });
+         services.AddDbContext<MyDbContext>((services, options) =>
+         {
+             options.UseNpgsql(services.GetRequiredService<IConfiguration>()
+                 .GetValue<string>("Db"));
+         });
+
     }
 
     public static void Main(string[] args)
