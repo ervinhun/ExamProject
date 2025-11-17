@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace Dataaccess;
+namespace DataAccess;
 
 public partial class UserBalance
 {
