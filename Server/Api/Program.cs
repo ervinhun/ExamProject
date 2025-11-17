@@ -1,7 +1,7 @@
 using Dataaccess;
 using Microsoft.EntityFrameworkCore;
 
-namespace  Api;
+namespace Api, DataAccess;
 
 public static class Program
 {
