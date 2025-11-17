@@ -1,0 +1,1 @@
+﻿dotnet tool install -g dotnet-ef --version '9.*' && dotnet ef dbcontext scaffold "Host=$DB_HOST;Port=5432;Database=$DB_NAME;Username=$DB_USER;Password=$DB_PASSWORD;" Npgsql.EntityFrameworkCore.PostgreSQL   --context MyDbContext     --no-onconfiguring        --schema gameapp   --force
