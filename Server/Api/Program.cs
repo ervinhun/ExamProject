@@ -19,8 +19,7 @@ public static class Program
         // Adds db context 
          services.AddDbContext<MyDbContext>((services, options) =>
          {
-             options.UseNpgsql(services.GetRequiredService<IConfiguration>()
-                 .GetValue<string>("Db"));
+             options.UseNpgsql(services.GetRequiredService<IConfiguration>().GetConnectionString("DefaultConnection"));
          });
 
     }
