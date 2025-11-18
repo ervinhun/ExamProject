@@ -5,5 +5,6 @@ Frontend:
   - "Client/**"
 
 FullStack:
-  - "Server/**"
-  - "Client/**"
+  - all:
+      - "Server/**"
+      - "Client/**"
