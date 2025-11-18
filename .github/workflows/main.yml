@@ -70,7 +70,7 @@ jobs:
           EOF
 
       - name: Run backend tests
-        run: dotnet test Server/Test/Test.csproj --no-build --logger "trx;LogFileName=test_results.trx"
+        run: dotnet test Server/Test/Test.csproj --no-build --configuration Release --logger "trx;LogFileName=test_results.trx"
 
       - name: Publish API
         run: dotnet publish Server/Api/Api.csproj -c Release -o ./publish
@@ -98,7 +98,7 @@ jobs:
         id: cache-sonar
         uses: actions/cache@v3
         with:
-          path: ~/.sonar
+          path: ~/.dotnet/tools
           key: ${{ runner.os }}-sonar
 
       - name: Install SonarScanner
@@ -125,7 +125,7 @@ jobs:
         run: dotnet restore Server/Server.sln
 
       - name: Build backend
-        run: dotnet build Server/Server.sln --no-restore
+        run: dotnet build Server/Server.sln --no-restore --configuration Release
 
       - name: Run backend tests with coverage
         run: dotnet test Server/Test/Test.csproj --no-build --logger "trx;LogFileName=test_results.trx" --collect:"XPlat Code Coverage" /p:CoverletOutputFormat=opencover
