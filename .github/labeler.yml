@@ -1,0 +1,9 @@
+Backend:
+  - "Server/**"
+
+Frontend:
+  - "Client/**"
+
+FullStack:
+  - "Server/**"
+  - "Client/**"
