@@ -7,6 +7,9 @@ public static class Program
 {
     public static void ConfigureServices(IServiceCollection services)
     {
+        // Load .env variables
+        DotNetEnv.Env.Load();
+        
         // Add controllers to the api
         services.AddControllers();
 
@@ -38,8 +41,12 @@ public static class Program
         // Needed for Swagger to work   
         app.UseOpenApi();
         app.UseSwaggerUi();
+        Console.WriteLine(Environment.GetEnvironmentVariable("JWT_SECRET"));
+        Console.WriteLine("Heeello");
 
         app.Run();
+        Console.WriteLine(Environment.GetEnvironmentVariable("JWT_SECRET"));
+
     }
 }
 

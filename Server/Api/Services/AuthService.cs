@@ -1,9 +1,11 @@
-using System.ComponentModel.DataAnnotations;
+/*using System.ComponentModel.DataAnnotations;
 using System.Data;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using Api.Dto.Auth;
+using Api.Dto.Auth.Request;
+using Api.Dto.Auth.Response;
 using api.Models;
 using api.Models.Requests;
 using DataAccess;
@@ -112,4 +114,4 @@ public class AuthService(
             .AddClaim(nameof(Libraryuser.Id), user.Id)
             .Encode();
     }
-}
+}*/
