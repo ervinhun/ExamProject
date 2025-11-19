@@ -1,4 +1,6 @@
 using Api.Dto.Auth;
+using Api.Dto.Auth.Request;
+using Api.Dto.Auth.Response;
 
 namespace api.Services;
 

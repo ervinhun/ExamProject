@@ -12,14 +12,15 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace DataAccess.Migrations
 {
     [DbContext(typeof(MyDbContext))]
-    [Migration("20251118141308_Init")]
-    partial class Init
+    [Migration("20251119120545_test")]
+    partial class test
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
+                .HasDefaultSchema("LotteryApp")
                 .HasAnnotation("ProductVersion", "9.0.4")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
@@ -31,11 +32,6 @@ namespace DataAccess.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<string>("Discriminator")
-                        .IsRequired()
-                        .HasMaxLength(8)
-                        .HasColumnType("character varying(8)");
-
                     b.Property<string>("Email")
                         .IsRequired()
                         .HasColumnType("text");
@@ -46,11 +42,9 @@ namespace DataAccess.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Users");
+                    b.ToTable("Users", "LotteryApp");
 
-                    b.HasDiscriminator().HasValue("User");
-
-                    b.UseTphMappingStrategy();
+                    b.UseTptMappingStrategy();
                 });
 
             modelBuilder.Entity("DataAccess.Entities.Finance.Wallet", b =>
@@ -70,14 +64,21 @@ namespace DataAccess.Migrations
                     b.HasIndex("PlayerId")
                         .IsUnique();
 
-                    b.ToTable("Wallets");
+                    b.ToTable("Wallets", "LotteryApp");
+                });
+
+            modelBuilder.Entity("DataAccess.Entities.Auth.Admin", b =>
+                {
+                    b.HasBaseType("DataAccess.Entities.Auth.User");
+
+                    b.ToTable("Admins", "LotteryApp");
                 });
 
             modelBuilder.Entity("DataAccess.Entities.Auth.Player", b =>
                 {
                     b.HasBaseType("DataAccess.Entities.Auth.User");
 
-                    b.HasDiscriminator().HasValue("Player");
+                    b.ToTable("Players", "LotteryApp");
                 });
 
             modelBuilder.Entity("DataAccess.Entities.Finance.Wallet", b =>
@@ -89,6 +90,24 @@ namespace DataAccess.Migrations
                         .IsRequired();
 
                     b.Navigation("Player");
+                });
+
+            modelBuilder.Entity("DataAccess.Entities.Auth.Admin", b =>
+                {
+                    b.HasOne("DataAccess.Entities.Auth.User", null)
+                        .WithOne()
+                        .HasForeignKey("DataAccess.Entities.Auth.Admin", "Id")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("DataAccess.Entities.Auth.Player", b =>
+                {
+                    b.HasOne("DataAccess.Entities.Auth.User", null)
+                        .WithOne()
+                        .HasForeignKey("DataAccess.Entities.Auth.Player", "Id")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("DataAccess.Entities.Auth.Player", b =>

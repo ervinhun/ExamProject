@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace DataAccess.Migrations
 {
     [DbContext(typeof(MyDbContext))]
-    [Migration("20251118173218_AddTPT")]
-    partial class AddTPT
+    [Migration("20251119114058_inint")]
+    partial class inint
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

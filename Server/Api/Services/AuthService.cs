@@ -12,6 +12,7 @@ using JWT;
 using JWT.Algorithms;
 using JWT.Builder;
 using JWT.Serializers;
+using Utils.Exceptions;
 using DataAnnotations_ValidationException = System.ComponentModel.DataAnnotations.ValidationException;
 using ValidationException = Bogus.ValidationException;
 
@@ -26,7 +27,7 @@ public class AuthService(
     public async Task<JwtClaims> VerifyAndDecodeToken(string token)
     {
         if (string.IsNullOrWhiteSpace(token))
-            throw new NoNullAllowedException("No token attached!");
+            throw new AuthenticationException("No token attached!");
 
         var builder = CreateJwtBuilder();
 
@@ -34,9 +35,9 @@ public class AuthService(
         try
         {
             jsonString = builder.Decode(token)
-                         ?? throw new ValidationException("Authentication failed!");
+                         ?? throw new AuthenticationException("Authentication failed!");
         }
-        catch (Exception e)
+        catch (AuthenticationException e)
         {
             logger.LogError(e.Message, e);
             throw new ValidationException("Valided to verify JWT");
@@ -99,7 +100,7 @@ public class AuthService(
     {
         return JwtBuilder.Create()
             .WithAlgorithm(new HMACSHA512Algorithm())
-            .WithSecret(appOptions.JwtSecret)
+            .WithSecret(Environment.GetEnvironmentVariable("JWT_SECRET"))
             .WithUrlEncoder(new JwtBase64UrlEncoder())
             .WithJsonSerializer(new JsonNetSerializer())
             .MustVerifySignature();

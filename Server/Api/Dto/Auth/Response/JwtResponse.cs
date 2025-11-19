@@ -1,4 +1,4 @@
-namespace Api.Dto.Auth;
+namespace Api.Dto.Auth.Response;
 
 public record JwtResponse(string Token)
 {
