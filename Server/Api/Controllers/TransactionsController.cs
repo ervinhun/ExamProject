@@ -4,152 +4,142 @@ using DataAccess;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
-namespace Api.Controllers
+namespace Api.Controllers;
+
+[ApiController]
+[Route("api/[controller]")]
+public class TransactionsController : ControllerBase
 {
-    [Route("api/[controller]")]
-    [ApiController]
-    public class TransactionsController : ControllerBase
+    private readonly MyDbContext _context;
+
+    public TransactionsController(MyDbContext context)
     {
-        private readonly MyDbContext _context;
+        _context = context;
+    }
 
-        public TransactionsController(MyDbContext context)
+    [HttpGet]
+    public async Task<ActionResult<IEnumerable<TransactionDto>>> GetTransactions()
+    {
+        var transactions = await _context.Transactions
+            .Select(t => new TransactionDto
+            {
+                Id = t.Id,
+                PlayerId = t.PlayerId,
+                TransactionNumber = t.TransactionNumber,
+                Amount = t.Amount,
+                Status = t.Status,
+                ReviewedBy = t.ReviewedBy,
+                CreatedAt = t.CreatedAt,
+                UpdatedAt = t.UpdatedAt
+            })
+            .ToListAsync();
+
+        return Ok(transactions);
+    }
+
+    [HttpGet("{id}")]
+    public async Task<ActionResult<TransactionDto>> GetTransaction(Guid id)
+    {
+        var transaction = await _context.Transactions
+            .Where(t => t.Id == id)
+            .Select(t => new TransactionDto
+            {
+                Id = t.Id,
+                PlayerId = t.PlayerId,
+                TransactionNumber = t.TransactionNumber,
+                Amount = t.Amount,
+                Status = t.Status,
+                ReviewedBy = t.ReviewedBy,
+                CreatedAt = t.CreatedAt,
+                UpdatedAt = t.UpdatedAt
+            })
+            .FirstOrDefaultAsync();
+
+        if (transaction == null)
         {
-            _context = context;
+            return NotFound();
         }
 
-        // GET: api/Transactions
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<TransactionDto>>> GetTransactions()
-        {
-            var transactions = await _context.Transactions
-                .Select(t => new TransactionDto
-                {
-                    Id = t.Id,
-                    UserId = t.UserId,
-                    TransactionNumber = t.TransactionNumber,
-                    Amount = t.Amount,
-                    Status = t.Status,
-                    ReviewedBy = t.ReviewedBy,
-                    CreatedAt = t.CreatedAt,
-                    UpdatedAt = t.UpdatedAt
-                })
-                .ToListAsync();
+        return Ok(transaction);
+    }
 
-            return Ok(transactions);
+    [HttpPost]
+    public async Task<ActionResult<TransactionDto>> CreateTransaction(CreateTransactionDto createDto)
+    {
+        var transaction = new Transaction
+        {
+            PlayerId = createDto.PlayerId,
+            Amount = createDto.Amount,
+            Status = createDto.Status,
+            TransactionNumber = Guid.NewGuid().ToString(),
+            CreatedAt = DateTime.UtcNow
+        };
+
+        _context.Transactions.Add(transaction);
+        await _context.SaveChangesAsync();
+
+        var transactionDto = new TransactionDto
+        {
+            Id = transaction.Id,
+            PlayerId = transaction.PlayerId,
+            TransactionNumber = transaction.TransactionNumber,
+            Amount = transaction.Amount,
+            Status = transaction.Status,
+            ReviewedBy = transaction.ReviewedBy,
+            CreatedAt = transaction.CreatedAt,
+            UpdatedAt = transaction.UpdatedAt
+        };
+
+        return CreatedAtAction(nameof(GetTransaction), new { id = transaction.Id }, transactionDto);
+    }
+
+    [HttpPut("{id}")]
+    public async Task<IActionResult> UpdateTransaction(Guid id, UpdateTransactionDto updateDto)
+    {
+        var transaction = await _context.Transactions.FindAsync(id);
+
+        if (transaction == null)
+        {
+            return NotFound();
         }
 
-        // GET: api/Transactions/5
-        [HttpGet("{id}")]
-        public async Task<ActionResult<TransactionDto>> GetTransaction(Guid id)
+        if (updateDto.PlayerId.HasValue)
         {
-            var transaction = await _context.Transactions
-                .Select(t => new TransactionDto
-                {
-                    Id = t.Id,
-                    UserId = t.UserId,
-                    TransactionNumber = t.TransactionNumber,
-                    Amount = t.Amount,
-                    Status = t.Status,
-                    ReviewedBy = t.ReviewedBy,
-                    CreatedAt = t.CreatedAt,
-                    UpdatedAt = t.UpdatedAt
-                })
-                .FirstOrDefaultAsync(t => t.Id == id);
-
-            if (transaction == null)
-            {
-                return NotFound();
-            }
-
-            return Ok(transaction);
+            transaction.PlayerId = updateDto.PlayerId.Value;
         }
-
-        // POST: api/Transactions
-        [HttpPost]
-        public async Task<ActionResult<TransactionDto>> PostTransaction(CreateTransactionDto createTransactionDto)
+        if (updateDto.Amount.HasValue)
         {
-            var transaction = new Transaction
-            {
-                UserId = createTransactionDto.UserId,
-                Amount = createTransactionDto.Amount,
-                TransactionNumber = Guid.NewGuid().ToString(),
-                Status = "Pending"
-            };
-
-            _context.Transactions.Add(transaction);
-            await _context.SaveChangesAsync();
-
-            var transactionDto = new TransactionDto
-            {
-                Id = transaction.Id,
-                UserId = transaction.UserId,
-                TransactionNumber = transaction.TransactionNumber,
-                Amount = transaction.Amount,
-                Status = transaction.Status,
-                ReviewedBy = transaction.ReviewedBy,
-                CreatedAt = transaction.CreatedAt,
-                UpdatedAt = transaction.UpdatedAt
-            };
-
-            return CreatedAtAction(nameof(GetTransaction), new { id = transaction.Id }, transactionDto);
+            transaction.Amount = updateDto.Amount.Value;
         }
-
-        // PUT: api/Transactions/5
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutTransaction(Guid id, UpdateTransactionDto updateTransactionDto)
+        if (!string.IsNullOrEmpty(updateDto.Status))
         {
-            var transaction = await _context.Transactions.FindAsync(id);
-
-            if (transaction == null)
-            {
-                return NotFound();
-            }
-
-            transaction.Status = updateTransactionDto.Status ?? transaction.Status;
-            transaction.ReviewedBy = updateTransactionDto.ReviewedBy ?? transaction.ReviewedBy;
+            transaction.Status = updateDto.Status;
+        }
+        if (updateDto.ReviewedBy.HasValue)
+        {
+            transaction.ReviewedBy = updateDto.ReviewedBy.Value;
             transaction.UpdatedAt = DateTime.UtcNow;
-
-            _context.Entry(transaction).State = EntityState.Modified;
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!TransactionExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
-
-            return NoContent();
         }
 
-        // DELETE: api/Transactions/5
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteTransaction(Guid id)
+        await _context.SaveChangesAsync();
+
+        return NoContent();
+    }
+
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> DeleteTransaction(Guid id)
+    {
+        var transaction = await _context.Transactions.FindAsync(id);
+
+        if (transaction == null)
         {
-            var transaction = await _context.Transactions.FindAsync(id);
-            if (transaction == null)
-            {
-                return NotFound();
-            }
-
-            _context.Transactions.Remove(transaction);
-            await _context.SaveChangesAsync();
-
-            return NoContent();
+            return NotFound();
         }
 
-        private bool TransactionExists(Guid id)
-        {
-            return _context.Transactions.Any(e => e.Id == id);
-        }
+        _context.Transactions.Remove(transaction);
+        await _context.SaveChangesAsync();
+
+        return NoContent();
     }
 }
 */

@@ -7,11 +7,11 @@ public partial class Transaction
 {
     public Guid Id { get; set; }
 
-    public Guid UserId { get; set; }
+    public Guid PlayerId { get; set; }
 
     public string TransactionNumber { get; set; } = null!;
 
-    public int Amount { get; set; }
+    public decimal Amount { get; set; }
 
     public string Status { get; set; } = null!;
 
@@ -21,8 +21,8 @@ public partial class Transaction
 
     public DateTime? UpdatedAt { get; set; }
 
-    public virtual User? ReviewedByNavigation { get; set; }
+    public virtual Player Player { get; set; } = null!;
 
-    public virtual User User { get; set; } = null!;
+    public virtual Admin? ReviewedByNavigation { get; set; }
 }
 /#1#*/

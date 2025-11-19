@@ -4,164 +4,174 @@ using DataAccess;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
-namespace Api.Controllers
+namespace Api.Controllers;
+
+[ApiController]
+[Route("api/[controller]")]
+public class PlayingBoardsController : ControllerBase
 {
-    [Route("api/[controller]")]
-    [ApiController]
-    public class PlayingBoardsController : ControllerBase
+    private readonly MyDbContext _context;
+
+    public PlayingBoardsController(MyDbContext context)
     {
-        private readonly MyDbContext _context;
+        _context = context;
+    }
 
-        public PlayingBoardsController(MyDbContext context)
+    [HttpGet]
+    public async Task<ActionResult<IEnumerable<PlayingBoardDto>>> GetPlayingBoards()
+    {
+        var playingBoards = await _context.PlayingBoards
+            .Select(pb => new PlayingBoardDto
+            {
+                Id = pb.Id,
+                UserId = pb.UserId,
+                BoardId = pb.BoardId,
+                GameId = pb.GameId,
+                Numbers = pb.Numbers,
+                FieldCount = pb.FieldCount,
+                Price = pb.Price,
+                IsRepeat = pb.IsRepeat,
+                RepeatCountRemaining = pb.RepeatCountRemaining,
+                IsWinningBoard = pb.IsWinningBoard,
+                CreatedAt = pb.CreatedAt
+            })
+            .ToListAsync();
+
+        return Ok(playingBoards);
+    }
+
+    [HttpGet("{id}")]
+    public async Task<ActionResult<PlayingBoardDto>> GetPlayingBoard(Guid id)
+    {
+        var playingBoard = await _context.PlayingBoards
+            .Where(pb => pb.Id == id)
+            .Select(pb => new PlayingBoardDto
+            {
+                Id = pb.Id,
+                UserId = pb.UserId,
+                BoardId = pb.BoardId,
+                GameId = pb.GameId,
+                Numbers = pb.Numbers,
+                FieldCount = pb.FieldCount,
+                Price = pb.Price,
+                IsRepeat = pb.IsRepeat,
+                RepeatCountRemaining = pb.RepeatCountRemaining,
+                IsWinningBoard = pb.IsWinningBoard,
+                CreatedAt = pb.CreatedAt
+            })
+            .FirstOrDefaultAsync();
+
+        if (playingBoard == null)
         {
-            _context = context;
+            return NotFound();
         }
 
-        // GET: api/PlayingBoards
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<PlayingBoardDto>>> GetPlayingBoards()
-        {
-            var playingBoards = await _context.PlayingBoards
-                .Select(pb => new PlayingBoardDto
-                {
-                    Id = pb.Id,
-                    UserId = pb.UserId,
-                    BoardId = pb.BoardId,
-                    GameId = pb.GameId,
-                    Numbers = pb.Numbers,
-                    FieldCount = pb.FieldCount,
-                    Price = pb.Price,
-                    IsRepeat = pb.IsRepeat,
-                    RepeatCountRemaining = pb.RepeatCountRemaining,
-                    IsWinningBoard = pb.IsWinningBoard,
-                    CreatedAt = pb.CreatedAt
-                })
-                .ToListAsync();
+        return Ok(playingBoard);
+    }
 
-            return Ok(playingBoards);
+    [HttpPost]
+    public async Task<ActionResult<PlayingBoardDto>> CreatePlayingBoard(CreatePlayingBoardDto createDto)
+    {
+        var playingBoard = new PlayingBoard
+        {
+            UserId = createDto.UserId,
+            BoardId = createDto.BoardId,
+            GameId = createDto.GameId,
+            Numbers = createDto.Numbers,
+            FieldCount = createDto.FieldCount,
+            Price = createDto.Price,
+            IsRepeat = createDto.IsRepeat,
+            RepeatCountRemaining = createDto.RepeatCountRemaining,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        _context.PlayingBoards.Add(playingBoard);
+        await _context.SaveChangesAsync();
+
+        var playingBoardDto = new PlayingBoardDto
+        {
+            Id = playingBoard.Id,
+            UserId = playingBoard.UserId,
+            BoardId = playingBoard.BoardId,
+            GameId = playingBoard.GameId,
+            Numbers = playingBoard.Numbers,
+            FieldCount = playingBoard.FieldCount,
+            Price = playingBoard.Price,
+            IsRepeat = playingBoard.IsRepeat,
+            RepeatCountRemaining = playingBoard.RepeatCountRemaining,
+            IsWinningBoard = playingBoard.IsWinningBoard,
+            CreatedAt = playingBoard.CreatedAt
+        };
+
+        return CreatedAtAction(nameof(GetPlayingBoard), new { id = playingBoard.Id }, playingBoardDto);
+    }
+
+    [HttpPut("{id}")]
+    public async Task<IActionResult> UpdatePlayingBoard(Guid id, UpdatePlayingBoardDto updateDto)
+    {
+        var playingBoard = await _context.PlayingBoards.FindAsync(id);
+
+        if (playingBoard == null)
+        {
+            return NotFound();
         }
 
-        // GET: api/PlayingBoards/5
-        [HttpGet("{id}")]
-        public async Task<ActionResult<PlayingBoardDto>> GetPlayingBoard(Guid id)
+        if (updateDto.UserId.HasValue)
         {
-            var playingBoard = await _context.PlayingBoards
-                .Select(pb => new PlayingBoardDto
-                {
-                    Id = pb.Id,
-                    UserId = pb.UserId,
-                    BoardId = pb.BoardId,
-                    GameId = pb.GameId,
-                    Numbers = pb.Numbers,
-                    FieldCount = pb.FieldCount,
-                    Price = pb.Price,
-                    IsRepeat = pb.IsRepeat,
-                    RepeatCountRemaining = pb.RepeatCountRemaining,
-                    IsWinningBoard = pb.IsWinningBoard,
-                    CreatedAt = pb.CreatedAt
-                })
-                .FirstOrDefaultAsync(pb => pb.Id == id);
-
-            if (playingBoard == null)
-            {
-                return NotFound();
-            }
-
-            return Ok(playingBoard);
+            playingBoard.UserId = updateDto.UserId.Value;
+        }
+        if (updateDto.BoardId.HasValue)
+        {
+            playingBoard.BoardId = updateDto.BoardId.Value;
+        }
+        if (updateDto.GameId.HasValue)
+        {
+            playingBoard.GameId = updateDto.GameId.Value;
+        }
+        if (!string.IsNullOrEmpty(updateDto.Numbers))
+        {
+            playingBoard.Numbers = updateDto.Numbers;
+        }
+        if (updateDto.FieldCount.HasValue)
+        {
+            playingBoard.FieldCount = updateDto.FieldCount.Value;
+        }
+        if (updateDto.Price.HasValue)
+        {
+            playingBoard.Price = updateDto.Price.Value;
+        }
+        if (updateDto.IsRepeat.HasValue)
+        {
+            playingBoard.IsRepeat = updateDto.IsRepeat.Value;
+        }
+        if (updateDto.RepeatCountRemaining.HasValue)
+        {
+            playingBoard.RepeatCountRemaining = updateDto.RepeatCountRemaining.Value;
+        }
+        if (updateDto.IsWinningBoard.HasValue)
+        {
+            playingBoard.IsWinningBoard = updateDto.IsWinningBoard.Value;
         }
 
-        // POST: api/PlayingBoards
-        [HttpPost]
-        public async Task<ActionResult<PlayingBoardDto>> PostPlayingBoard(CreatePlayingBoardDto createPlayingBoardDto)
+        await _context.SaveChangesAsync();
+
+        return NoContent();
+    }
+
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> DeletePlayingBoard(Guid id)
+    {
+        var playingBoard = await _context.PlayingBoards.FindAsync(id);
+
+        if (playingBoard == null)
         {
-            var playingBoard = new PlayingBoard
-            {
-                UserId = createPlayingBoardDto.UserId,
-                BoardId = createPlayingBoardDto.BoardId,
-                GameId = createPlayingBoardDto.GameId,
-                Numbers = createPlayingBoardDto.Numbers,
-                FieldCount = createPlayingBoardDto.FieldCount,
-                Price = createPlayingBoardDto.Price,
-                IsRepeat = createPlayingBoardDto.IsRepeat,
-                RepeatCountRemaining = createPlayingBoardDto.RepeatCountRemaining
-            };
-
-            _context.PlayingBoards.Add(playingBoard);
-            await _context.SaveChangesAsync();
-
-            var playingBoardDto = new PlayingBoardDto
-            {
-                Id = playingBoard.Id,
-                UserId = playingBoard.UserId,
-                BoardId = playingBoard.BoardId,
-                GameId = playingBoard.GameId,
-                Numbers = playingBoard.Numbers,
-                FieldCount = playingBoard.FieldCount,
-                Price = playingBoard.Price,
-                IsRepeat = playingBoard.IsRepeat,
-                RepeatCountRemaining = playingBoard.RepeatCountRemaining,
-                IsWinningBoard = playingBoard.IsWinningBoard,
-                CreatedAt = playingBoard.CreatedAt
-            };
-
-            return CreatedAtAction(nameof(GetPlayingBoard), new { id = playingBoard.Id }, playingBoardDto);
+            return NotFound();
         }
 
-        // PUT: api/PlayingBoards/5
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutPlayingBoard(Guid id, UpdatePlayingBoardDto updatePlayingBoardDto)
-        {
-            var playingBoard = await _context.PlayingBoards.FindAsync(id);
+        _context.PlayingBoards.Remove(playingBoard);
+        await _context.SaveChangesAsync();
 
-            if (playingBoard == null)
-            {
-                return NotFound();
-            }
-
-            playingBoard.IsWinningBoard = updatePlayingBoardDto.IsWinningBoard ?? playingBoard.IsWinningBoard;
-            playingBoard.RepeatCountRemaining = updatePlayingBoardDto.RepeatCountRemaining ?? playingBoard.RepeatCountRemaining;
-
-            _context.Entry(playingBoard).State = EntityState.Modified;
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!PlayingBoardExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
-
-            return NoContent();
-        }
-
-        // DELETE: api/PlayingBoards/5
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeletePlayingBoard(Guid id)
-        {
-            var playingBoard = await _context.PlayingBoards.FindAsync(id);
-            if (playingBoard == null)
-            {
-                return NotFound();
-            }
-
-            _context.PlayingBoards.Remove(playingBoard);
-            await _context.SaveChangesAsync();
-
-            return NoContent();
-        }
-
-        private bool PlayingBoardExists(Guid id)
-        {
-            return _context.PlayingBoards.Any(e => e.Id == id);
-        }
+        return NoContent();
     }
 }
 */

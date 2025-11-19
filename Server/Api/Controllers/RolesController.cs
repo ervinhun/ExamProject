@@ -4,138 +4,123 @@ using DataAccess;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
-namespace Api.Controllers
+namespace Api.Controllers;
+
+[ApiController]
+[Route("api/[controller]")]
+public class RolesController : ControllerBase
 {
-    [Route("api/[controller]")]
-    [ApiController]
-    public class RolesController : ControllerBase
+    private readonly MyDbContext _context;
+
+    public RolesController(MyDbContext context)
     {
-        private readonly MyDbContext _context;
+        _context = context;
+    }
 
-        public RolesController(MyDbContext context)
+    [HttpGet]
+    public async Task<ActionResult<IEnumerable<RoleDto>>> GetRoles()
+    {
+        var roles = await _context.Roles
+            .Select(r => new RoleDto
+            {
+                Id = r.Id,
+                Name = r.Name,
+                Description = r.Description,
+                IsDeleted = r.IsDeleted
+            })
+            .ToListAsync();
+
+        return Ok(roles);
+    }
+
+    [HttpGet("{id}")]
+    public async Task<ActionResult<RoleDto>> GetRole(Guid id)
+    {
+        var role = await _context.Roles
+            .Where(r => r.Id == id)
+            .Select(r => new RoleDto
+            {
+                Id = r.Id,
+                Name = r.Name,
+                Description = r.Description,
+                IsDeleted = r.IsDeleted
+            })
+            .FirstOrDefaultAsync();
+
+        if (role == null)
         {
-            _context = context;
+            return NotFound();
         }
 
-        // GET: api/Roles
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<RoleDto>>> GetRoles()
-        {
-            var roles = await _context.Roles
-                .Select(r => new RoleDto
-                {
-                    Id = r.Id,
-                    Name = r.Name,
-                    Description = r.Description,
-                    IsDeleted = r.IsDeleted
-                })
-                .ToListAsync();
+        return Ok(role);
+    }
 
-            return Ok(roles);
+    [HttpPost]
+    public async Task<ActionResult<RoleDto>> CreateRole(CreateRoleDto createDto)
+    {
+        var role = new Role
+        {
+            Id = Guid.NewGuid(),
+            Name = createDto.Name,
+            Description = createDto.Description
+        };
+
+        _context.Roles.Add(role);
+        await _context.SaveChangesAsync();
+
+        var roleDto = new RoleDto
+        {
+            Id = role.Id,
+            Name = role.Name,
+            Description = role.Description,
+            IsDeleted = role.IsDeleted
+        };
+
+        return CreatedAtAction(nameof(GetRole), new { id = role.Id }, roleDto);
+    }
+
+    [HttpPut("{id}")]
+    public async Task<IActionResult> UpdateRole(Guid id, UpdateRoleDto updateDto)
+    {
+        var role = await _context.Roles.FindAsync(id);
+
+        if (role == null)
+        {
+            return NotFound();
         }
 
-        // GET: api/Roles/5
-        [HttpGet("{id}")]
-        public async Task<ActionResult<RoleDto>> GetRole(Guid id)
+        if (!string.IsNullOrEmpty(updateDto.Name))
         {
-            var role = await _context.Roles
-                .Select(r => new RoleDto
-                {
-                    Id = r.Id,
-                    Name = r.Name,
-                    Description = r.Description,
-                    IsDeleted = r.IsDeleted
-                })
-                .FirstOrDefaultAsync(r => r.Id == id);
-
-            if (role == null)
-            {
-                return NotFound();
-            }
-
-            return Ok(role);
+            role.Name = updateDto.Name;
+        }
+        if (!string.IsNullOrEmpty(updateDto.Description))
+        {
+            role.Description = updateDto.Description;
+        }
+        if (updateDto.IsDeleted.HasValue)
+        {
+            role.IsDeleted = updateDto.IsDeleted.Value;
         }
 
-        // POST: api/Roles
-        [HttpPost]
-        public async Task<ActionResult<RoleDto>> PostRole(CreateRoleDto createRoleDto)
+        await _context.SaveChangesAsync();
+
+        return NoContent();
+    }
+
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> DeleteRole(Guid id)
+    {
+        var role = await _context.Roles.FindAsync(id);
+
+        if (role == null)
         {
-            var role = new Role
-            {
-                Name = createRoleDto.Name,
-                Description = createRoleDto.Description
-            };
-
-            _context.Roles.Add(role);
-            await _context.SaveChangesAsync();
-
-            var roleDto = new RoleDto
-            {
-                Id = role.Id,
-                Name = role.Name,
-                Description = role.Description,
-                IsDeleted = role.IsDeleted
-            };
-
-            return CreatedAtAction(nameof(GetRole), new { id = role.Id }, roleDto);
+            return NotFound();
         }
 
-        // PUT: api/Roles/5
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutRole(Guid id, UpdateRoleDto updateRoleDto)
-        {
-            var role = await _context.Roles.FindAsync(id);
+        _context.Roles.Remove(role);
+        await _context.SaveChangesAsync();
 
-            if (role == null)
-            {
-                return NotFound();
-            }
-
-            role.Name = updateRoleDto.Name ?? role.Name;
-            role.Description = updateRoleDto.Description ?? role.Description;
-            role.IsDeleted = updateRoleDto.IsDeleted ?? role.IsDeleted;
-
-            _context.Entry(role).State = EntityState.Modified;
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!RoleExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
-
-            return NoContent();
-        }
-
-        // DELETE: api/Roles/5
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteRole(Guid id)
-        {
-            var role = await _context.Roles.FindAsync(id);
-            if (role == null)
-            {
-                return NotFound();
-            }
-
-            _context.Roles.Remove(role);
-            await _context.SaveChangesAsync();
-
-            return NoContent();
-        }
-
-        private bool RoleExists(Guid id)
-        {
-            return _context.Roles.Any(e => e.Id == id);
-        }
+        return NoContent();
     }
 }
 */

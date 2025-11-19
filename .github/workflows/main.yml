@@ -11,6 +11,7 @@ on:
   workflow_dispatch:
 
 jobs:
+
   frontend:
     name: Frontend CI
     runs-on: ubuntu-latest
@@ -27,7 +28,7 @@ jobs:
         working-directory: Client
         run: npm ci
 
-      - name: Lint
+      - name: Lint frontend
         working-directory: Client
         run: npm run lint
 
@@ -47,11 +48,11 @@ jobs:
         with:
           dotnet-version: '9.0.x'
 
-      - name: Restore solution dependencies
+      - name: Restore solution
         run: dotnet restore Server/Server.sln
 
       - name: Build solution
-        run: dotnet build Server/Server.sln --no-restore
+        run: dotnet build Server/Server.sln --no-restore --configuration Release
 
       - name: Generate appsettings.json
         run: |
@@ -68,25 +69,25 @@ jobs:
           }
           EOF
 
-      - name: Run tests
-        run: dotnet test Server/Test/Test.csproj --no-build --logger "trx;LogFileName=test_results.trx"
+      - name: Run backend tests
+        run: dotnet test Server/Test/Test.csproj --no-build --configuration Release --logger "trx;LogFileName=test_results.trx"
 
       - name: Publish API
         run: dotnet publish Server/Api/Api.csproj -c Release -o ./publish
 
-      - name: Build Docker image
+      - name: Build Backend Docker image
         working-directory: Server
-        run: docker build -t ExamProject-backend/server .
+        run: docker build -t examproject-backend/server .
 
   sonarcloud:
     name: SonarCloud Analysis
     runs-on: ubuntu-latest
     needs: [frontend, backend]
     steps:
-      - name: Checkout code
+      - name: Checkout
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Required for SonarCloud analysis
+          fetch-depth: 0
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
@@ -94,18 +95,17 @@ jobs:
           dotnet-version: '9.0.x'
 
       - name: Cache SonarScanner
-        id: cache-sonar-scanner
+        id: cache-sonar
         uses: actions/cache@v3
         with:
-          path: ./.sonar/scanner
-          key: ${{ runner.os }}-sonar-scanner
-          restore-keys: ${{ runner.os }}-sonar-scanner
+          path: ~/.dotnet/tools
+          key: ${{ runner.os }}-sonar
 
       - name: Install SonarScanner
-        if: steps.cache-sonar-scanner.outputs.cache-hit != 'true'
+        if: steps.cache-sonar.outputs.cache-hit != 'true'
         run: dotnet tool install --global dotnet-sonarscanner
 
-      - name: Begin SonarCloud Scan
+      - name: Begin SonarCloud analysis
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
@@ -113,7 +113,7 @@ jobs:
           dotnet sonarscanner begin \
             /k:"ervinhun_ExamProject" \
             /o:"ervinhun" \
-            /d:sonar.login="${{ secrets.SONAR_TOKEN }}" \
+            /d:sonar.login=${{ secrets.SONAR_TOKEN }} \
             /d:sonar.host.url="https://sonarcloud.io" \
             /d:sonar.solution="Server/Server.sln" \
             /d:sonar.test.inclusions="Server/Test/**/*.cs,Client/src/**/*.test.tsx,Client/src/**/*.test.ts" \
@@ -121,16 +121,16 @@ jobs:
             /d:sonar.cs.vstest.reportsPaths="**/test_results.trx" \
             /d:sonar.cs.opencover.reportsPaths="**/coverage.opencover.xml"
 
-      - name: Restore solution dependencies
+      - name: Restore backend
         run: dotnet restore Server/Server.sln
 
-      - name: Build solution
-        run: dotnet build Server/Server.sln --no-restore
+      - name: Build backend
+        run: dotnet build Server/Server.sln --no-restore --configuration Release
 
-      - name: Run tests and collect coverage
+      - name: Run backend tests with coverage
         run: dotnet test Server/Test/Test.csproj --no-build --logger "trx;LogFileName=test_results.trx" --collect:"XPlat Code Coverage" /p:CoverletOutputFormat=opencover
 
-      - name: End SonarCloud Scan
+      - name: End SonarCloud analysis
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: dotnet sonarscanner end /d:sonar.login="${{ secrets.SONAR_TOKEN }}"
+        run: dotnet sonarscanner end /d:sonar.login=${{ secrets.SONAR_TOKEN }}
