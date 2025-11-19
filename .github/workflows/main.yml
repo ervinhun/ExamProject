@@ -128,12 +128,7 @@ jobs:
         run: dotnet build Server/Server.sln --no-restore --configuration Release
 
       - name: Run backend tests with coverage
-        run: dotnet test Server/Test/Test.csproj \
-              --no-build \
-              --logger "trx;LogFileName=test_results.trx" \
-              /p:CollectCoverage=true \
-              /p:CoverletOutputFormat=opencover \
-              /p:CoverletOutput=TestResults/coverage.opencover.xml
+        run: dotnet test Server/Test/Test.csproj --no-build --logger "trx;LogFileName=test_results.trx" /p:CollectCoverage=true /p:CoverletOutputFormat=opencover /p:CoverletOutput=TestResults/coverage.opencover.xml
 
       - name: End SonarCloud analysis
         env:
