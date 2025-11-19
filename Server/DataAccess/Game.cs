@@ -1,4 +1,5 @@
-﻿using System;
+﻿/*
+using System;
 using System.Collections.Generic;
 
 namespace DataAccess;
@@ -25,3 +26,4 @@ public partial class Game
 
     public virtual ICollection<PlayingBoard> PlayingBoards { get; set; } = new List<PlayingBoard>();
 }
+*/
