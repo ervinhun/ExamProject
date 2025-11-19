@@ -13,11 +13,15 @@ public partial class PlayingHistory
 
     public Guid TicketId { get; set; }
 
+    public Guid GameId { get; set; }
+
     public string Title { get; set; } = null!;
 
     public string? Description { get; set; }
 
     public DateTime CreatedAt { get; set; }
+
+    public virtual Game Game { get; set; } = null!;
 
     public virtual PlayingBoard Ticket { get; set; } = null!;
 
