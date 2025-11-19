@@ -1,4 +1,5 @@
-﻿using System;
+﻿/*
+using System;
 using System.Collections.Generic;
 
 namespace DataAccess;
@@ -13,3 +14,4 @@ public partial class PlayingNumber
 
     public virtual PlayingBoard PlayingBoard { get; set; } = null!;
 }
+*/

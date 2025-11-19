@@ -1,3 +1,4 @@
+/*
 using Api.Dto;
 using DataAccess;
 using Microsoft.AspNetCore.Mvc;
@@ -133,3 +134,4 @@ public class BoardsController : ControllerBase
         return NoContent();
     }
 }
+*/

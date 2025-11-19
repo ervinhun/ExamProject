@@ -1,4 +1,5 @@
-﻿using System;
+﻿/*
+using System;
 using System.Collections.Generic;
 
 namespace DataAccess;
@@ -21,3 +22,4 @@ public partial class Board
 
     public virtual User User { get; set; } = null!;
 }
+*/

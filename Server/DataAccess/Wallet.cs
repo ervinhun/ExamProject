@@ -1,4 +1,5 @@
-﻿using System;
+﻿/*
+using System;
 using System.Collections.Generic;
 
 namespace DataAccess;
@@ -19,3 +20,4 @@ public partial class Wallet
 
     public virtual User User { get; set; } = null!;
 }
+*/

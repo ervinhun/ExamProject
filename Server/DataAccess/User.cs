@@ -1,9 +1,10 @@
-﻿using System;
+﻿/*
+using System;
 using System.Collections.Generic;
 
 namespace DataAccess;
 
-public partial class User
+public class Usert
 {
     public Guid Id { get; set; }
 
@@ -45,3 +46,4 @@ public partial class User
 
     public virtual Wallet? Wallet { get; set; }
 }
+*/

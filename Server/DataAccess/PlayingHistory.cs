@@ -1,4 +1,5 @@
-﻿using System;
+﻿/*
+using System;
 using System.Collections.Generic;
 
 namespace DataAccess;
@@ -27,3 +28,4 @@ public partial class PlayingHistory
 
     public virtual User User { get; set; } = null!;
 }
+*/

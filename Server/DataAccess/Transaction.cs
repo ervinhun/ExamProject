@@ -1,4 +1,4 @@
-﻿using System;
+﻿/*using System;
 using System.Collections.Generic;
 
 namespace DataAccess;
@@ -25,3 +25,4 @@ public partial class Transaction
 
     public virtual Admin? ReviewedByNavigation { get; set; }
 }
+/#1#*/
