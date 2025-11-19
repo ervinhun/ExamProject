@@ -1,3 +1,4 @@
+/*
 using Api.Dto;
 using DataAccess;
 using Microsoft.AspNetCore.Mvc;
@@ -122,3 +123,4 @@ public class PlayersController : ControllerBase
         return NoContent();
     }
 }
+*/

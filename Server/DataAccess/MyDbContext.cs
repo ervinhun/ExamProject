@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using DataAccess.Entities.Auth;
+﻿using DataAccess.Entities.Auth;
 using DataAccess.Entities.Finance;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
