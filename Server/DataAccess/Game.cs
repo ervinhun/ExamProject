@@ -13,15 +13,13 @@ public partial class Game
 
     public bool? IsClosed { get; set; }
 
-    public int? WinningNumber1 { get; set; }
-
-    public int? WinningNumber2 { get; set; }
-
-    public int? WinningNumber3 { get; set; }
-
     public DateTime CreatedAt { get; set; }
 
     public DateTime? ClosedAt { get; set; }
 
     public virtual ICollection<PlayingBoard> PlayingBoards { get; set; } = new List<PlayingBoard>();
+
+    public virtual ICollection<PlayingHistory> PlayingHistories { get; set; } = new List<PlayingHistory>();
+
+    public virtual ICollection<WinningNumber> WinningNumbers { get; set; } = new List<WinningNumber>();
 }
