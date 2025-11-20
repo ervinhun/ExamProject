@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace DataAccess.Migrations
 {
     /// <inheritdoc />
-    public partial class inint : Migration
+    public partial class Init : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -21,7 +21,10 @@ namespace DataAccess.Migrations
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     Email = table.Column<string>(type: "text", nullable: false),
-                    Password = table.Column<string>(type: "text", nullable: false)
+                    PasswordHash = table.Column<byte[]>(type: "bytea", nullable: false),
+                    PasswordSalt = table.Column<byte[]>(type: "bytea", nullable: false),
+                    RefreshTokenHash = table.Column<string>(type: "text", nullable: false),
+                    RefreshTokenExpires = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -87,6 +90,51 @@ namespace DataAccess.Migrations
                         onDelete: ReferentialAction.Cascade);
                 });
 
+            migrationBuilder.CreateTable(
+                name: "Transaction",
+                schema: "LotteryApp",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    PlayerId = table.Column<Guid>(type: "uuid", nullable: false),
+                    WalletId = table.Column<Guid>(type: "uuid", nullable: false),
+                    ReviewedBy = table.Column<Guid>(type: "uuid", nullable: false),
+                    Status = table.Column<string>(type: "text", nullable: false),
+                    Amount = table.Column<decimal>(type: "numeric", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Transaction", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Transaction_Players_PlayerId",
+                        column: x => x.PlayerId,
+                        principalSchema: "LotteryApp",
+                        principalTable: "Players",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_Transaction_Wallets_WalletId",
+                        column: x => x.WalletId,
+                        principalSchema: "LotteryApp",
+                        principalTable: "Wallets",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Transaction_PlayerId",
+                schema: "LotteryApp",
+                table: "Transaction",
+                column: "PlayerId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Transaction_WalletId",
+                schema: "LotteryApp",
+                table: "Transaction",
+                column: "WalletId");
+
             migrationBuilder.CreateIndex(
                 name: "IX_Wallets_PlayerId",
                 schema: "LotteryApp",
@@ -100,6 +148,10 @@ namespace DataAccess.Migrations
         {
             migrationBuilder.DropTable(
                 name: "Admins",
+                schema: "LotteryApp");
+
+            migrationBuilder.DropTable(
+                name: "Transaction",
                 schema: "LotteryApp");
 
             migrationBuilder.DropTable(

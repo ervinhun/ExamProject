@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace DataAccess.Migrations
 {
     [DbContext(typeof(MyDbContext))]
-    [Migration("20251120150223_TransactionsNew")]
-    partial class TransactionsNew
+    [Migration("20251120232953_Init")]
+    partial class Init
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -36,7 +36,18 @@ namespace DataAccess.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<string>("Password")
+                    b.Property<byte[]>("PasswordHash")
+                        .IsRequired()
+                        .HasColumnType("bytea");
+
+                    b.Property<byte[]>("PasswordSalt")
+                        .IsRequired()
+                        .HasColumnType("bytea");
+
+                    b.Property<DateTime>("RefreshTokenExpires")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("RefreshTokenHash")
                         .IsRequired()
                         .HasColumnType("text");
 
@@ -81,7 +92,7 @@ namespace DataAccess.Migrations
 
                     b.HasIndex("WalletId");
 
-                    b.ToTable("Transactions", "LotteryApp");
+                    b.ToTable("Transaction", "LotteryApp");
                 });
 
             modelBuilder.Entity("DataAccess.Entities.Finance.Wallet", b =>

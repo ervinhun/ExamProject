@@ -1,6 +1,6 @@
 using System.Text.Json;
 
-namespace Utils.Json;
+namespace Utils;
 
 public static class JsonSettings
 {
