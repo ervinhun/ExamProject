@@ -1,3 +1,5 @@
+using Api.Options;
+using api.Services;
 using DataAccess;
 using Microsoft.EntityFrameworkCore;
 
@@ -5,10 +7,8 @@ namespace Api;
 
 public static class Program
 {
-    public static void ConfigureServices(IServiceCollection services)
+    private static void ConfigureServices(IServiceCollection services)
     {
-        // Load .env variables
-        DotNetEnv.Env.Load();
         
         // Add controllers to the api
         services.AddControllers();
@@ -16,15 +16,29 @@ public static class Program
         // Needed for Swagger to work 
         services.AddOpenApiDocument();
 
-        // Adds service to the scope 
-        // services.AddScoped<>();
+        /*
+         *  Add service to the scope,  means that a new instance is created per request -> each request, new instance of service
+         */
+        services.AddScoped<IAuthService, AuthService>();
 
+        /*
+         *  Add service as a singleton, means that one instance of a service is shared across the app -> longer lifetime (configuration, logging, cashing)  
+         */
+        // services.AddSingleton();
+        
         // Adds db context 
-         services.AddDbContext<MyDbContext>((services, options) =>
+         services.AddDbContext<MyDbContext>((serviceProvider, options) =>
          {
-             options.UseNpgsql(services.GetRequiredService<IConfiguration>().GetConnectionString("DefaultConnection"));
+             options.UseNpgsql(serviceProvider.GetRequiredService<IConfiguration>().GetConnectionString("DefaultConnection"));
          });
+    }
 
+    private static void ConfigureOptions(IServiceCollection services,  IConfiguration configuration)
+    {
+        services.AddOptions<JwtOptions>()
+            .Bind(configuration.GetSection("JWT"))
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
     }
 
     public static void Main(string[] args)
@@ -32,6 +46,7 @@ public static class Program
         var builder = WebApplication.CreateBuilder(args);
         
         ConfigureServices(builder.Services);
+        ConfigureOptions(builder.Services, builder.Configuration);
         
         var app = builder.Build();
 

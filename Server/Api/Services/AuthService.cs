@@ -1,4 +1,4 @@
-/*using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.Data;
 using System.Security.Cryptography;
 using System.Text;
@@ -6,15 +6,16 @@ using System.Text.Json;
 using Api.Dto.Auth;
 using Api.Dto.Auth.Request;
 using Api.Dto.Auth.Response;
-using api.Models;
-using api.Models.Requests;
+using Api.Options;
 using DataAccess;
-using dataccess;
+using DataAccess.Entities.Auth;
 using JWT;
 using JWT.Algorithms;
 using JWT.Builder;
 using JWT.Serializers;
+using Microsoft.Extensions.Options;
 using Utils.Exceptions;
+using Utils.Json;
 using DataAnnotations_ValidationException = System.ComponentModel.DataAnnotations.ValidationException;
 using ValidationException = Bogus.ValidationException;
 
@@ -24,8 +25,10 @@ public class AuthService(
     MyDbContext ctx,
     ILogger<AuthService> logger,
     TimeProvider timeProvider,
-    AppOptions appOptions) : IAuthService
+    IOptions<JwtOptions> options) : IAuthService
 {
+    private readonly JwtOptions _jwtOptions = options.Value;
+    
     public async Task<JwtClaims> VerifyAndDecodeToken(string token)
     {
         if (string.IsNullOrWhiteSpace(token))
@@ -36,19 +39,23 @@ public class AuthService(
         string jsonString;
         try
         {
-            jsonString = builder.Decode(token)
-                         ?? throw new AuthenticationException("Authentication failed!");
+            jsonString = builder.Decode(token);
+            if (jsonString == null)
+            {
+                throw new AuthenticationException("Authentication failed! Token not found!");
+            }
         }
         catch (AuthenticationException e)
         {
             logger.LogError(e.Message, e);
-            throw new ValidationException("Valided to verify JWT");
+            throw new AuthenticationException("Failed to verify JWT");
         }
 
-        var jwtClaims = JsonSerializer.Deserialize<JwtClaims>(jsonString, new JsonSerializerOptions
+        var jwtClaims = JsonSerializer.Deserialize<JwtClaims>(jsonString, JsonSettings.DefaultOptions);
+        if (jwtClaims == null)
         {
-            PropertyNameCaseInsensitive = true
-        }) ?? throw new ValidationException("Authentication failed!");
+            throw new AuthenticationException("Authentication failed! No token attached!");
+        }
 
         _ = ctx.Libraryusers.FirstOrDefault(u => u.Id == jwtClaims.Id)
             ?? throw new ValidationException("Authentication is valid, but user is not found!");
@@ -65,7 +72,7 @@ public class AuthService(
                                      Encoding.UTF8.GetBytes(dto.Password + user.Salt))
                                  .Aggregate("", (current, b) => current + b.ToString("x2"));
         if (!passwordsMatch)
-            throw new ValidationException("Password is incorrect!");
+            throw new AuthenticationException("Password is incorrect!");
 
         var token = CreateJwt(user);
         return new JwtResponse(token);
@@ -75,23 +82,24 @@ public class AuthService(
     {
         Validator.ValidateObject(dto, new ValidationContext(dto), true);
 
-        var isEmailTaken = ctx.Libraryusers.Any(u => u.Email == dto.Email);
+        var isEmailTaken = ctx.Users.Any(u => u.Email.Equals(dto.Email));
         if (isEmailTaken)
-            throw new ValidationException("Email is already taken");
+            throw new AuthenticationException("Email is already taken");
 
         var salt = Guid.NewGuid().ToString();
         var hash = SHA512.HashData(
             Encoding.UTF8.GetBytes(dto.Password + salt));
-        var user = new Libraryuser
+        var user = new User()
         {
             Email = dto.Email,
-            Createdat = timeProvider.GetUtcNow().DateTime.ToUniversalTime(),
-            Id = Guid.NewGuid().ToString(),
-            Salt = salt,
-            Passwordhash = hash.Aggregate("", (current, b) => current + b.ToString("x2")),
-            Role = "User"
+            //Createdat = timeProvider.GetUtcNow().DateTime.ToUniversalTime(),
+            Id = Guid.NewGuid(),
+            PasswordSalt = salt,
+            PasswordHash = hash.Aggregate("", (current, b) => current + b.ToString("x2")),
+            //Role = "User"
         };
-        ctx.Libraryusers.Add(user);
+        ctx.Users.Add(user);
+        
         await ctx.SaveChangesAsync();
 
         var token = CreateJwt(user);
@@ -102,16 +110,17 @@ public class AuthService(
     {
         return JwtBuilder.Create()
             .WithAlgorithm(new HMACSHA512Algorithm())
-            .WithSecret(Environment.GetEnvironmentVariable("JWT_SECRET"))
+            .WithSecret(_jwtOptions.Secret)
             .WithUrlEncoder(new JwtBase64UrlEncoder())
             .WithJsonSerializer(new JsonNetSerializer())
-            .MustVerifySignature();
+                .MustVerifySignature();
     }
 
-    private string CreateJwt(Libraryuser user)
+    private string CreateJwt(User user)
     {
         return CreateJwtBuilder()
-            .AddClaim(nameof(Libraryuser.Id), user.Id)
+            .AddClaim(nameof(user.Id), user.Id)
+            .AddClaim(nameof(user.Email), user.Email)
             .Encode();
     }
-}*/
+}

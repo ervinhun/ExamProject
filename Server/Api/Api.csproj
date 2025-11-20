@@ -8,8 +8,7 @@
 
   <ItemGroup>
     <ProjectReference Include="../DataAccess/DataAccess.csproj"/>
-      <ProjectReference Include="../Utils/Utils.csproj"/>
-      <PackageReference Include="DotNetEnv" Version="3.1.1" />
+    <ProjectReference Include="../Utils/Utils.csproj"/>
     <PackageReference Include="JWT" Version="11.0.0"/>
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="9.0.4" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.4" />
