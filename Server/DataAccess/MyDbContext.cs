@@ -20,6 +20,7 @@ public class MyDbContext(DbContextOptions<MyDbContext> options) : DbContext(opti
     public DbSet<User> Users => Set<User>();
     public DbSet<Player> Players => Set<Player>();
     public DbSet<Wallet> Wallets => Set<Wallet>();
+    public DbSet<Transaction> Transactions => Set<Transaction>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -43,8 +44,25 @@ public class MyDbContext(DbContextOptions<MyDbContext> options) : DbContext(opti
             .HasOne(p => p.Wallet)
             .WithOne(w => w.Player)
             .HasForeignKey<Wallet>(w => w.PlayerId);
+        /*
+         * MANY-TO-ONE RELATIONSHIP
+         */
+        
+        modelBuilder.Entity<Player>()
+            .HasMany(p=>p.Transactions)
+            .WithOne(t=>t.Player)
+            .HasForeignKey(t=>t.PlayerId)
+            .OnDelete(DeleteBehavior.Restrict);
+        
+        modelBuilder.Entity<Wallet>()
+            .HasMany(w=>w.Transactions)
+            .WithOne(t=>t.Wallet)
+            .HasForeignKey(t=>t.WalletId)
+            .OnDelete(DeleteBehavior.Restrict);
+        
         
         
         base.OnModelCreating(modelBuilder);
     }
+    
 }
