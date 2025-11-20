@@ -9,4 +9,6 @@ public class Wallet
     
     public Player Player { get; set; } = null!;
     public required UInt32 Balance { get; set; }
+    
+    public List<Transaction> Transactions { get; set; } = new();
 }

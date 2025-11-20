@@ -94,15 +94,7 @@ jobs:
         with:
           dotnet-version: '9.0.x'
 
-      - name: Cache SonarScanner
-        id: cache-sonar
-        uses: actions/cache@v3
-        with:
-          path: ~/.dotnet/tools
-          key: ${{ runner.os }}-sonar
-
       - name: Install SonarScanner
-        if: steps.cache-sonar.outputs.cache-hit != 'true'
         run: dotnet tool install --global dotnet-sonarscanner
 
       - name: Begin SonarCloud analysis
@@ -117,7 +109,6 @@ jobs:
             /d:sonar.host.url="https://sonarcloud.io" \
             /d:sonar.solution="Server/Server.sln" \
             /d:sonar.test.inclusions="Server/Test/**/*.cs,Client/src/**/*.test.tsx,Client/src/**/*.test.ts" \
-            /d:sonar.exclusions="Client/node_modules/**,Client/public/**,Client/dist/**,**/*.csproj" \
             /d:sonar.cs.vstest.reportsPaths="**/test_results.trx" \
             /d:sonar.cs.opencover.reportsPaths="**/coverage.opencover.xml"
 
@@ -128,7 +119,14 @@ jobs:
         run: dotnet build Server/Server.sln --no-restore --configuration Release
 
       - name: Run backend tests with coverage
-        run: dotnet test Server/Test/Test.csproj --no-build --logger "trx;LogFileName=test_results.trx" --collect:"XPlat Code Coverage" /p:CoverletOutputFormat=opencover
+        working-directory: Server/Test
+        run: |
+          dotnet test Test.csproj \
+            --no-build \
+            --logger "trx;LogFileName=test_results.trx" \
+            /p:CollectCoverage=true \
+            /p:CoverletOutputFormat=opencover \
+            /p:CoverletOutput=TestResults/coverage.opencover.xml
 
       - name: End SonarCloud analysis
         env:

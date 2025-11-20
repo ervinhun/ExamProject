@@ -1,10 +1,17 @@
 Backend:
-  - "Server/**"
+  - changed-files:
+      paths:
+        - "Server/**"
 
 Frontend:
-  - "Client/**"
+  - changed-files:
+      paths:
+        - "Client/**"
 
 FullStack:
-  - all:
-      - "Server/**"
-      - "Client/**"
+  - changed-files:
+      all:
+        - patterns:
+            - "Server/**"
+        - patterns:
+            - "Client/**"

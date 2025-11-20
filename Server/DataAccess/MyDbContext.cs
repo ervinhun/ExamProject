@@ -27,15 +27,15 @@ public class MyDbContext(DbContextOptions<MyDbContext> options) : DbContext(opti
          * Define global schema
          */
         modelBuilder.HasDefaultSchema("LotteryApp");
-
+        
         /*
          * TPT - Table Per Type Strategy -> Each type/class has its own table in DataBase
          */
         modelBuilder.Entity<User>().ToTable("Users");
         modelBuilder.Entity<Player>().ToTable("Players");
         modelBuilder.Entity<Admin>().ToTable("Admins");
-
-
+        
+        
         /*
          * ONE-TO-ONE RELATIONSHIP
          */
@@ -43,10 +43,24 @@ public class MyDbContext(DbContextOptions<MyDbContext> options) : DbContext(opti
             .HasOne(p => p.Wallet)
             .WithOne(w => w.Player)
             .HasForeignKey<Wallet>(w => w.PlayerId);
-
-
+        /*
+         * MANY-TO-ONE RELATIONSHIP
+         */
+        
+        modelBuilder.Entity<Player>()
+            .HasMany(p=>p.Transactions)
+            .WithOne(t=>t.Player)
+            .HasForeignKey(t=>t.PlayerId)
+            .OnDelete(DeleteBehavior.Restrict);
+        
+        modelBuilder.Entity<Wallet>()
+            .HasMany(w=>w.Transactions)
+            .WithOne(t=>t.Wallet)
+            .HasForeignKey(t=>t.WalletId)
+            .OnDelete(DeleteBehavior.Restrict);
+        
+        
+        
         base.OnModelCreating(modelBuilder);
     }
-    
 }
-
