@@ -65,16 +65,16 @@ public class AuthService(
 
     public async Task<JwtResponse> Login(LoginRequestDto dto)
     {
-        var user = ctx.Libraryusers.FirstOrDefault(u => u.Email == dto.Email)
-                   ?? throw new ValidationException("User is not found!");
-        var passwordsMatch = user.Passwordhash ==
+        var user = ctx.Users.FirstOrDefault(u => u.Email == dto.Email)
+                   ?? throw new AuthenticationException("User is not found!");
+        var passwordsMatch = user.PasswordHash ==
                              SHA512.HashData(
                                      Encoding.UTF8.GetBytes(dto.Password + user.Salt))
                                  .Aggregate("", (current, b) => current + b.ToString("x2"));
         if (!passwordsMatch)
             throw new AuthenticationException("Password is incorrect!");
 
-        var token = CreateJwt(user);
+        var token = await CreateJwt(user);
         return new JwtResponse(token);
     }
 
