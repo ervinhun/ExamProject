@@ -120,13 +120,12 @@ jobs:
 
       - name: Run backend tests with coverage
         working-directory: Server/Test
-        run: |
-          dotnet test Test.csproj \
-            --no-build \
+        run: dotnet test ${{ github.workspace }}/Server/Test/Test.csproj \
             --logger "trx;LogFileName=test_results.trx" \
             /p:CollectCoverage=true \
             /p:CoverletOutputFormat=opencover \
-            /p:CoverletOutput=TestResults/coverage.opencover.xml
+            /p:CoverletOutput=${{ github.workspace }}/Server/Test/TestResults/coverage.opencover.xml
+
 
       - name: End SonarCloud analysis
         env:
