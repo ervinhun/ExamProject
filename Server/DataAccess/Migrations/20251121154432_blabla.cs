@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace DataAccess.Migrations
 {
     /// <inheritdoc />
-    public partial class Init : Migration
+    public partial class blabla : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -15,16 +15,32 @@ namespace DataAccess.Migrations
                 name: "LotteryApp");
 
             migrationBuilder.CreateTable(
+                name: "Roles",
+                schema: "LotteryApp",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    Name = table.Column<int>(type: "integer", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Roles", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Users",
                 schema: "LotteryApp",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    Email = table.Column<string>(type: "text", nullable: false),
+                    FullName = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
+                    PhoneNumber = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
+                    Email = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
                     PasswordHash = table.Column<byte[]>(type: "bytea", nullable: false),
                     PasswordSalt = table.Column<byte[]>(type: "bytea", nullable: false),
-                    RefreshTokenHash = table.Column<string>(type: "text", nullable: false),
-                    RefreshTokenExpires = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                    RefreshTokenHash = table.Column<string>(type: "character varying(512)", maxLength: 512, nullable: false),
+                    RefreshTokenExpires = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -55,7 +71,8 @@ namespace DataAccess.Migrations
                 schema: "LotteryApp",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false)
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    Activated = table.Column<bool>(type: "boolean", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -70,13 +87,40 @@ namespace DataAccess.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "RoleUser",
+                schema: "LotteryApp",
+                columns: table => new
+                {
+                    RolesId = table.Column<Guid>(type: "uuid", nullable: false),
+                    UsersId = table.Column<Guid>(type: "uuid", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_RoleUser", x => new { x.RolesId, x.UsersId });
+                    table.ForeignKey(
+                        name: "FK_RoleUser_Roles_RolesId",
+                        column: x => x.RolesId,
+                        principalSchema: "LotteryApp",
+                        principalTable: "Roles",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_RoleUser_Users_UsersId",
+                        column: x => x.UsersId,
+                        principalSchema: "LotteryApp",
+                        principalTable: "Users",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Wallets",
                 schema: "LotteryApp",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     PlayerId = table.Column<Guid>(type: "uuid", nullable: false),
-                    Balance = table.Column<long>(type: "bigint", nullable: false)
+                    Balance = table.Column<double>(type: "double precision", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -91,7 +135,7 @@ namespace DataAccess.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Transaction",
+                name: "Transactions",
                 schema: "LotteryApp",
                 columns: table => new
                 {
@@ -100,22 +144,22 @@ namespace DataAccess.Migrations
                     WalletId = table.Column<Guid>(type: "uuid", nullable: false),
                     ReviewedBy = table.Column<Guid>(type: "uuid", nullable: false),
                     Status = table.Column<string>(type: "text", nullable: false),
-                    Amount = table.Column<decimal>(type: "numeric", nullable: false),
+                    Amount = table.Column<double>(type: "double precision", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Transaction", x => x.Id);
+                    table.PrimaryKey("PK_Transactions", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Transaction_Players_PlayerId",
+                        name: "FK_Transactions_Players_PlayerId",
                         column: x => x.PlayerId,
                         principalSchema: "LotteryApp",
                         principalTable: "Players",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
-                        name: "FK_Transaction_Wallets_WalletId",
+                        name: "FK_Transactions_Wallets_WalletId",
                         column: x => x.WalletId,
                         principalSchema: "LotteryApp",
                         principalTable: "Wallets",
@@ -124,15 +168,21 @@ namespace DataAccess.Migrations
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_Transaction_PlayerId",
+                name: "IX_RoleUser_UsersId",
                 schema: "LotteryApp",
-                table: "Transaction",
+                table: "RoleUser",
+                column: "UsersId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Transactions_PlayerId",
+                schema: "LotteryApp",
+                table: "Transactions",
                 column: "PlayerId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Transaction_WalletId",
+                name: "IX_Transactions_WalletId",
                 schema: "LotteryApp",
-                table: "Transaction",
+                table: "Transactions",
                 column: "WalletId");
 
             migrationBuilder.CreateIndex(
@@ -151,7 +201,15 @@ namespace DataAccess.Migrations
                 schema: "LotteryApp");
 
             migrationBuilder.DropTable(
-                name: "Transaction",
+                name: "RoleUser",
+                schema: "LotteryApp");
+
+            migrationBuilder.DropTable(
+                name: "Transactions",
+                schema: "LotteryApp");
+
+            migrationBuilder.DropTable(
+                name: "Roles",
                 schema: "LotteryApp");
 
             migrationBuilder.DropTable(

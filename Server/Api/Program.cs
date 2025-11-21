@@ -87,19 +87,19 @@ public static class Program
     {
         using var  scope = serviceProvider.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<MyDbContext>();
-
-        foreach (var roleName in Enum.GetValues<UserRole>())
+        
+        var existingRoleNames =  await dbContext.Roles.Select(r => r.Name).ToListAsync();
+        foreach (var roleEnum in Enum.GetValues<UserRole>())
         {
-            var role = await dbContext.Roles.AnyAsync(r => r.Name.Equals(roleName));
-            if (!role)
+            if (!existingRoleNames.Contains(roleEnum))
             {
-                var newRole = new Role()
+                dbContext.Roles.Add(new Role
                 {
-                    Name = roleName,
-                };
-                dbContext.Roles.Add(newRole);
+                    Name = roleEnum
+                });
             }
         }
+
         
         await dbContext.SaveChangesAsync();
     }
@@ -136,7 +136,6 @@ public static class Program
             superAdminRole.Users.Add(superAdmin);
 
             dbContext.Users.Add(superAdmin);
-            dbContext.Roles.Add(superAdminRole);
             
             await dbContext.SaveChangesAsync();
         }
