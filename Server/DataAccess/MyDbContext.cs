@@ -23,6 +23,8 @@ public class MyDbContext(DbContextOptions<MyDbContext> options) : DbContext(opti
     public DbSet<User> Users => Set<User>();
     public DbSet<Player> Players => Set<Player>();
     public DbSet<Wallet> Wallets => Set<Wallet>();
+    public DbSet<Transaction> Transactions => Set<Transaction>();
+    public DbSet<Role> Roles => Set<Role>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -37,30 +39,38 @@ public class MyDbContext(DbContextOptions<MyDbContext> options) : DbContext(opti
         modelBuilder.Entity<User>().ToTable("Users");
         modelBuilder.Entity<Player>().ToTable("Players");
         modelBuilder.Entity<Admin>().ToTable("Admins");
-        
+
+        modelBuilder.Entity<User>(userEntity =>
+        {
+            // Users -> Roles : Many-to-Many (Automatically creates RoleUser join table)
+            userEntity
+                .HasMany(u => u.Roles)
+                .WithMany(r => r.Users)
+                .UsingEntity(j=>j.ToTable("RoleUser"));
+        });
         
         modelBuilder.Entity<Player>(playerEntity =>
         {
             // Player -> Wallet : One-to-One
-            playerEntity.HasOne(p => p.Wallet)
+            playerEntity
+                .HasOne(p => p.Wallet)
                 .WithOne(w => w.Player)
                 .HasForeignKey<Wallet>(w => w.PlayerId);
         });
 
         
-        /*
-         * MANY-TO-ONE RELATIONSHIP
-         */
         modelBuilder.Entity<Transaction>(transactionEntity =>
         {
             // Transaction -> Player : Many-to-One
-            transactionEntity.HasOne(t => t.Player)
+            transactionEntity
+                .HasOne(t => t.Player)
                 .WithMany(p => p.Transactions)
                 .HasForeignKey(t => t.PlayerId)
                 .OnDelete(DeleteBehavior.Restrict);
 
             // Transaction -> Wallet : Many-to-One
-            transactionEntity.HasOne(t => t.Wallet)
+            transactionEntity
+                .HasOne(t => t.Wallet)
                 .WithMany(w => w.Transactions)
                 .HasForeignKey(t => t.WalletId)
                 .OnDelete(DeleteBehavior.Restrict);

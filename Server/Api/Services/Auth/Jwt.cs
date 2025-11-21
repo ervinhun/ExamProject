@@ -71,8 +71,13 @@ public class Jwt(IOptions<JwtOptions> options, MyDbContext ctx): IJwt
         var claims = new List<Claim>
         {
             new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-            new Claim(ClaimTypes.Email, user.Email)
+            new Claim(ClaimTypes.Email, user.Email),
         };
+
+        foreach (var role in user.Roles)
+        {
+            claims.Add(new Claim(ClaimTypes.Role, role.Name.ToString()));
+        }
         
         /*  Symmetric key -> same key used for signing and verifying */
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwt.Secret));
