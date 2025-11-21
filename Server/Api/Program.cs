@@ -24,8 +24,16 @@ public static class Program
     {
         DotNetEnv.Env.Load("../.env");
         
-        // Adds db context 
+        // Get Options 
         var dbOptions = configuration.GetSection("DbOptions").Get<DbOptions>();
+        var jwtOptions = configuration.GetSection("JwtOptions").Get<JwtOptions>();
+
+        if (dbOptions == null || jwtOptions == null)
+        {
+            throw new Exception("Missing configuration");
+        }
+        
+        // Adds db context 
         services.AddDbContext<MyDbContext>((serviceProvider, options) =>
         {
             options.UseNpgsql(dbOptions.ConnectionString);
@@ -39,7 +47,6 @@ public static class Program
         services.AddScoped<IEmailService, EmailService>();
         
         
-        var jwtOptions = configuration.GetSection("JwtOptions").Get<JwtOptions>();
         services
             .AddAuthentication("Bearer")
             .AddJwtBearer("Bearer", options =>
