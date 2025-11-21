@@ -1,5 +1,6 @@
 ﻿using DataAccess.Entities.Auth;
 using DataAccess.Entities.Finance;
+using DataAccess.Entities.Game;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.Extensions.Options;
@@ -25,7 +26,11 @@ public class MyDbContext(DbContextOptions<MyDbContext> options) : DbContext(opti
     public DbSet<Wallet> Wallets => Set<Wallet>();
     public DbSet<Transaction> Transactions => Set<Transaction>();
     public DbSet<Role> Roles => Set<Role>();
-
+    public DbSet<Admin> Admins => Set<Admin>();
+    public DbSet<GameInstance> GameInstances => Set<GameInstance>();
+    public DbSet<GameTemplate> GameTemplates => Set<GameTemplate>();
+    public DbSet<WinningNumber> WinningNumbers => Set<WinningNumber>();
+    
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         /*
@@ -75,6 +80,25 @@ public class MyDbContext(DbContextOptions<MyDbContext> options) : DbContext(opti
                 .HasForeignKey(t => t.WalletId)
                 .OnDelete(DeleteBehavior.Restrict);
         });
+
+        modelBuilder.Entity<GameInstance>(gameInstanceEntity =>
+        {
+            // GameInstance -> GameTemplate : One-to-One Unidirectional
+            gameInstanceEntity
+                .HasOne(g => g.GameTemplate)
+                .WithOne()
+                .HasForeignKey<GameInstance>(g => g.GameTemplateId)
+                .IsRequired()
+                .OnDelete(DeleteBehavior.Restrict);
+            // GameInstance -> WinningNumbers : One-To-Many
+            gameInstanceEntity
+                .HasMany(g=>g.WinningNumbers)
+                .WithOne(w=>w.GameInstance)
+                .HasForeignKey(w=>w.GameInstanceId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });   
+        
+        
         
         base.OnModelCreating(modelBuilder);
     }
