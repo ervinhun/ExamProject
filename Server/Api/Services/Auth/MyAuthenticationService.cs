@@ -13,8 +13,8 @@ public class MyAuthenticationService(MyDbContext ctx, IJwt jwt) : IMyAuthenticat
 
     public async Task<JwtResponseDto> Login(LoginRequestDto dto)
     {
-        var user = await ctx.Users.FirstOrDefaultAsync(u => u.Email == dto.Email);
-        
+        var user = await ctx.Users.Include(user => user.Roles).FirstOrDefaultAsync(u => u.Email == dto.Email);
+
         if (user == null || !HashUtils.VerifyPasswordHash(dto.Password, user.PasswordHash, user.PasswordSalt))
         {
             throw new AuthenticationException("Email or password is incorrect");

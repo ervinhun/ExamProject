@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace DataAccess.Migrations
 {
     [DbContext(typeof(MyDbContext))]
-    [Migration("20251121115305_RolesAdded")]
-    partial class RolesAdded
+    [Migration("20251121154941_Init")]
+    partial class Init
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -32,16 +32,8 @@ namespace DataAccess.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<Guid>("AssignedBy")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<int>("Name")
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -59,6 +51,14 @@ namespace DataAccess.Migrations
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)");
 
+                    b.Property<string>("FullName")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
                     b.Property<byte[]>("PasswordHash")
                         .IsRequired()
                         .HasColumnType("bytea");
@@ -66,6 +66,11 @@ namespace DataAccess.Migrations
                     b.Property<byte[]>("PasswordSalt")
                         .IsRequired()
                         .HasColumnType("bytea");
+
+                    b.Property<string>("PhoneNumber")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
 
                     b.Property<DateTime>("RefreshTokenExpires")
                         .HasColumnType("timestamp with time zone");
@@ -164,6 +169,9 @@ namespace DataAccess.Migrations
             modelBuilder.Entity("DataAccess.Entities.Auth.Player", b =>
                 {
                     b.HasBaseType("DataAccess.Entities.Auth.User");
+
+                    b.Property<bool>("Activated")
+                        .HasColumnType("boolean");
 
                     b.ToTable("Players", "LotteryApp");
                 });

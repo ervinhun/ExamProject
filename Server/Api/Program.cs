@@ -12,6 +12,8 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+using NSwag;
+using NSwag.Generation.Processors.Security;
 using Utils;
 
 namespace Api;
@@ -53,21 +55,32 @@ public static class Program
                     IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtOptions.Secret))
                 };
             });
-        
+
+        services.AddOpenApiDocument(configure =>
+        {
+            configure.Title = "Swagger UI";
+
+            configure.AddSecurity("JWT", new OpenApiSecurityScheme
+            {
+                Type = OpenApiSecuritySchemeType.ApiKey,
+                Name = "Authorization",
+                In = OpenApiSecurityApiKeyLocation.Header,
+                Description = "JWT Authorization header using the Bearer scheme.",
+            });
+            configure.OperationProcessors.Add(new AspNetCoreOperationSecurityScopeProcessor("JWT"));
+        });
         
         // Add controllers to the api
         services.AddControllers();
+        services.AddAuthorization();
 
-        // Needed for Swagger to work 
-        services.AddOpenApiDocument();
-        
-        
+
         /*
-         *  Add service as a singleton, means that one instance of a service is shared across the app -> longer lifetime (configuration, logging, cashing)  
+         *  Add service as a singleton, means that one instance of a service is shared across the app -> longer lifetime (configuration, logging, cashing)
          */
         // services.AddSingleton();
-        
-        
+
+
     }
 
     private static void ConfigureOptions(IServiceCollection services,  ConfigurationManager configuration)
@@ -88,19 +101,23 @@ public static class Program
         using var  scope = serviceProvider.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<MyDbContext>();
 
-        foreach (var roleName in Enum.GetValues<UserRole>())
+        
+        var existingRoleNames = await dbContext.Roles
+            .Select(r => r.Name)
+            .ToListAsync();
+
+        foreach (var roleEnum in Enum.GetValues<UserRole>())
         {
-            var role = await dbContext.Roles.AnyAsync(r => r.Name.Equals(roleName));
-            if (!role)
+
+            if (!existingRoleNames.Contains(roleEnum))
             {
-                var newRole = new Role()
+                dbContext.Roles.Add(new Role
                 {
-                    Name = roleName,
-                };
-                dbContext.Roles.Add(newRole);
+                    Name = roleEnum
+                });
             }
         }
-        
+
         await dbContext.SaveChangesAsync();
     }
     
@@ -136,10 +153,8 @@ public static class Program
             superAdminRole.Users.Add(superAdmin);
 
             dbContext.Users.Add(superAdmin);
-            dbContext.Roles.Add(superAdminRole);
-            
-            await dbContext.SaveChangesAsync();
         }
+        await dbContext.SaveChangesAsync();
     }
 
     public static async Task Main(string[] args)

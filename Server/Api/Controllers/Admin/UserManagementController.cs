@@ -1,17 +1,19 @@
 using Api.Dto.test;
+using DataAccess.Entities.Auth;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Api.Controllers.Admin;
 
 [ApiController]
-[Authorize(Roles = "Admin")]
-[Authorize(Roles = "SuperAdmin")]
+
 [Route("api/admin")]
 public class UserManagementController
 {
+    
+    [Authorize(Roles = "SuperAdmin,Admin")]
     [HttpPost("register-player")]
-    public async Task CreateUserAsync([FromBody] CreateUserDto createUserDto)
+    public async Task RegisterPlayerAsync([FromBody] CreateUserDto createUserDto)
     {
         
     }

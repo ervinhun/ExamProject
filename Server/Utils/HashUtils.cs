@@ -20,7 +20,7 @@ public class HashUtils
 
     public static string GenerateRefreshToken()
     {
-        var randomNumber = new byte[64];
+        var randomNumber = new byte[64]; // 512 bits 
         RandomNumberGenerator.Fill(randomNumber);
         return Convert.ToBase64String(randomNumber);
     }
