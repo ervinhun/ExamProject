@@ -1,4 +1,6 @@
+using System.Security.Claims;
 using Api.Dto.test;
+using Api.Dto.User;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -14,6 +16,11 @@ public class UsersController : ControllerBase
     [HttpGet("all")]
     public async Task<ActionResult<List<UserDto>>> GetAllUsersAsync()
     {
+        foreach (var claim in User.FindAll(ClaimTypes.Role))
+        {
+            Console.WriteLine(claim.Type + ":" + claim.Value);
+            
+        }
         return null;
     }
 
@@ -35,12 +42,7 @@ public class UsersController : ControllerBase
     {
         await Task.FromResult(Ok(200));
     }
-    
-    [HttpPost("register-player")]
-    public async Task RegisterPlayerAsync([FromBody] CreateUserDto createUserDto)
-    {
-        
-    }
+
     
     [Authorize(Roles = "superadmin,admin,player")]
     [HttpPost("update-password/{id:guid}")]

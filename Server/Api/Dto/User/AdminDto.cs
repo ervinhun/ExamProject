@@ -1,3 +1,5 @@
+using Api.Dto.User;
+
 namespace Api.Dto.test;
 
 public class AdminDto : UserDto

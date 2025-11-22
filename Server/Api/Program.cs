@@ -1,6 +1,7 @@
 using System.Text;
 using Api.Configuration;
 using api.Services;
+using Api.Services.Admin;
 using api.Services.Auth;
 using Api.Services.Auth;
 using Api.Services.Email;
@@ -44,6 +45,7 @@ public static class Program
          */
         services.AddScoped<IJwt, Jwt>();
         services.AddScoped<IMyAuthenticationService, MyAuthenticationService>();
+        services.AddScoped<IUserManagementService, UserManagementService>();
         services.AddScoped<IEmailService, EmailService>();
         
         

@@ -18,6 +18,7 @@ public class AuthenticationController(IMyAuthenticationService authenticationSer
         {
             return BadRequest("Username or password is incorrect");
         }
+        
         return Ok(result);
     }
 

@@ -1,4 +1,6 @@
 using Api.Dto.test;
+using Api.Dto.User;
+using Api.Services.Admin;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -7,7 +9,7 @@ namespace Api.Controllers.User;
 [Authorize(Roles = "superadmin, admin, player")]
 [ApiController]
 [Route("api/players")]
-public class PlayersController : ControllerBase
+public class PlayersController(IUserManagementService userManagementService) : ControllerBase
 {
     
     [HttpGet("all")]
@@ -44,6 +46,21 @@ public class PlayersController : ControllerBase
     public async Task<ActionResult<TransactionDto>> TopUpAmountForPlayerIdAsync(Guid id, [FromBody] CreateTransactionRequestDto createTransactionDto)
     {
         return await Task.FromResult(Ok(createTransactionDto));
+    }
+    
+    [Authorize(Roles = "superadmin,admin")]
+    [HttpPost("create")]
+    public async Task RegisterPlayerAsync([FromBody] CreatePlayerDto createPlayerDto)
+    {
+        try
+        {
+            await userManagementService.RegisterPlayer(createPlayerDto);
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+            throw;
+        }
     }
     
     [AllowAnonymous]

@@ -1,4 +1,4 @@
-namespace Api.Dto.test;
+namespace Api.Dto.User;
 
 public class UserDto
 {
