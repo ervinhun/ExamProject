@@ -36,7 +36,8 @@ public class Jwt(IOptions<JwtOptions> options, MyDbContext ctx): IJwt
         return new JwtResponseDto
         {
             AccessToken = GenerateAccessToken(user),
-            RefreshToken = await GenerateAndSaveRefreshTokenAsync(user)
+            RefreshToken = await GenerateAndSaveRefreshTokenAsync(user),
+            user = new UserRepsonseDto(user)
         };
     }
 
@@ -76,13 +77,13 @@ public class Jwt(IOptions<JwtOptions> options, MyDbContext ctx): IJwt
 
         foreach (var role in user.Roles)
         {
-            claims.Add(new Claim(ClaimTypes.Role, role.Name.ToString()));
+            claims.Add(new Claim(ClaimTypes.Role, role.Name.ToString().ToLower()));
         }
         
         /*  Symmetric key -> same key used for signing and verifying */
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwt.Secret));
         /*  Signing credentials = key + hashing algorithm */
-        var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha384);
+        var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
         var token = new JwtSecurityToken(
             audience: _jwt.Audience,

@@ -21,4 +21,8 @@
     <PackageReference Include="NSwag.AspNetCore" Version="14.6.1" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Controllers\Admin\" />
+  </ItemGroup>
+
 </Project>

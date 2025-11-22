@@ -1,6 +1,7 @@
 using System.Text;
 using Api.Configuration;
 using api.Services;
+using Api.Services.Admin;
 using api.Services.Auth;
 using Api.Services.Auth;
 using Api.Services.Email;
@@ -30,7 +31,7 @@ public static class Program
 
         if (dbOptions == null || jwtOptions == null)
         {
-            throw new Exception("Missing configuration");
+            throw new Exception("Missing options configuration");
         }
         
         // Adds db context 
@@ -44,6 +45,7 @@ public static class Program
          */
         services.AddScoped<IJwt, Jwt>();
         services.AddScoped<IMyAuthenticationService, MyAuthenticationService>();
+        services.AddScoped<IUserManagementService, UserManagementService>();
         services.AddScoped<IEmailService, EmailService>();
         
         
@@ -86,6 +88,7 @@ public static class Program
          *  Add service as a singleton, means that one instance of a service is shared across the app -> longer lifetime (configuration, logging, cashing)
          */
         // services.AddSingleton();
+
 
 
     }
@@ -138,7 +141,7 @@ public static class Program
 
         if (email == null || password == null)
         {
-            throw new Exception("Missing configuration");
+            throw new Exception("Missing environment configuration");
         }
     
         var user = await dbContext.Users.AnyAsync(x => x.Email == email);
@@ -170,9 +173,20 @@ public static class Program
         
         ConfigureOptions(builder.Services, builder.Configuration);
         ConfigureServices(builder.Services, builder.Configuration);
-        
-        var app = builder.Build();
+        builder.Services.AddCors(options =>
+        {
+            options.AddPolicy("AllowFrontend", policy =>
+            {
+                policy
+                    .WithOrigins("http://localhost:5173") // ← your React dev server
+                    .AllowAnyHeader()
+                    .AllowAnyMethod()
+                    .AllowCredentials(); // ← REQUIRED when using cookies
+            });
+        });
 
+        var app = builder.Build();
+        app.UseCors("AllowFrontend");
         app.UseAuthentication();
         app.UseAuthorization();
         

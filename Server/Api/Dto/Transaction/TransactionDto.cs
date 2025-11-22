@@ -1,6 +1,6 @@
 namespace Api.Dto.test;
 
-public class TransactionDto
+public record TransactionDto
 {
     public Guid Id { get; set; }
     public Guid PlayerId { get; set; }
@@ -12,11 +12,9 @@ public class TransactionDto
     public DateTime? UpdatedAt { get; set; }
 }
 
-public class CreateTransactionDto
+public class CreateTransactionRequestDto
 {
-    public Guid PlayerId { get; set; }
     public decimal Amount { get; set; }
-    public string Status { get; set; } = null!;
 }
 
 public class UpdateTransactionDto
