@@ -1,4 +1,5 @@
-﻿using DataAccess.Entities.Auth;
+﻿using System.ComponentModel.DataAnnotations;
+using DataAccess.Entities.Auth;
 
 namespace DataAccess.Entities.Finance;
 
@@ -11,7 +12,9 @@ public class Transaction
     public Wallet Wallet { get; set; }
     public Guid ReviewedBy { get; set; } = Guid.Empty;
     public string Status { get; set; } = string.Empty;
-    public decimal Amount { get; set; } = decimal.Zero;
+    
+    [Range(0, double.MaxValue)]
+    public double Amount { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; }
    

@@ -23,6 +23,20 @@ namespace DataAccess.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("DataAccess.Entities.Auth.Role", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Name")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Roles", "LotteryApp");
+                });
+
             modelBuilder.Entity("DataAccess.Entities.Auth.User", b =>
                 {
                     b.Property<Guid>("Id")
@@ -31,11 +45,37 @@ namespace DataAccess.Migrations
 
                     b.Property<string>("Email")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
 
-                    b.Property<string>("Password")
+                    b.Property<string>("FullName")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<byte[]>("PasswordHash")
+                        .IsRequired()
+                        .HasColumnType("bytea");
+
+                    b.Property<byte[]>("PasswordSalt")
+                        .IsRequired()
+                        .HasColumnType("bytea");
+
+                    b.Property<string>("PhoneNumber")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
+                    b.Property<DateTime>("RefreshTokenExpires")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("RefreshTokenHash")
+                        .IsRequired()
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)");
 
                     b.HasKey("Id");
 
@@ -50,8 +90,8 @@ namespace DataAccess.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<decimal>("Amount")
-                        .HasColumnType("numeric");
+                    b.Property<double>("Amount")
+                        .HasColumnType("double precision");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -87,8 +127,8 @@ namespace DataAccess.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<long>("Balance")
-                        .HasColumnType("bigint");
+                    b.Property<double>("Balance")
+                        .HasColumnType("double precision");
 
                     b.Property<Guid>("PlayerId")
                         .HasColumnType("uuid");
@@ -101,6 +141,116 @@ namespace DataAccess.Migrations
                     b.ToTable("Wallets", "LotteryApp");
                 });
 
+            modelBuilder.Entity("DataAccess.Entities.Game.GameInstance", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("AdminId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("CreatedById")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("GameTemplateId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsExpired")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("Week")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AdminId");
+
+                    b.HasIndex("GameTemplateId")
+                        .IsUnique();
+
+                    b.ToTable("GameInstances", "LotteryApp");
+                });
+
+            modelBuilder.Entity("DataAccess.Entities.Game.GameTemplate", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<double>("BasePrice")
+                        .HasColumnType("double precision");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("ExpirationDayOfWeek")
+                        .HasColumnType("integer");
+
+                    b.Property<TimeOnly>("ExpirationTime")
+                        .HasColumnType("time without time zone");
+
+                    b.Property<int>("MaxNumbersPerBoard")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("MinNumbersPerBoard")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("NumberRangeMax")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("NumberRangeMin")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("GameTemplates", "LotteryApp");
+                });
+
+            modelBuilder.Entity("DataAccess.Entities.Game.WinningNumber", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("GameInstanceId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Number")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("GameInstanceId");
+
+                    b.ToTable("WinningNumbers", "LotteryApp");
+                });
+
+            modelBuilder.Entity("RoleUser", b =>
+                {
+                    b.Property<Guid>("RolesId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("UsersId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("RolesId", "UsersId");
+
+                    b.HasIndex("UsersId");
+
+                    b.ToTable("RoleUser", "LotteryApp");
+                });
+
             modelBuilder.Entity("DataAccess.Entities.Auth.Admin", b =>
                 {
                     b.HasBaseType("DataAccess.Entities.Auth.User");
@@ -111,6 +261,9 @@ namespace DataAccess.Migrations
             modelBuilder.Entity("DataAccess.Entities.Auth.Player", b =>
                 {
                     b.HasBaseType("DataAccess.Entities.Auth.User");
+
+                    b.Property<bool>("Activated")
+                        .HasColumnType("boolean");
 
                     b.ToTable("Players", "LotteryApp");
                 });
@@ -145,6 +298,51 @@ namespace DataAccess.Migrations
                     b.Navigation("Player");
                 });
 
+            modelBuilder.Entity("DataAccess.Entities.Game.GameInstance", b =>
+                {
+                    b.HasOne("DataAccess.Entities.Auth.Admin", "Admin")
+                        .WithMany()
+                        .HasForeignKey("AdminId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("DataAccess.Entities.Game.GameTemplate", "GameTemplate")
+                        .WithOne()
+                        .HasForeignKey("DataAccess.Entities.Game.GameInstance", "GameTemplateId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Admin");
+
+                    b.Navigation("GameTemplate");
+                });
+
+            modelBuilder.Entity("DataAccess.Entities.Game.WinningNumber", b =>
+                {
+                    b.HasOne("DataAccess.Entities.Game.GameInstance", "GameInstance")
+                        .WithMany("WinningNumbers")
+                        .HasForeignKey("GameInstanceId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("GameInstance");
+                });
+
+            modelBuilder.Entity("RoleUser", b =>
+                {
+                    b.HasOne("DataAccess.Entities.Auth.Role", null)
+                        .WithMany()
+                        .HasForeignKey("RolesId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("DataAccess.Entities.Auth.User", null)
+                        .WithMany()
+                        .HasForeignKey("UsersId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("DataAccess.Entities.Auth.Admin", b =>
                 {
                     b.HasOne("DataAccess.Entities.Auth.User", null)
@@ -166,6 +364,11 @@ namespace DataAccess.Migrations
             modelBuilder.Entity("DataAccess.Entities.Finance.Wallet", b =>
                 {
                     b.Navigation("Transactions");
+                });
+
+            modelBuilder.Entity("DataAccess.Entities.Game.GameInstance", b =>
+                {
+                    b.Navigation("WinningNumbers");
                 });
 
             modelBuilder.Entity("DataAccess.Entities.Auth.Player", b =>

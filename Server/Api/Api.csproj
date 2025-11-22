@@ -8,22 +8,17 @@
 
   <ItemGroup>
     <ProjectReference Include="../DataAccess/DataAccess.csproj"/>
-      <ProjectReference Include="../Utils/Utils.csproj"/>
-      <PackageReference Include="DotNetEnv" Version="3.1.1" />
-    <PackageReference Include="JWT" Version="11.0.0"/>
+    <ProjectReference Include="../Utils/Utils.csproj"/>
+    <PackageReference Include="DotNetEnv" Version="3.1.1" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="9.0.4" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.4" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.4">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+    <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.15.0" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.4" />
     <PackageReference Include="NSwag.AspNetCore" Version="14.6.1" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Controllers\" />
-    <Folder Include="Dto\" />
   </ItemGroup>
 
 </Project>

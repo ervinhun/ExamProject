@@ -1,7 +1,11 @@
 ﻿using DataAccess.Entities.Auth;
 using DataAccess.Entities.Finance;
+using DataAccess.Entities.Game;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
+using Microsoft.Extensions.Options;
+
+
 
 namespace DataAccess;
 
@@ -21,7 +25,12 @@ public class MyDbContext(DbContextOptions<MyDbContext> options) : DbContext(opti
     public DbSet<Player> Players => Set<Player>();
     public DbSet<Wallet> Wallets => Set<Wallet>();
     public DbSet<Transaction> Transactions => Set<Transaction>();
-
+    public DbSet<Role> Roles => Set<Role>();
+    public DbSet<Admin> Admins => Set<Admin>();
+    public DbSet<GameInstance> GameInstances => Set<GameInstance>();
+    public DbSet<GameTemplate> GameTemplates => Set<GameTemplate>();
+    public DbSet<WinningNumber> WinningNumbers => Set<WinningNumber>();
+    
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         /*
@@ -35,34 +44,62 @@ public class MyDbContext(DbContextOptions<MyDbContext> options) : DbContext(opti
         modelBuilder.Entity<User>().ToTable("Users");
         modelBuilder.Entity<Player>().ToTable("Players");
         modelBuilder.Entity<Admin>().ToTable("Admins");
+
+        modelBuilder.Entity<User>(userEntity =>
+        {
+            // Users -> Roles : Many-to-Many (Automatically creates RoleUser join table)
+            userEntity
+                .HasMany(u => u.Roles)
+                .WithMany(r => r.Users)
+                .UsingEntity(j=>j.ToTable("RoleUser"));
+        });
         
+        modelBuilder.Entity<Player>(playerEntity =>
+        {
+            // Player -> Wallet : One-to-One
+            playerEntity
+                .HasOne(p => p.Wallet)
+                .WithOne(w => w.Player)
+                .HasForeignKey<Wallet>(w => w.PlayerId);
+        });
+
         
-        /*
-         * ONE-TO-ONE RELATIONSHIP
-         */
-        modelBuilder.Entity<Player>()
-            .HasOne(p => p.Wallet)
-            .WithOne(w => w.Player)
-            .HasForeignKey<Wallet>(w => w.PlayerId);
-        /*
-         * MANY-TO-ONE RELATIONSHIP
-         */
-        
-        modelBuilder.Entity<Player>()
-            .HasMany(p=>p.Transactions)
-            .WithOne(t=>t.Player)
-            .HasForeignKey(t=>t.PlayerId)
-            .OnDelete(DeleteBehavior.Restrict);
-        
-        modelBuilder.Entity<Wallet>()
-            .HasMany(w=>w.Transactions)
-            .WithOne(t=>t.Wallet)
-            .HasForeignKey(t=>t.WalletId)
-            .OnDelete(DeleteBehavior.Restrict);
+        modelBuilder.Entity<Transaction>(transactionEntity =>
+        {
+            // Transaction -> Player : Many-to-One
+            transactionEntity
+                .HasOne(t => t.Player)
+                .WithMany(p => p.Transactions)
+                .HasForeignKey(t => t.PlayerId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Transaction -> Wallet : Many-to-One
+            transactionEntity
+                .HasOne(t => t.Wallet)
+                .WithMany(w => w.Transactions)
+                .HasForeignKey(t => t.WalletId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<GameInstance>(gameInstanceEntity =>
+        {
+            // GameInstance -> GameTemplate : One-to-One Unidirectional
+            gameInstanceEntity
+                .HasOne(g => g.GameTemplate)
+                .WithOne()
+                .HasForeignKey<GameInstance>(g => g.GameTemplateId)
+                .IsRequired()
+                .OnDelete(DeleteBehavior.Restrict);
+            // GameInstance -> WinningNumbers : One-To-Many
+            gameInstanceEntity
+                .HasMany(g=>g.WinningNumbers)
+                .WithOne(w=>w.GameInstance)
+                .HasForeignKey(w=>w.GameInstanceId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });   
         
         
         
         base.OnModelCreating(modelBuilder);
     }
-    
 }
