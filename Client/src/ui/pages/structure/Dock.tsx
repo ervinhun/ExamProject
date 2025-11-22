@@ -2,11 +2,11 @@ import {NavLink} from "react-router-dom";
 
 export default function Dock() {
     return (
-        <div className="my-dock flex space-x-6 p-4">
+        <div className="flex space-x-10 bg-base-300 shadow-sm navbar-center w-full">
             <NavLink
                 to="/"
                 className={({ isActive }) =>
-                    `dock-button ${isActive ? "dock-active" : ""}`
+                    `dock-button ${isActive ? "dock-active" : ""} flex items-center`
                 }
             >
                 <img
@@ -20,7 +20,7 @@ export default function Dock() {
             <NavLink
                 to="/login"
                 className={({ isActive }) =>
-                    `dock-button ${isActive ? "dock-active" : ""}`
+                    `dock-button ${isActive ? "dock-active" : ""} flex items-center`
                 }
             >
                 <img

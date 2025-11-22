@@ -9,7 +9,7 @@ export default function Layout() {
             <div className="app-header">
                 <Header />
             </div>
-            <div className="app-content mb-20">
+            <div className="app-content flex-1">
                <Outlet />
             </div>
             <div className="app-footer"><Footer /></div>

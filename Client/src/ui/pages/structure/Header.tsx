@@ -1,10 +1,30 @@
 import Dock from "./Dock.tsx";
+import {useAtom} from "jotai";
+import {useNavigate} from "react-router-dom";
+import {AuthAtom} from "../../../utils/Atom.ts";
 
 export default function Header() {
 
+    const [auth, setAuth] = useAtom(AuthAtom);
+    const navigate = useNavigate();
+
+    function logout() {
+        setAuth({ email: null, token: null });
+
+        // Optional: call backend logout to clear refresh cookie
+        fetch("http://localhost:5152/api/auth/logout", {
+            method: "POST",
+            credentials: "include"
+        });
+
+        navigate("/login");
+    }
+
+    const isLoggedIn = !!auth.token;
+
     function getTitle() {
         return (
-            <div className="flex items-center space-x-4 mb-6 md:mb-0">
+            <div className="flex items-center space-x-4 mb-3">
                 <img
                     src="https://jerneif.dk/cms/Clubjerneif/images/logo.png"
                     alt="Jerne IF"
@@ -13,14 +33,32 @@ export default function Header() {
                 <h1 className="text-4xl md:text-6xl font-bold text-default-400">
                     Lottery App
                 </h1>
+                {isLoggedIn && (
+                    <>
+                        <span className="font-medium">
+                            Hello, {auth.name || auth.email}
+                        </span>
+
+                        <button
+                            className="btn btn-sm btn-error text-white"
+                            onClick={logout}
+                        >
+                            Logout
+                        </button>
+                    </>
+                )}
             </div>
         );
     }
 
     return (
-        <div className="flex flex-col md:flex-col w-full max-w-5xl px-6 py-12 rounded-lg shadow-md space-y-6">
-            {getTitle()}
-            <Dock/>
+        <div className="flex justify-center">
+            <div className="w-full max-w-5xl px-6 py-12 bg-base-300 rounded-xl shadow-md space-y-6 text-center">
+                {getTitle()}
+                <div className="flex justify-center">
+                    <Dock />
+                </div>
+            </div>
         </div>
     );
 }
