@@ -76,7 +76,7 @@ public class Jwt(IOptions<JwtOptions> options, MyDbContext ctx): IJwt
 
         foreach (var role in user.Roles)
         {
-            claims.Add(new Claim(ClaimTypes.Role, role.Name.ToString()));
+            claims.Add(new Claim(ClaimTypes.Role, role.Name.ToString().ToLower()));
         }
         
         /*  Symmetric key -> same key used for signing and verifying */

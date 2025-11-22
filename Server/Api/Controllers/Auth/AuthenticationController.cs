@@ -30,6 +30,7 @@ public class AuthenticationController(IMyAuthenticationService authenticationSer
             return BadRequest("Registration failed");
         }
         return Ok(result);
+        
     }
     
     [HttpPost("refresh-token")]

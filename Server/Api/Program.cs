@@ -30,7 +30,7 @@ public static class Program
 
         if (dbOptions == null || jwtOptions == null)
         {
-            throw new Exception("Missing configuration");
+            throw new Exception("Missing options configuration");
         }
         
         // Adds db context 
@@ -138,7 +138,7 @@ public static class Program
 
         if (email == null || password == null)
         {
-            throw new Exception("Missing configuration");
+            throw new Exception("Missing environment configuration");
         }
     
         var user = await dbContext.Users.AnyAsync(x => x.Email == email);

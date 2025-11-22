@@ -31,7 +31,7 @@ public class UserManagementService(MyDbContext ctx, IEmailService emailService) 
         throw new NotImplementedException();
     }
 
-    public Task<Player> UpdateUser(UpdateUserDto updateUserDto)
+    public Task<Player> UpdateUser(UpdateUserDetailsDto updateUserDto)
     {
         throw new NotImplementedException();
     }
