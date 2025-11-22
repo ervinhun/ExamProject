@@ -11,16 +11,37 @@ public class AuthenticationController(IMyAuthenticationService authenticationSer
 {
 
     [HttpPost("login")]
-    public async Task<ActionResult<JwtResponseDto>> Login(LoginRequestDto loginRequestDto)
+    public async Task<ActionResult> Login(LoginRequestDto loginRequestDto)
     {
         var result = await authenticationService.Login(loginRequestDto);
+
         if (result == null)
         {
             return BadRequest("Username or password is incorrect");
-        }
-        
-        return Ok(result);
+
+        // result.RefreshToken contains the refresh token created by your service
+        // result.AccessToken contains the access token
+        // result.User contains user info
+
+        bool isDev = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development";
+
+        Response.Cookies.Append("refreshToken", result.RefreshToken, new CookieOptions
+        {
+            HttpOnly = true,
+            SameSite = SameSiteMode.None,
+            Secure = !isDev,     // Secure=false in localhost, true in production
+            Expires = DateTime.UtcNow.AddDays(7),
+            Path = "/"
+        });
+
+        // Never return the refresh token in the response body!
+        return Ok(new
+        {
+            accessToken = result.AccessToken,
+            User = result.user
+        });
     }
+
 
     [HttpPost("register")]
     public async Task<ActionResult<JwtResponseDto>> Register(RegisterRequestDto registerRequestDto)
@@ -31,7 +52,6 @@ public class AuthenticationController(IMyAuthenticationService authenticationSer
             return BadRequest("Registration failed");
         }
         return Ok(result);
-        
     }
     
     [HttpPost("refresh-token")]

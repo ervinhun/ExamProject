@@ -90,6 +90,7 @@ public static class Program
         // services.AddSingleton();
 
 
+
     }
 
     private static void ConfigureOptions(IServiceCollection services,  ConfigurationManager configuration)
@@ -172,9 +173,20 @@ public static class Program
         
         ConfigureOptions(builder.Services, builder.Configuration);
         ConfigureServices(builder.Services, builder.Configuration);
-        
-        var app = builder.Build();
+        builder.Services.AddCors(options =>
+        {
+            options.AddPolicy("AllowFrontend", policy =>
+            {
+                policy
+                    .WithOrigins("http://localhost:5173") // ← your React dev server
+                    .AllowAnyHeader()
+                    .AllowAnyMethod()
+                    .AllowCredentials(); // ← REQUIRED when using cookies
+            });
+        });
 
+        var app = builder.Build();
+        app.UseCors("AllowFrontend");
         app.UseAuthentication();
         app.UseAuthorization();
         
