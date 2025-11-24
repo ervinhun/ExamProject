@@ -8,7 +8,7 @@ public record UserRepsonseDto
     public string email { get; set; }
     public List<RoleDto> Roles { get; set; }
 
-    public UserRepsonseDto(User user)
+    public UserRepsonseDto(DataAccess.Entities.Auth.User user)
     {
         this.name = user.FullName;
         this.email = user.Email;
