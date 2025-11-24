@@ -39,7 +39,7 @@ export default function Login() {
         setAuth({
             name: data.user.name,
             email: data.user.email,
-            role: data.user.roles.map((r: Role) => r.name),
+            role: data.user.roles.map((r: Role) => r.name.toLowerCase()),
             token: data.accessToken
         })
         console.log(data.user.name);

@@ -40,12 +40,12 @@ export default function Dock() {
 
 
 
-            {isLoggedIn() && getRole()?.includes("Player") && (
+            {isLoggedIn() && getRole()?.includes("player") && (
                 <DockPlayer />
             )}
 
 
-            {isLoggedIn() && (getRole()?.includes("Admin") || getRole()?.includes("SuperAdmin")) && (
+            {isLoggedIn() && (getRole()?.includes("admin") || getRole()?.includes("superadmin")) && (
                 <DockAdmin />
             )}
         </div>

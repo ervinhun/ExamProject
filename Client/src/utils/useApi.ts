@@ -27,7 +27,7 @@ export function useApi() {
     }
 
     // 🔥 Fully robust API fetch with silent token refresh
-    async function apiFetch(url: string, options: any = {}) {
+    async function apiFetch(url: string, options: RequestInit  = {}) {
         const res = await fetch(url, {
             ...options,
             credentials: "include",
