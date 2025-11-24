@@ -1,11 +1,16 @@
 import {NavLink} from "react-router-dom";
+import {useApi} from "../../../utils/useApi.ts";
+import DockPlayer from "./DockPlayer.tsx";
+import DockAdmin from "./DockAdmin.tsx";
 
 export default function Dock() {
+    const {isLoggedIn, getRole} = useApi();
+
     return (
         <div className="flex space-x-10 bg-base-300 shadow-sm navbar-center w-full">
             <NavLink
                 to="/"
-                className={({ isActive }) =>
+                className={({isActive}) =>
                     `dock-button ${isActive ? "dock-active" : ""} flex items-center`
                 }
             >
@@ -16,10 +21,11 @@ export default function Dock() {
                 />
                 <span className="dock-label text-accent">Home</span>
             </NavLink>
+            {!isLoggedIn() && (
 
             <NavLink
                 to="/login"
-                className={({ isActive }) =>
+                className={({isActive}) =>
                     `dock-button ${isActive ? "dock-active" : ""} flex items-center`
                 }
             >
@@ -30,6 +36,18 @@ export default function Dock() {
                 />
                 <span className="dock-label text-accent">Login</span>
             </NavLink>
+            )}
+
+
+
+            {isLoggedIn() && getRole()?.includes("player") && (
+                <DockPlayer />
+            )}
+
+
+            {isLoggedIn() && (getRole()?.includes("admin") || getRole()?.includes("superadmin")) && (
+                <DockAdmin />
+            )}
         </div>
     );
 }

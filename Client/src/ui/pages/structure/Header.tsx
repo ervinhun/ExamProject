@@ -1,26 +1,25 @@
 import Dock from "./Dock.tsx";
-import {useAtom} from "jotai";
 import {useNavigate} from "react-router-dom";
+import {useApi} from "../../../utils/useApi.ts"
+import {useAtom} from "jotai";
 import {AuthAtom} from "../../../utils/Atom.ts";
 
 export default function Header() {
 
-    const [auth, setAuth] = useAtom(AuthAtom);
     const navigate = useNavigate();
+    const [auth] = useAtom(AuthAtom);
+    const {isLoggedIn, resetAuth} = useApi();
 
     function logout() {
-        setAuth({ email: null, token: null });
-
+        resetAuth();
         // Optional: call backend logout to clear refresh cookie
-        fetch("http://localhost:5152/api/auth/logout", {
-            method: "POST",
-            credentials: "include"
-        });
+        //fetch("http://localhost:5152/api/auth/logout", {
+        //    method: "POST",
+        //    credentials: "include"
+        //});
 
-        navigate("/login");
+        navigate("/");
     }
-
-    const isLoggedIn = !!auth.token;
 
     function getTitle() {
         return (
@@ -33,7 +32,7 @@ export default function Header() {
                 <h1 className="text-4xl md:text-6xl font-bold text-default-400">
                     Lottery App
                 </h1>
-                {isLoggedIn && (
+                {isLoggedIn() && (
                     <>
                         <span className="font-medium">
                             Hello, {auth.name || auth.email}
@@ -41,8 +40,7 @@ export default function Header() {
 
                         <button
                             className="btn btn-sm btn-error text-white"
-                            onClick={logout}
-                        >
+                            onClick={logout}>
                             Logout
                         </button>
                     </>
@@ -56,7 +54,7 @@ export default function Header() {
             <div className="w-full max-w-5xl px-6 py-12 bg-base-300 rounded-xl shadow-md space-y-6 text-center">
                 {getTitle()}
                 <div className="flex justify-center">
-                    <Dock />
+                    <Dock/>
                 </div>
             </div>
         </div>

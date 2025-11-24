@@ -1,14 +1,10 @@
-import {atom} from "jotai";
+import {atomWithStorage} from "jotai/utils";
+import type {AuthUser} from "../model/AuthUser.ts";
 
-export const AuthAtom = atom({
-    name: null as string | null,
-    email: null as string | null,
-    role: null as string | null,
-    token: null as string | null
+export const AuthAtom = atomWithStorage<AuthUser>("auth", {
+    name: null,
+    email: null,
+    role: [],
+    token: null
 });
 AuthAtom.debugLabel = "Auth User";
-
-export const TokenAtom = atom({
-    accessToken: null as string | null,
-    refreshToken: null as string | null
-})
