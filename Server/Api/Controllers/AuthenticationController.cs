@@ -34,7 +34,7 @@ public class AuthenticationController(IMyAuthenticationService authenticationSer
                 return Ok(new
                 {
                     accessToken = result.AccessToken,
-                    User = result.user
+                    User = result.User
                 });
             }
             catch (Exception e)
