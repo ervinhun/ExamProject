@@ -7,10 +7,13 @@ export default function Login() {
 
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
-    const [accessToken, setAccessToken] = useState<string | null>(null);
     const [, setUser] = useState<string | null>(null);
     const [, setAuth] = useAtom(AuthAtom);
     const navigate = useNavigate();
+
+    interface Role {
+        name: string;
+    }
 
     async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
         e.preventDefault();
@@ -36,61 +39,15 @@ export default function Login() {
         setAuth({
             name: data.user.name,
             email: data.user.email,
-            role: data.user.roles,
+            role: data.user.roles.map((r: Role) => r.name),
             token: data.accessToken
         })
-        console.log( data.user.name);
-        console.log( data.user.email);
+        console.log(data.user.name);
+        console.log(data.user.email);
         console.log(data.user.roles);
         console.log(data.accessToken);
 
-
-        // Go to homepage
         navigate("/");
-    }
-
-    // Generic API wrapper with auto-refresh logic
-    async function apiFetch(url: string, options: any = {}) {
-
-        const res = await fetch(url, {
-            ...options,
-            credentials: "include", // send refresh token cookie
-            headers: {
-                "Authorization": `Bearer ${accessToken}`,
-                ...(options.headers || {})
-            }
-        });
-
-        if (res.status !== 401) {
-            return res;
-        }
-
-        // Try refresh token
-        const refreshRes = await fetch("http://localhost:5152/api/auth/refresh", {
-            method: "POST",
-            credentials: "include"
-        });
-
-        if (refreshRes.ok) {
-            const data = await refreshRes.json();
-            setAccessToken(data.accessToken);
-
-            // Retry the original request
-            return apiFetch(url, options);
-        }
-
-        // Refresh failed → logout user
-        logout();
-        return res;
-    }
-
-    function logout() {
-        setUser(null);
-        setAccessToken(null);
-        fetch("http://localhost:5152/api/auth/logout", {
-            method: "POST",
-            credentials: "include"
-        });
     }
 
 
@@ -139,14 +96,6 @@ export default function Login() {
 
                 {/* Submit */}
                 <button className="btn btn-primary w-full">Login</button>
-
-                {/* Register.tsx */}
-                <p className="text-center text-sm mt-2">
-                    Don’t have an account?{" "}
-                    <a href="/register" className="link link-hover text-primary">
-                        Register
-                    </a>
-                </p>
             </form>
         </div>
     );

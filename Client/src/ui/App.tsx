@@ -4,15 +4,75 @@ import {createBrowserRouter, RouterProvider} from "react-router-dom";
 import Home from "./pages/Home.tsx";
 import Login from "./pages/Login.tsx";
 import Register from "./pages/Register.tsx";
+import Balance from "./pages/Player/Balance.tsx";
+import MyBoards from "./pages/Player/Boards/MyBoards.tsx";
+import CreateBoard from "./pages/Player/Boards/CreateBoard.tsx";
+import RepeatingBoards from "./pages/Player/Boards/RepeatingBoards.tsx";
+import GameHistory from "./pages/GameHistory.tsx";
+import WinningBoards from "./pages/Player/History/WinningBoards.tsx";
+import Profile from "./pages/Player/Profile.tsx";
+import Dashboard from "./pages/Admin/Dashboard.tsx";
+import AllPlayers from "./pages/Admin/Players/AllPlayers.tsx";
+import WinningBoardsAdmin from "./pages/Admin/Boards/WinningBoardsAdmin.tsx";
+import Pending from "./pages/Admin/Transactions/Pending.tsx";
+import AllTransactions from "./pages/Admin/Transactions/AllTransactions.tsx";
+import AllBoards from "./pages/Admin/Boards/AllBoards.tsx";
+import AddPlayer from "./pages/Admin/Players/AddPlayer.tsx";
+import Settings from "./pages/Admin/Settings.tsx";
+import RequirePlayer from "./pages/structure/Auth/RequiredPlayer.tsx";
+import RequireAdmin from "./pages/structure/Auth/RequiredAdmin.tsx";
+import Forbidden403 from "./pages/Errors/Forbidden403.tsx";
 
 const router = createBrowserRouter([
     {
         path: "/",
-        element: <Layout />,
+        element: <Layout/>,
         children: [
-            { path: "/", element: <Home /> },
-            { path: "/login", element: <Login /> },
-            { path: "/register", element: <Register /> }
+            {path: "/", element: <Home/>},
+            {path: "/login", element: <Login/>},
+            {path: "/register", element: <Register/>},
+
+            //Error page
+            { path: "/403", element: <Forbidden403 /> },
+
+            // Player //
+            {
+                element: <RequirePlayer/>,
+                children: [
+                    {path: "/balance", element: <Balance/>},
+
+                    {path: "/boards", element: <MyBoards/>},
+                    {path: "/boards/new", element: <CreateBoard/>},
+                    {path: "/boards/repeating", element: <RepeatingBoards/>},
+
+                    {path: "/games", element: <GameHistory/>},
+                    {path: "/games/wins", element: <WinningBoards/>},
+
+                    {path: "/profile", element: <Profile/>}
+                ],
+            },
+
+            // Admin //
+            {
+                element: <RequireAdmin/>,
+                children: [
+                    {path: "/admin/dashboard", element: <Dashboard/>},
+
+                    {path: "/admin/players", element: <AllPlayers/>},
+                    {path: "/admin/players/new", element: <AddPlayer/>},
+
+                    {path: "/admin/games", element: <GameHistory/>},
+                    {path: "/admin/games/winning-numbers", element: <WinningBoardsAdmin/>},
+
+                    {path: "/admin/transactions/pending", element: <Pending/>},
+                    {path: "/admin/transactions/all", element: <AllTransactions/>},
+
+                    {path: "/admin/boards", element: <AllBoards/>},
+                    {path: "/admin/boards/winning", element: <WinningBoardsAdmin/>},
+
+                    {path: "/admin/settings", element: <Settings/>}
+                ],
+            },
         ],
     },
 ]);
