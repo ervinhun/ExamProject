@@ -1,7 +1,21 @@
+import { useAtom } from "jotai";
+import { createUserAtom } from "@core/atoms/user";
 export default function AddPlayer() {
+    
+    const [,createUser] = useAtom(createUserAtom)
+   async function handleSubmit(e:React.FormEvent<HTMLFormElement>){
+
+        e.preventDefault();
+        await createUser({
+
+            fullName: "abc",
+            email: "abc@mail.com",
+            phoneNo:"123456"
+        });
+    }
     return (
         <div className="flex justify-center mt-10 w-full">
-            <form className="w-full max-w-lg p-6 bg-base-200 rounded-xl shadow-md space-y-4">
+            <form className="w-full max-w-lg p-6 bg-base-200 rounded-xl shadow-md space-y-4" onSubmit={handleSubmit}>
                 <h2 className="text-3xl font-semibold text-center mb-4">Registration</h2>
 
                 {/* First Name */}

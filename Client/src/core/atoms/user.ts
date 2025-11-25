@@ -1,6 +1,9 @@
 import { atom } from 'jotai';
 import type { User } from '@core/types/users';
 import { fetchAllUsers, fetchUserById } from '@core/api/controllers/user';
+import type { CreateUserDto } from '@core/types/users';
+import { createUser } from '@core/api/controllers/user';
+
 // Primary atoms
 export const userListAtom = atom<User[]>([]);
 
@@ -32,4 +35,31 @@ export const fetchUserByIdAtom = atom(null,
                 .finally(() =>{});
         }
     }
+
 )
+
+export const createUserAtom = atom(null,
+    async (get,set,createUserDto:CreateUserDto)=>{
+        const users=get(userListAtom)
+        for(let i = 0; i< users.length;i++){
+            if(users[i].email === createUserDto.email){
+               throw new Error("This email already exists")
+            }
+        }
+        await createUser(createUserDto)
+                .then(res=>{
+                         set (userListAtom,[...users,res]);
+                        return res;
+                })
+                .catch(err => {throw err})
+                .finally(() =>{});
+       
+
+    }
+
+)
+
+// createUserAtom
+ // deleteUserByIdAtom
+ 
+ // updateUserByIdAtom
