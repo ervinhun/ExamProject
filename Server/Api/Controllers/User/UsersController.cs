@@ -53,7 +53,7 @@ public class UsersController(IUserManagementService userManagementService) : Con
     
     [Authorize(Roles = "superadmin,admin,player")]
     [HttpPost("update-password/{id:guid}")]
-    public async Task<ActionResult> UpdatePasswordByIdAsync(Guid id,
+    public async Task<IActionResult> UpdatePasswordByIdAsync(Guid id,
         [FromBody] UpdatePasswordDto updatePasswordDto)
     {
         return await Task.FromResult(Ok(id));

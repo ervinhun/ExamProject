@@ -41,8 +41,8 @@ public class AuthenticationController(IMyAuthenticationService authenticationSer
             return Ok(200);
         }
 
-    [HttpPost("login")]
-    public async Task<ActionResult> Login(LoginRequestDto loginRequestDto)
+        [HttpPost("login")]
+        public async Task<IActionResult> Login(LoginRequestDto loginRequestDto)
         {
             
             // result.RefreshToken contains the refresh token created by your service
