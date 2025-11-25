@@ -48,20 +48,6 @@ public class PlayersController(IUserManagementService userManagementService) : C
         return await Task.FromResult(Ok(createTransactionDto));
     }
     
-    [Authorize(Roles = "superadmin,admin")]
-    [HttpPost("create")]
-    public async Task RegisterPlayerAsync([FromBody] CreatePlayerDto createPlayerDto)
-    {
-        try
-        {
-            await userManagementService.RegisterPlayer(createPlayerDto);
-        }
-        catch (Exception e)
-        {
-            Console.WriteLine(e);
-            throw;
-        }
-    }
     
     [AllowAnonymous]
     [HttpPost("apply")]

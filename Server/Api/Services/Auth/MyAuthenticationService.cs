@@ -10,6 +10,7 @@ namespace api.Services.Auth;
 
 public class MyAuthenticationService(MyDbContext ctx, IJwt jwt) : IMyAuthenticationService
 {
+    
 
     public async Task<JwtResponseDto> Login(LoginRequestDto dto)
     {
@@ -17,6 +18,7 @@ public class MyAuthenticationService(MyDbContext ctx, IJwt jwt) : IMyAuthenticat
 
         if (user == null || !HashUtils.VerifyPasswordHash(dto.Password, user.PasswordHash, user.PasswordSalt))
         {
+            Console.Out.WriteLine("Invalid credentials");
             throw new AuthenticationException("Email or password is incorrect");
         }
 
@@ -46,4 +48,5 @@ public class MyAuthenticationService(MyDbContext ctx, IJwt jwt) : IMyAuthenticat
         
         return newUser;
     }
+    
 }

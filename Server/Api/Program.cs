@@ -178,7 +178,7 @@ public static class Program
             options.AddPolicy("AllowFrontend", policy =>
             {
                 policy
-                    .WithOrigins("http://localhost:5173") // ← your React dev server
+                    .WithOrigins("http://localhost:5173") // ← React App
                     .AllowAnyHeader()
                     .AllowAnyMethod()
                     .AllowCredentials(); // ← REQUIRED when using cookies

@@ -1,28 +1,22 @@
+import { authAtom } from "@core/atoms/auth";
+import { isLoggedInAtom, logoutAtom } from "@core/atoms/auth";
 import Dock from "./Dock.tsx";
 import {useAtom} from "jotai";
 import {useNavigate} from "react-router-dom";
-import {AuthAtom} from "../../../utils/Atom.ts";
+// import {AuthAtom} from "@core/atoms/auth";
 
 export default function Header() {
 
-    const [auth, setAuth] = useAtom(AuthAtom);
+    const [authUser,] = useAtom(authAtom);
+    // const   [currentUser, setCurrentUser] = useAtom(currentUserAtom);
+    const [,logout] = useAtom(logoutAtom);
     const navigate = useNavigate();
+    const [isLoggedIn,] = useAtom(isLoggedInAtom);
 
-    function logout() {
-        setAuth({ email: null, token: null });
 
-        // Optional: call backend logout to clear refresh cookie
-        fetch("http://localhost:5152/api/auth/logout", {
-            method: "POST",
-            credentials: "include"
-        });
-
-        navigate("/login");
-    }
-
-    const isLoggedIn = !!auth.token;
 
     function getTitle() {
+        console.log("Rendering Header, isLoggedIn:", isLoggedIn, "authAtom:", authUser);
         return (
             <div className="flex items-center space-x-4 mb-3">
                 <img
@@ -36,7 +30,7 @@ export default function Header() {
                 {isLoggedIn && (
                     <>
                         <span className="font-medium">
-                            Hello, {auth.name || auth.email}
+                            Hello, {authUser?.email ?? authUser?.name ?? 'User'}!
                         </span>
 
                         <button
@@ -46,6 +40,14 @@ export default function Header() {
                             Logout
                         </button>
                     </>
+                )}
+                {!isLoggedIn && (
+                    <button
+                        className="btn btn-sm btn-primary text-white"
+                        onClick={() => navigate("/login")}
+                    >
+                        Login
+                    </button>
                 )}
             </div>
         );

@@ -43,6 +43,9 @@ namespace DataAccess.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<string>("Email")
                         .IsRequired()
                         .HasMaxLength(255)
@@ -191,23 +194,26 @@ namespace DataAccess.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<int>("ExpirationDayOfWeek")
-                        .HasColumnType("integer");
+                    b.Property<long>("ExpirationDayOfWeek")
+                        .HasColumnType("bigint");
 
                     b.Property<TimeOnly>("ExpirationTime")
                         .HasColumnType("time without time zone");
 
-                    b.Property<int>("MaxNumbersPerBoard")
-                        .HasColumnType("integer");
+                    b.Property<long>("MaxNumbersPerBoard")
+                        .HasColumnType("bigint");
 
-                    b.Property<int>("MinNumbersPerBoard")
-                        .HasColumnType("integer");
+                    b.Property<long>("MinNumbersPerBoard")
+                        .HasColumnType("bigint");
 
-                    b.Property<int>("NumberRangeMax")
-                        .HasColumnType("integer");
+                    b.Property<long>("Multiplier")
+                        .HasColumnType("bigint");
 
-                    b.Property<int>("NumberRangeMin")
-                        .HasColumnType("integer");
+                    b.Property<long>("NumberRangeMax")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("NumberRangeMin")
+                        .HasColumnType("bigint");
 
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
