@@ -1,3 +1,4 @@
+using System.Reflection.Metadata;
 using Api.Dto.Auth.Request;
 using Api.Dto.Auth.Response;
 using api.Services;
@@ -9,11 +10,51 @@ namespace Api.Controllers.Auth;
 [Route("api/auth")]
 public class AuthenticationController(IMyAuthenticationService authenticationService, IJwt jwt) : ControllerBase
 {
-
-        [HttpPost("login")]
-        public async Task<ActionResult> Login(LoginRequestDto loginRequestDto)
+    [HttpPost("logout")]
+    public IActionResult Logout()
+    {
+        try
         {
+            var user = User.Claims;
+            
+            var isDev = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development";
+                
+         
+            var cookieOptions = new CookieOptions
+            {
+                HttpOnly = true,
+                Expires = DateTimeOffset.UtcNow.AddDays(-1),
+                Path = "/"
+            };
+            if (isDev)
+            {
+                // Localhost (HTTP) configuration
+                cookieOptions.Secure = false;
+                cookieOptions.SameSite = SameSiteMode.Lax; 
+            }
+            else
+            {
+                // Production (HTTPS) configuration
+                cookieOptions.Secure = true;
+                cookieOptions.SameSite = SameSiteMode.None; 
+            }
 
+
+            Response.Cookies.Append("refreshToken", "", cookieOptions);
+                
+                
+            return Ok();
+        }
+        catch (Exception e)
+        {
+            return BadRequest(e.Message);
+        }
+    }
+
+    [HttpPost("login")]
+    public async Task<ActionResult> Login(LoginRequestDto loginRequestDto)
+        {
+            
             // result.RefreshToken contains the refresh token created by your service
             // result.AccessToken contains the access token
             // result.User contains user info
@@ -22,19 +63,35 @@ public class AuthenticationController(IMyAuthenticationService authenticationSer
             {
                 var result = await authenticationService.Login(loginRequestDto);
                 var isDev = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development";
-
-                Response.Cookies.Append("refreshToken", result.RefreshToken, new CookieOptions
+                
+         
+                var cookieOptions = new CookieOptions
                 {
                     HttpOnly = true,
-                    SameSite = SameSiteMode.None,
-                    Secure = !isDev, // Secure=false in localhost, true in production
-                    Expires = DateTime.UtcNow.AddDays(7),
+                    Expires = DateTimeOffset.UtcNow.AddDays(1),
                     Path = "/"
-                });
+                };
+                if (isDev)
+                {
+                    // Localhost (HTTP) configuration
+                    cookieOptions.Secure = false;
+                    cookieOptions.SameSite = SameSiteMode.Lax; 
+                }
+                else
+                {
+                    // Production (HTTPS) configuration
+                    cookieOptions.Secure = true;
+                    cookieOptions.SameSite = SameSiteMode.None; 
+                }
+
+
+                Response.Cookies.Append("refreshToken", result.RefreshToken, cookieOptions);
+                
+                
                 return Ok(new
                 {
                     accessToken = result.AccessToken,
-                    User = result.user
+                    result.User
                 });
             }
             catch (Exception e)

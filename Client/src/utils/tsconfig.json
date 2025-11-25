@@ -1,0 +1,7 @@
+{
+  "extends": "../../tsconfig.settings.json",
+  "include": ["**/*.ts", "**/*.tsx", "../vite-env.d.ts", "../core/atoms/Atom.ts", "../core/atoms/AuthUser.ts"],
+  "references": [{
+    "path": "../core"
+  }]
+}

@@ -1,27 +1,22 @@
+import { authAtom } from "@core/atoms/auth.ts";
+import { isLoggedInAtom, logoutAtom } from "@core/atoms/auth.ts";
 import Dock from "./Dock.tsx";
-import {useNavigate} from "react-router-dom";
-import {useApi} from "../../../utils/useApi.ts"
 import {useAtom} from "jotai";
-import {AuthAtom} from "../../../utils/Atom.ts";
+import {useNavigate} from "react-router-dom";
+// import {AuthAtom} from "@core/atoms/auth";
 
 export default function Header() {
 
+    const [authUser, setAuth] = useAtom(authAtom);
+    // const   [currentUser, setCurrentUser] = useAtom(currentUserAtom);
+    const [,logout] = useAtom(logoutAtom);
     const navigate = useNavigate();
-    const [auth] = useAtom(AuthAtom);
-    const {isLoggedIn, resetAuth} = useApi();
+    const [isLoggedIn,] = useAtom(isLoggedInAtom);
 
-    function logout() {
-        resetAuth();
-        // Optional: call backend logout to clear refresh cookie
-        //fetch("http://localhost:5152/api/auth/logout", {
-        //    method: "POST",
-        //    credentials: "include"
-        //});
 
-        navigate("/");
-    }
 
     function getTitle() {
+        console.log("Rendering Header, isLoggedIn:", isLoggedIn, "authAtom:", authUser);
         return (
             <div className="flex items-center space-x-4 mb-3">
                 <img
@@ -32,18 +27,27 @@ export default function Header() {
                 <h1 className="text-4xl md:text-6xl font-bold text-default-400">
                     Lottery App
                 </h1>
-                {isLoggedIn() && (
+                {isLoggedIn && (
                     <>
                         <span className="font-medium">
-                            Hello, {auth.name || auth.email}
+                            Hello, {authUser?.email ?? authUser?.name ?? 'User'}!
                         </span>
 
                         <button
                             className="btn btn-sm btn-error text-white"
-                            onClick={logout}>
+                            onClick={logout}
+                        >
                             Logout
                         </button>
                     </>
+                )}
+                {!isLoggedIn && (
+                    <button
+                        className="btn btn-sm btn-primary text-white"
+                        onClick={() => navigate("/login")}
+                    >
+                        Login
+                    </button>
                 )}
             </div>
         );
@@ -54,7 +58,7 @@ export default function Header() {
             <div className="w-full max-w-5xl px-6 py-12 bg-base-300 rounded-xl shadow-md space-y-6 text-center">
                 {getTitle()}
                 <div className="flex justify-center">
-                    <Dock/>
+                    <Dock />
                 </div>
             </div>
         </div>

@@ -7,6 +7,7 @@ using Api.Dto.Auth.Request;
 using Api.Dto.Auth.Response;
 using DataAccess;
 using DataAccess.Entities.Auth;
+using DataAccess.Enums;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Utils.Exceptions;
@@ -36,9 +37,18 @@ public class Jwt(IOptions<JwtOptions> options, MyDbContext ctx): IJwt
         return new JwtResponseDto
         {
             AccessToken = GenerateAccessToken(user),
-            RefreshToken = await GenerateAndSaveRefreshTokenAsync(user),
-            user = new UserRepsonseDto(user)
+            RefreshToken = await GenerateAndSaveRefreshTokenAsync(user) ?? user.RefreshTokenHash,
+            User = new UserResponseDto()
+            {
+                Id = user.Id,
+                Email = user.Email,
+                FullName = user.FullName,
+                Roles = user.Roles
+                    .Select(r => r.Name)
+                    .ToList()
+            }
         };
+        
     }
 
     private async Task<User?> ValidateRefreshTokenForUserIdAsync(Guid userId, string refreshToken)
@@ -51,13 +61,14 @@ public class Jwt(IOptions<JwtOptions> options, MyDbContext ctx): IJwt
         
         if (user.RefreshTokenHash != HashUtils.HashRefreshToken(refreshToken) || user.RefreshTokenExpires < DateTime.UtcNow)
         {
+            Console.Out.WriteLine("token invalid");
             throw new AuthenticationException("Invalid refresh token");
         }
 
         return user;
     }
     
-    private async Task<string> GenerateAndSaveRefreshTokenAsync(User user)
+    private async Task<string?> GenerateAndSaveRefreshTokenAsync(User user)
     {
         var refreshToken = HashUtils.GenerateRefreshToken(); 
         user.RefreshTokenHash = HashUtils.HashRefreshToken(refreshToken);
@@ -71,7 +82,7 @@ public class Jwt(IOptions<JwtOptions> options, MyDbContext ctx): IJwt
         /* Set up the claims JWT Token will return */
         var claims = new List<Claim>
         {
-            new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+            new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
             new Claim(ClaimTypes.Email, user.Email),
         };
 

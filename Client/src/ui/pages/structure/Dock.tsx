@@ -1,10 +1,16 @@
 import {NavLink} from "react-router-dom";
-import {useApi} from "../../../utils/useApi.ts";
 import DockPlayer from "./DockPlayer.tsx";
 import DockAdmin from "./DockAdmin.tsx";
+// import { authUserAtom } from "@core/atoms/auth.ts";
+import { authAtom } from "@core/atoms/auth";
+import { useAtom } from "jotai";
+import { useEffect } from "react";
+import { envConfig } from "@core/config/EnvConfig";
+import { isLoggedInAtom } from "@core/atoms/auth.ts";
 
 export default function Dock() {
-    const {isLoggedIn, getRole} = useApi();
+    const [authUser,] = useAtom(authAtom)
+    const [isLoggedIn,] = useAtom(isLoggedInAtom)
 
     return (
         <div className="flex space-x-10 bg-base-300 shadow-sm navbar-center w-full">
@@ -21,7 +27,7 @@ export default function Dock() {
                 />
                 <span className="dock-label text-accent">Home</span>
             </NavLink>
-            {!isLoggedIn() && (
+            {!isLoggedIn && (
 
             <NavLink
                 to="/login"
@@ -40,12 +46,12 @@ export default function Dock() {
 
 
 
-            {isLoggedIn() && getRole()?.includes("player") && (
+            {isLoggedIn && authUser.roles.includes(Number(envConfig.PLAYER_ROLE)) && (
                 <DockPlayer />
             )}
 
 
-            {isLoggedIn() && (getRole()?.includes("admin") || getRole()?.includes("superadmin")) && (
+            {isLoggedIn && authUser.roles.includes(Number(envConfig.ADMIN_ROLE)) || authUser.roles.includes(Number(envConfig.SUPERADMIN_ROLE)) && (
                 <DockAdmin />
             )}
         </div>

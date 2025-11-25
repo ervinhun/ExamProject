@@ -1,25 +1,34 @@
 import * as z from 'zod';
-import {uint32} from "zod";
 
 
 const envSchema = z.object({
-    apiUrl:z.url(),
-    apiPort:uint32(),
-    environment: z.string(),
+    VITE_API_PORT:z .string().default("5152"),
+    VITE_API_HOST: z.string(),
+    VITE_ADMIN: z.string(),
+    VITE_PLAYER: z.string(),
+    VITE_SUPERADMIN: z.string(),
+    VITE_ENVIRONMENT: z.string().default("development"),
+    VITE_SECURE: z.string().default("true"),
+    VITE_CLITEN_PORT: z.string().default("5173"),
 
 })
 
 type Env = z.infer<typeof envSchema>;
+
 class EnvConfig{
-    private static _instance:EnvConfig;
+    private static _instance: EnvConfig;
     protected _env: Env;
+    private envImport: ImportMetaEnv = import.meta.env
+
     private constructor(){
         this._env = this.validateEnv();
     }
 
     private validateEnv(): Env{
         try{
-            return envSchema.parse(import.meta.env);
+            // console.log(envSchema.parse(this.envImport));
+            
+            return envSchema.parse(this.envImport)
         }catch (e){
             if(e instanceof z.ZodError){
                 throw new Error(`ZodError: ${e}`);
@@ -27,6 +36,7 @@ class EnvConfig{
             throw e;
         }
     }
+
     public static getInstance(): EnvConfig {
         if (!EnvConfig._instance) {
             EnvConfig._instance = new EnvConfig();
@@ -34,14 +44,17 @@ class EnvConfig{
         return EnvConfig._instance;
     }
 
-    public get api_port() { return this._env.apiPort}
-    public get api_host() { return this._env.apiUrl}
+    public get API_HOST() { return this._env.VITE_API_HOST }
+    public get ADMIN_ROLE() { return this._env.VITE_ADMIN }
+    public get PLAYER_ROLE() { return this._env.VITE_PLAYER }
+    public get SUPERADMIN_ROLE() { return this._env.VITE_SUPERADMIN }
+    public get SECURE() { return this._env.VITE_SECURE }
+    public get CLITEN_PORT() { return Number.parseInt(this._env.VITE_CLITEN_PORT) }
+    public get ENVIRONMENT() { return this._env.VITE_ENVIRONMENT }
+    public get API_PORT() { return Number.parseInt(this._env.VITE_API_PORT) }
 
-
-    // Environments
-    public get isDev() { return this._env.environment === "development"; }
-    public get isProd() { return this._env.environment === "production"; }
-    public get isTest() { return this._env.environment === "test"; }
+    // public get isProd() { return this._env.environment === "production"; }
+    // public get isTest() { return this._env.environment === "test"; }
 
 }
 

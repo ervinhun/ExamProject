@@ -2,5 +2,7 @@
 {
   "extends": "../../tsconfig.settings.json",
   "include": ["**/*.ts", "**/*.tsx", "../../vite-env.d.ts"],
-  "references": []
+  "references": [{
+    "path":"../core"
+  }]
 }
