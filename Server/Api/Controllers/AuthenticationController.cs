@@ -23,6 +23,7 @@ public class AuthenticationController(IMyAuthenticationService authenticationSer
                 Expires = DateTimeOffset.UtcNow.AddDays(-1),
                 Path = "/"
             };
+            
             if (isDev)
             {
                 // Localhost (HTTP) configuration
@@ -44,11 +45,6 @@ public class AuthenticationController(IMyAuthenticationService authenticationSer
         [HttpPost("login")]
         public async Task<IActionResult> Login(LoginRequestDto loginRequestDto)
         {
-            
-            // result.RefreshToken contains the refresh token created by your service
-            // result.AccessToken contains the access token
-            // result.User contains user info
-
             try
             {
                 if (User.Identity is { IsAuthenticated: true })
