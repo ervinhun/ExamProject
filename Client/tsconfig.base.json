@@ -20,7 +20,7 @@
     /* Project references */
     "composite": true,
     "outDir": "./dist",
-    "rootDir": ".",
+    "rootDir": "./",
     /* Path aliases */
     "baseUrl": ".",
     "paths": {

@@ -10,47 +10,6 @@ namespace Api.Controllers.Auth;
 [Route("api/auth")]
 public class AuthenticationController(IMyAuthenticationService authenticationService, IJwt jwt) : ControllerBase
 {
-    [HttpPost("logout")]
-    public IActionResult Logout()
-    {
-        try
-        {
-            var user = User.Claims;
-            
-            var isDev = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development";
-                
-         
-            var cookieOptions = new CookieOptions
-            {
-                HttpOnly = true,
-                Expires = DateTimeOffset.UtcNow.AddDays(-1),
-                Path = "/"
-            };
-            if (isDev)
-            {
-                // Localhost (HTTP) configuration
-                cookieOptions.Secure = false;
-                cookieOptions.SameSite = SameSiteMode.Lax; 
-            }
-            else
-            {
-                // Production (HTTPS) configuration
-                cookieOptions.Secure = true;
-                cookieOptions.SameSite = SameSiteMode.None; 
-            }
-
-<<<<<<< Updated upstream
-
-<<<<<<< Updated upstream
-            Response.Cookies.Append("refreshToken", "", cookieOptions);
-                
-                
-            return Ok();
-        }
-        catch (Exception e)
-=======
-=======
->>>>>>> Stashed changes
         [HttpPost("logout")]
         public IActionResult Logout()
         {
@@ -81,17 +40,6 @@ public class AuthenticationController(IMyAuthenticationService authenticationSer
             Response.Cookies.Append("refreshToken", "", cookieOptions);
             return Ok(200);
         }
-        
-        [HttpPost("login")]
-        public async Task<ActionResult<JwtResponseDto>> Login(LoginRequestDto loginRequestDto)
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-        {
-            return BadRequest(e.Message);
-        }
-    }
 
     [HttpPost("login")]
     public async Task<ActionResult> Login(LoginRequestDto loginRequestDto)
@@ -131,13 +79,6 @@ public class AuthenticationController(IMyAuthenticationService authenticationSer
                     cookieOptions.SameSite = SameSiteMode.None; 
                 }
 
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
                 Response.Cookies.Append("refreshToken", result.RefreshToken, cookieOptions);
                 
                 
@@ -146,14 +87,6 @@ public class AuthenticationController(IMyAuthenticationService authenticationSer
                     // Never return the refresh token in the response body!
                     accessToken = result.AccessToken,
                     result.User
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-=======
-                    
->>>>>>> Stashed changes
-=======
-                    
->>>>>>> Stashed changes
                 });
             }
             catch (Exception e)

@@ -43,15 +43,9 @@ public class Jwt(IOptions<JwtOptions> options, MyDbContext ctx): IJwt
                 Id = user.Id,
                 Email = user.Email,
                 FullName = user.FullName,
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
                 Roles = user.Roles
                     .Select(r => r.Name)
                     .ToList()
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
             }
         };
         
