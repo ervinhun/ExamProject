@@ -40,7 +40,7 @@ export const fetchUserByIdAtom = atom(null,
 
 export const createUserAtom = atom(null,
     async (get,set,createUserDto:CreateUserDto)=>{
-        const users=get(userListAtom)
+        const users = get(userListAtom)
         for(let i = 0; i< users.length;i++){
             if(users[i].email === createUserDto.email){
                throw new Error("This email already exists")
@@ -48,7 +48,7 @@ export const createUserAtom = atom(null,
         }
         await createUser(createUserDto)
                 .then(res=>{
-                         set (userListAtom,[...users,res]);
+                        set(userListAtom,[...users,res]);
                         return res;
                 })
                 .catch(err => {throw err})

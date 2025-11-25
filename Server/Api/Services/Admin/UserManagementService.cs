@@ -13,15 +13,15 @@ namespace Api.Services.Admin;
 public class UserManagementService(MyDbContext ctx, IEmailService emailService) : IUserManagementService
 {
     
-    public async Task<ActionResult<Player>> RegisterPlayer(CreatePlayerDto createPlayerDto)
+    public async Task<User> RegisterUser(CreateUserDto createUserDto)
     {
-        HashUtils.CreatePasswordHash("123321", out byte[] hash, out var salt);
+        HashUtils.CreatePasswordHash("player", out var hash, out var salt);
         
         var player = new Player()
         {
-            FullName = createPlayerDto.FullName,
-            Email = createPlayerDto.Email,
-            PhoneNumber = createPlayerDto.PhoneNo,
+            FullName = createUserDto.FullName,
+            Email = createUserDto.Email,
+            PhoneNumber = createUserDto.PhoneNo,
             PasswordHash = hash,
             PasswordSalt = salt,
         };
@@ -30,7 +30,7 @@ public class UserManagementService(MyDbContext ctx, IEmailService emailService) 
         return player;
     }
 
-    public Task<ActionResult<DataAccess.Entities.Auth.Admin>> RegisterAdmin(CreateAdminDto createAdminDto)
+    public Task<DataAccess.Entities.Auth.Admin> RegisterAdmin(CreateAdminDto createAdminDto)
     {
         throw new NotImplementedException();
     }

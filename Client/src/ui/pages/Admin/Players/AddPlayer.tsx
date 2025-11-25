@@ -1,16 +1,15 @@
 import { useAtom } from "jotai";
 import { createUserAtom } from "@core/atoms/user";
-export default function AddPlayer() {
-    
+
+export default function AddPlayer() {    
     const [,createUser] = useAtom(createUserAtom)
    async function handleSubmit(e:React.FormEvent<HTMLFormElement>){
 
         e.preventDefault();
         await createUser({
-
             fullName: "abc",
             email: "abc@mail.com",
-            phoneNo:"123456"
+            phoneNo:"123456123"
         });
     }
     return (

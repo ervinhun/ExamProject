@@ -25,7 +25,8 @@ export async function createUser(userDto: CreateUserDto): Promise<User>{
     return await api<User>(`${endpoint}/create`, {
         schema:UserSchema,
         init: {
-            method:"POST"
+            method:"POST",
+            body: JSON.stringify(userDto)
         }
     })
 }
