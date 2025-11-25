@@ -12,7 +12,7 @@ namespace Api.Controllers.User;
 public class UsersController : ControllerBase
 {
     
-
+ 
     [HttpGet("all")]
     public async Task<ActionResult<List<UserDto>>> GetAllUsersAsync()
     {

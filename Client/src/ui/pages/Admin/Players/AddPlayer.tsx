@@ -128,7 +128,7 @@ export default function AddPlayer() {
                 </div>
 
                 {/* Submit */}
-                <button className="btn btn-primary w-full mt-2">
+                <button className="btn btn-primary w-full mt-2" type="submit">
                     Register
                 </button>
             </form>
