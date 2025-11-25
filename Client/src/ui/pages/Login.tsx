@@ -2,7 +2,6 @@ import {useEffect, useState} from "react";
 import {useAtom} from "jotai";
 import {useNavigate} from "react-router-dom";
 import { isLoggedInAtom, loginAtom } from "@core/atoms/auth";
-import { authAtom } from "@core/atoms/auth";
 
 export default function Login() {
 
