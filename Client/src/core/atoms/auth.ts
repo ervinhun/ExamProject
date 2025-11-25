@@ -1,5 +1,4 @@
-import { loginRequest, meRequest, logoutRequest } from '@core/api/controllers/auth';
-import type { AuthResponseDto, LoginRequestDto } from '@core/types/auth';
+import { loginRequest, logoutRequest } from '@core/api/controllers/auth';
 import { atom } from 'jotai'
 import type { User } from '@core/types/users';
 import { atomWithStorage } from 'jotai/utils';
@@ -42,7 +41,7 @@ export const logoutAtom = atom(null,
     }
 );
 
-export const isLoggedInAtom = atom((get, _) => {
+export const isLoggedInAtom = atom((get) => {
     const auth = get(authAtom);
     return auth.token !== null && auth.token !== undefined;
 });

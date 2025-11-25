@@ -9,8 +9,8 @@ interface RequireRoleProps {
 }
 
 export default function RequireRole({ roles }: Readonly<RequireRoleProps>) {
-    const [authUser, _] = useAtom(authAtom);
-    const [isLoggedIn, ] = useAtom(isLoggedInAtom);
+    const [authUser,] = useAtom(authAtom);
+    const [isLoggedIn,] = useAtom(isLoggedInAtom);
     
     const location = useLocation();
 

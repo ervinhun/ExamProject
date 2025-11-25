@@ -1,6 +1,6 @@
 import type { AuthResponseDto, LoginRequestDto } from "@core/types/auth"
 import { api } from "../Api"
-import { UserSchema, type User } from "@core/types/users";
+import { type User } from "@core/types/users";
 
 const endpoint = "/api/auth";
 export const loginRequest = async (loginRequest: LoginRequestDto): Promise<AuthResponseDto> =>{
@@ -40,9 +40,10 @@ export const logoutRequest = async (): Promise<void> => {
     }
 }
 
+
 export const meRequest = async (): Promise<AuthResponseDto> => {
     try{
-        const raw = await api<{accessToken?: string | null; user: any}>(`${endpoint}/me`, {
+        const raw = await api<{accessToken?: string | null; user: User}>(`${endpoint}/me`, {
                 init: {
                     method: "GET"
                 }

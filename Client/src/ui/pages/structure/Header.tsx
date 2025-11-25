@@ -7,7 +7,7 @@ import {useNavigate} from "react-router-dom";
 
 export default function Header() {
 
-    const [authUser, setAuth] = useAtom(authAtom);
+    const [authUser,] = useAtom(authAtom);
     // const   [currentUser, setCurrentUser] = useAtom(currentUserAtom);
     const [,logout] = useAtom(logoutAtom);
     const navigate = useNavigate();

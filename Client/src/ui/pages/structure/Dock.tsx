@@ -4,7 +4,6 @@ import DockAdmin from "./DockAdmin.tsx";
 // import { authUserAtom } from "@core/atoms/auth.ts";
 import { authAtom } from "@core/atoms/auth";
 import { useAtom } from "jotai";
-import { useEffect } from "react";
 import { envConfig } from "@core/config/EnvConfig";
 import { isLoggedInAtom } from "@core/atoms/auth.ts";
 
