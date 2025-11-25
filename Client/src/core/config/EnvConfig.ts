@@ -1,3 +1,4 @@
+/// <reference types="vite/client" />
 import * as z from 'zod';
 
 
@@ -9,8 +10,7 @@ const envSchema = z.object({
     VITE_SUPERADMIN: z.string(),
     VITE_ENVIRONMENT: z.string().default("development"),
     VITE_SECURE: z.string().default("true"),
-    VITE_CLITEN_PORT: z.string().default("5173"),
-
+    VITE_CLIENT_PORT: z.string().default("5173"),
 })
 
 type Env = z.infer<typeof envSchema>;
@@ -45,11 +45,12 @@ class EnvConfig{
     }
 
     public get API_HOST() { return this._env.VITE_API_HOST }
-    public get ADMIN_ROLE() { return this._env.VITE_ADMIN }
-    public get PLAYER_ROLE() { return this._env.VITE_PLAYER }
-    public get SUPERADMIN_ROLE() { return this._env.VITE_SUPERADMIN }
-    public get SECURE() { return this._env.VITE_SECURE }
-    public get CLITEN_PORT() { return Number.parseInt(this._env.VITE_CLITEN_PORT) }
+    public get API_URL() { return this._env.VITE_API_HOST }
+    public get ADMIN_ROLE() { return Number.parseInt(this._env.VITE_ADMIN) }
+    public get PLAYER_ROLE() { return Number.parseInt(this._env.VITE_PLAYER) }
+    public get SUPERADMIN_ROLE() { return Number.parseInt(this._env.VITE_SUPERADMIN) }
+    public get SECURE() { return this._env.VITE_SECURE === 'true' }
+    public get CLIENT_PORT() { return Number.parseInt(this._env.VITE_CLIENT_PORT) }
     public get ENVIRONMENT() { return this._env.VITE_ENVIRONMENT }
     public get API_PORT() { return Number.parseInt(this._env.VITE_API_PORT) }
 
