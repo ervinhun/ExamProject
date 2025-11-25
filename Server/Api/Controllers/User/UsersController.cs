@@ -29,6 +29,13 @@ public class UsersController : ControllerBase
     {
         return Ok(200);
     }
+    
+    [HttpPost("create")]
+    public async Task<ActionResult<UserDto>> CreateUserAsync([FromBody] CreateUserDto createUserDto)
+    {
+        return Ok(createUserDto);
+    }
+    
 
     [HttpGet("{userId:guid}")]
     public async Task<ActionResult<UserDto>> GetUserByIdAsync(Guid userId)
