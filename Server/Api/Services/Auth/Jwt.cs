@@ -43,9 +43,15 @@ public class Jwt(IOptions<JwtOptions> options, MyDbContext ctx): IJwt
                 Id = user.Id,
                 Email = user.Email,
                 FullName = user.FullName,
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
                 Roles = user.Roles
                     .Select(r => r.Name)
                     .ToList()
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
             }
         };
         
@@ -70,6 +76,11 @@ public class Jwt(IOptions<JwtOptions> options, MyDbContext ctx): IJwt
     
     private async Task<string?> GenerateAndSaveRefreshTokenAsync(User user)
     {
+        if (user.RefreshTokenExpires > DateTime.UtcNow)
+        {
+            return null;
+        }
+        
         var refreshToken = HashUtils.GenerateRefreshToken(); 
         user.RefreshTokenHash = HashUtils.HashRefreshToken(refreshToken);
         user.RefreshTokenExpires = DateTime.UtcNow.AddDays(7);

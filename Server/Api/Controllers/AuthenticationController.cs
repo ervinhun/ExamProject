@@ -39,13 +39,55 @@ public class AuthenticationController(IMyAuthenticationService authenticationSer
                 cookieOptions.SameSite = SameSiteMode.None; 
             }
 
+<<<<<<< Updated upstream
 
+<<<<<<< Updated upstream
             Response.Cookies.Append("refreshToken", "", cookieOptions);
                 
                 
             return Ok();
         }
         catch (Exception e)
+=======
+=======
+>>>>>>> Stashed changes
+        [HttpPost("logout")]
+        public IActionResult Logout()
+        {
+            var u = User.FindFirst("sub");
+            var isDev = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development";
+                
+         
+            var cookieOptions = new CookieOptions
+            {
+                HttpOnly = true,
+                Expires = DateTimeOffset.UtcNow.AddDays(-1),
+                Path = "/"
+            };
+            if (isDev)
+            {
+                // Localhost (HTTP) configuration
+                cookieOptions.Secure = false;
+                cookieOptions.SameSite = SameSiteMode.Lax; 
+            }
+            else
+            {
+                // Production (HTTPS) configuration
+                cookieOptions.Secure = true;
+                cookieOptions.SameSite = SameSiteMode.None; 
+            }
+
+            Console.Out.WriteLine(u);
+            Response.Cookies.Append("refreshToken", "", cookieOptions);
+            return Ok(200);
+        }
+        
+        [HttpPost("login")]
+        public async Task<ActionResult<JwtResponseDto>> Login(LoginRequestDto loginRequestDto)
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
         {
             return BadRequest(e.Message);
         }
@@ -61,6 +103,11 @@ public class AuthenticationController(IMyAuthenticationService authenticationSer
 
             try
             {
+                if (User.Identity is { IsAuthenticated: true })
+                {
+                    throw new Exception("Already logged in");
+                }
+                
                 var result = await authenticationService.Login(loginRequestDto);
                 var isDev = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development";
                 
@@ -84,14 +131,29 @@ public class AuthenticationController(IMyAuthenticationService authenticationSer
                     cookieOptions.SameSite = SameSiteMode.None; 
                 }
 
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
 
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
                 Response.Cookies.Append("refreshToken", result.RefreshToken, cookieOptions);
                 
                 
                 return Ok(new
                 {
+                    // Never return the refresh token in the response body!
                     accessToken = result.AccessToken,
                     result.User
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+=======
+                    
+>>>>>>> Stashed changes
+=======
+                    
+>>>>>>> Stashed changes
                 });
             }
             catch (Exception e)
@@ -99,10 +161,9 @@ public class AuthenticationController(IMyAuthenticationService authenticationSer
                 return BadRequest(e.Message);
             }
 
-            // Never return the refresh token in the response body!
 
         }
-
+        
 
         [HttpPost("register")]
         public async Task<ActionResult<JwtResponseDto>> Register(RegisterRequestDto registerRequestDto)
@@ -125,5 +186,16 @@ public class AuthenticationController(IMyAuthenticationService authenticationSer
 
             return Ok(result);
         }
-    
+
+        [HttpGet("me")]
+        public async Task<ActionResult<JwtResponseDto>> Me()
+        {
+            Console.Out.WriteLine(User.Identity?.Name);
+            if (User.Identity is { IsAuthenticated: true })
+            {
+                var user = User;
+                Console.Out.WriteLine(user);
+            }
+            return null;
+        }
 }

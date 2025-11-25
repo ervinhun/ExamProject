@@ -8,9 +8,7 @@
       "DOM.Iterable"
     ],
     "module": "ESNext",
-    "types": ["vite/client"],
     "skipLibCheck": true,
-
     /* Bundler mode */
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
@@ -38,5 +36,8 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true
   },
-  "include": ["src"]
+  "exclude": [
+    "node_modules",
+    "tmp"
+  ]
 }
