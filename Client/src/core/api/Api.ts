@@ -1,6 +1,7 @@
+/// <reference types="vite/client" />
 import * as z from 'zod'
 import { getDefaultStore } from 'jotai/vanilla'
-import { authAtom } from '@core/atoms/auth'
+import { authAtom } from '../atoms/auth'
 
 export async function api<T>(
     url: string,
@@ -26,10 +27,11 @@ export async function api<T>(
         }
     }
 
-    const headers: HeadersInit = {
+    const headers = {
         "content-type": "application/json",
         ...init?.headers
-    }
+    } as Record<string, string>
+    
     if (token) {
         headers["authorization"] = `Bearer ${token}`;
     }
@@ -48,7 +50,7 @@ export async function api<T>(
     const data = await response.json();
 
     if(!schema){
-        return data as Promise<T>;
+        return data as T;
     }
     return schema.parse(data);
 

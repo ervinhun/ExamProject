@@ -5,7 +5,7 @@ import DockAdmin from "./DockAdmin.tsx";
 import { authAtom } from "@core/atoms/auth";
 import { useAtom } from "jotai";
 import { envConfig } from "@core/config/EnvConfig";
-import { isLoggedInAtom } from "@core/atoms/auth.ts";
+import { isLoggedInAtom } from "@core/atoms/auth";
 
 export default function Dock() {
     const [authUser,] = useAtom(authAtom)

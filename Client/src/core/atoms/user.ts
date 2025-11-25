@@ -1,8 +1,8 @@
 import { atom } from 'jotai';
-import type { User } from '@core/types/users';
-import { fetchAllUsers, fetchUserById } from '@core/api/controllers/user';
-import type { CreateUserDto } from '@core/types/users';
-import { createUser } from '@core/api/controllers/user';
+import type { User } from '../types/users';
+import { fetchAllUsers, fetchUserById } from '../api/controllers/user';
+import type { CreateUserDto } from '../types/users';
+import { createUser } from '../api/controllers/user';
 
 // Primary atoms
 export const userListAtom = atom<User[]>([]);
@@ -14,8 +14,8 @@ export const userLoadingAtom = atom<boolean>(false);
 export const fetchUsersAtom = atom(null, 
     async (_, set) => {
         await fetchAllUsers()
-                    .then(res=>set(userListAtom, res))
-                    .catch(err => {throw err})
+                    .then((res: any)=>set(userListAtom, res))
+                    .catch((err: any) => {throw err})
                     .finally(() =>{});
     }
 );
@@ -27,11 +27,11 @@ export const fetchUserByIdAtom = atom(null,
         }
         else{
             await fetchUserById(userId)
-                .then(res=>{
+                .then((res: any)=>{
                         set(selectedUserAtom, res);
                         return res;
                 })
-                .catch(err => {throw err})
+                .catch((err: any) => {throw err})
                 .finally(() =>{});
         }
     }
@@ -47,11 +47,11 @@ export const createUserAtom = atom(null,
             }
         }
         await createUser(createUserDto)
-                .then(res=>{
+                .then((res: any)=>{
                         set(userListAtom,[...users,res]);
                         return res;
                 })
-                .catch(err => {throw err})
+                .catch((err: any) => {throw err})
                 .finally(() =>{});
        
 

@@ -1,4 +1,4 @@
-import { envConfig } from "@core/config/EnvConfig.ts";
+import { envConfig } from "@core/config/EnvConfig";
 import RequireRole from "./RequireRole.tsx";
 
 export default function RequirePlayer() {

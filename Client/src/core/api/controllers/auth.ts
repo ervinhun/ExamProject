@@ -1,6 +1,6 @@
-import type { AuthResponseDto, LoginRequestDto } from "@core/types/auth"
-import { api } from "../Api"
-import { type User } from "@core/types/users";
+import type { AuthResponseDto, LoginRequestDto } from "../../types/auth"
+import { api } from "../Api";
+import { type User } from "../../types/users";
 
 const endpoint = "/api/auth";
 export const loginRequest = async (loginRequest: LoginRequestDto): Promise<AuthResponseDto> =>{

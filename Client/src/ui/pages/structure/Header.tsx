@@ -1,5 +1,5 @@
-import { authAtom } from "@core/atoms/auth.ts";
-import { isLoggedInAtom, logoutAtom } from "@core/atoms/auth.ts";
+import { authAtom } from "@core/atoms/auth";
+import { isLoggedInAtom, logoutAtom } from "@core/atoms/auth";
 import Dock from "./Dock.tsx";
 import {useAtom} from "jotai";
 import {useNavigate} from "react-router-dom";

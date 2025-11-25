@@ -1,6 +1,6 @@
-import { loginRequest, logoutRequest } from '@core/api/controllers/auth';
+import { loginRequest, logoutRequest } from '../api/controllers/auth';
 import { atom } from 'jotai'
-import type { User } from '@core/types/users';
+import type { User } from '../types/users';
 import { atomWithStorage } from 'jotai/utils';
 
 // Auth user shape used by the client convenience atoms
@@ -24,11 +24,11 @@ authAtom.debugLabel = "Auth User";
 
 export const loginAtom = atom(null,
     async (_, set, credentials: {email: string, password: string}) => {
-        await loginRequest(credentials).then(response=>{
+        await loginRequest(credentials).then((response: any)=>{
             console.log("LoginAtom response:", response);
             const user: User = {...response.user} as User;
             set(authAtom, {...user, roles: user.roles ?? [], token: response.accessToken} as AuthUser);
-        }).catch(err => {throw err})
+        }).catch((err: any) => {throw err})
         .finally(() =>{});
     }
 )
@@ -36,7 +36,7 @@ export const loginAtom = atom(null,
 export const logoutAtom = atom(null, 
     async (_, set) => {
         await logoutRequest()
-                    .catch(err => {throw err})
+                    .catch((err: any) => {throw err})
                     .finally(() => set(authAtom, {id: null, name: null, email: null, roles: [], token: null}));
     }
 );
