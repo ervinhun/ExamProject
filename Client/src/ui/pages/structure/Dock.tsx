@@ -51,7 +51,7 @@ export default function Dock() {
             )}
 
 
-            {isLoggedIn && authUser.roles.includes(Number(envConfig.ADMIN_ROLE)) || authUser.roles.includes(Number(envConfig.SUPERADMIN_ROLE)) && (
+            {isLoggedIn && (authUser.roles.includes(Number(envConfig.ADMIN_ROLE)) || authUser.roles.includes(Number(envConfig.SUPERADMIN_ROLE))) && (
                 <DockAdmin />
             )}
         </div>

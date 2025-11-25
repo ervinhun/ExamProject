@@ -20,7 +20,7 @@
     /* Project references */
     "composite": true,
     "outDir": "./dist",
-    "rootDir": "./",
+    "rootDir": "./src",
     /* Path aliases */
     "baseUrl": ".",
     "paths": {
@@ -36,8 +36,10 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true
   },
+  "include": ["src/**/*"],
   "exclude": [
     "node_modules",
-    "tmp"
+    "tmp",
+    "dist"
   ]
 }

@@ -18,7 +18,7 @@ export default function Login() {
         if(isLoggedIn) {
             navigate("/");
             return;
-        }   
+        }  
     }, [isLoggedIn]);
 
     async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {

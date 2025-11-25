@@ -31,7 +31,7 @@ export async function api<T>(
         ...init?.headers
     }
     if (token) {
-        (headers as Record<string, string>)["authorization"] = `Bearer ${token}`
+        headers["authorization"] = `Bearer ${token}`;
     }
 
     const  response = await fetch(url, {

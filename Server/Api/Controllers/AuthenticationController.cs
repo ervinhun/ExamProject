@@ -60,27 +60,40 @@ public class AuthenticationController(IMyAuthenticationService authenticationSer
                 var isDev = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development";
                 
          
-                var cookieOptions = new CookieOptions
+                var cookieOptionsRefresh = new CookieOptions
                 {
                     HttpOnly = true,
                     Expires = DateTimeOffset.UtcNow.AddDays(1),
                     Path = "/"
                 };
+
+                var cookieOptionsAccess = new CookieOptions
+                {
+                    HttpOnly = true,
+                    Expires = DateTimeOffset.UtcNow.AddMinutes(60),
+                    Path = "/"
+                };
+                
                 if (isDev)
                 {
                     // Localhost (HTTP) configuration
-                    cookieOptions.Secure = false;
-                    cookieOptions.SameSite = SameSiteMode.Lax; 
+                    cookieOptionsAccess.Secure = false;
+                    cookieOptionsRefresh.Secure = false;
+                    cookieOptionsAccess.SameSite = SameSiteMode.Lax; 
+                    cookieOptionsRefresh.SameSite = SameSiteMode.Lax; 
                 }
                 else
                 {
                     // Production (HTTPS) configuration
-                    cookieOptions.Secure = true;
-                    cookieOptions.SameSite = SameSiteMode.None; 
+                    cookieOptionsAccess.Secure = true;
+                    cookieOptionsRefresh.Secure = true;
+                    cookieOptionsAccess.SameSite = SameSiteMode.None;
+                    cookieOptionsRefresh.SameSite = SameSiteMode.None;
                 }
-
-                Response.Cookies.Append("refreshToken", result.RefreshToken, cookieOptions);
                 
+
+                Response.Cookies.Append("refreshToken", result.RefreshToken, cookieOptionsRefresh);
+                Response.Cookies.Append("accessToken", result.AccessToken, cookieOptionsAccess);
                 
                 return Ok(new
                 {

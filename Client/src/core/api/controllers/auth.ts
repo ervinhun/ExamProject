@@ -18,7 +18,11 @@ export const loginRequest = async (loginRequest: LoginRequestDto): Promise<AuthR
                 };
                 return response;
     }catch(err){
-        throw err;
+        console.error("Login error:", err);
+        return {
+            accessToken: null,
+            user: null
+        };
     }
 }
 
@@ -30,7 +34,9 @@ export const logoutRequest = async (): Promise<void> => {
                 }
             });
     }catch(err){
-        throw err;
+        // throw err;
+        console.error("Logout error:", err);
+        return;
     }
 }
 
@@ -48,6 +54,9 @@ export const meRequest = async (): Promise<AuthResponseDto> => {
         return response;
     }catch(err){
         console.error("Me error:", err);
-        throw err;
+        return {
+            accessToken: null,
+            user: null
+        };
     }
 }

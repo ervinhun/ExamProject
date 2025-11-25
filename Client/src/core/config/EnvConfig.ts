@@ -25,7 +25,6 @@ class EnvConfig{
     }
 
     private validateEnv(): Env{
-        console.log(this.envImport)
         try{
             // console.log(envSchema.parse(this.envImport));
             

@@ -10,6 +10,7 @@ namespace api.Services.Auth;
 
 public class MyAuthenticationService(MyDbContext ctx, IJwt jwt) : IMyAuthenticationService
 {
+    
 
     public async Task<JwtResponseDto> Login(LoginRequestDto dto)
     {

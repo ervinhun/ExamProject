@@ -41,6 +41,7 @@ export const logoutAtom = atom(null,
                     .finally(() => set(authAtom, {id: null, name: null, email: null, roles: [], token: null}));
     }
 );
+
 export const isLoggedInAtom = atom((get, _) => {
     const auth = get(authAtom);
     return auth.token !== null && auth.token !== undefined;
