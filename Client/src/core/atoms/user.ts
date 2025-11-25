@@ -14,8 +14,8 @@ export const userLoadingAtom = atom<boolean>(false);
 export const fetchUsersAtom = atom(null, 
     async (_, set) => {
         await fetchAllUsers()
-                    .then((res: any)=>set(userListAtom, res))
-                    .catch((err: any) => {throw err})
+                    .then((res)=>set(userListAtom, res))
+                    .catch((err) => {throw err})
                     .finally(() =>{});
     }
 );
@@ -27,11 +27,11 @@ export const fetchUserByIdAtom = atom(null,
         }
         else{
             await fetchUserById(userId)
-                .then((res: any)=>{
+                .then((res)=>{
                         set(selectedUserAtom, res);
                         return res;
                 })
-                .catch((err: any) => {throw err})
+                .catch((err) => {throw err})
                 .finally(() =>{});
         }
     }
@@ -47,11 +47,11 @@ export const createUserAtom = atom(null,
             }
         }
         await createUser(createUserDto)
-                .then((res: any)=>{
+                .then((res)=>{
                         set(userListAtom,[...users,res]);
                         return res;
                 })
-                .catch((err: any) => {throw err})
+                .catch((err) => {throw err})
                 .finally(() =>{});
        
 
