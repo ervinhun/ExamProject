@@ -7,9 +7,10 @@ export default function AddPlayer() {
 
         e.preventDefault();
         await createUser({
-            fullName: "abc",
+            firstName: "abc",
+            lastName: "def",
             email: "abc@mail.com",
-            phoneNo:"123456123"
+            phoneNumber:"123456123"
         });
     }
     return (
@@ -58,34 +59,12 @@ export default function AddPlayer() {
                     </div>
                 </div>
 
-                {/* Municipality */}
-                <div className="form-control">
-                    <label className="label">
-                        <span className="label-text">Municipality</span>
-                    </label>
-                    <input type="text" className="input input-bordered w-full" />
-                </div>
-
                 {/* Phone Numbers */}
                 <div className="form-control">
                     <label className="label">
                         <span className="label-text">Mobile Phone</span>
                     </label>
                     <input type="tel" className="input input-bordered w-full" required />
-                </div>
-
-                <div className="form-control">
-                    <label className="label">
-                        <span className="label-text">Additional Mobile</span>
-                    </label>
-                    <input type="tel" className="input input-bordered w-full" />
-                </div>
-
-                <div className="form-control">
-                    <label className="label">
-                        <span className="label-text">Landline</span>
-                    </label>
-                    <input type="tel" className="input input-bordered w-full" />
                 </div>
 
                 {/* Birthdate */}
@@ -123,21 +102,6 @@ export default function AddPlayer() {
                         <span className="label-text">Confirm Email</span>
                     </label>
                     <input type="email" className="input input-bordered w-full" required />
-                </div>
-
-                {/* Extra Emails */}
-                <div className="form-control">
-                    <label className="label">
-                        <span className="label-text">Extra Email</span>
-                    </label>
-                    <input type="email" className="input input-bordered w-full" />
-                </div>
-
-                <div className="form-control">
-                    <label className="label">
-                        <span className="label-text">Extra Email 2</span>
-                    </label>
-                    <input type="email" className="input input-bordered w-full" />
                 </div>
 
                 {/* Submit */}

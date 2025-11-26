@@ -1,11 +1,15 @@
+using DataAccess.Enums;
+
 namespace Api.Dto.User;
 
 public class UserDto
 {
     public Guid UserId { get; set; }
-    public string FullName { get; set; } = null!;
+    public string FirstName { get; set; } = null!;
+    public string LastName { get; set; } = null!;
     public string Email { get; set; } = null!;
-    public string? PhoneNo { get; set; }
+    public string? PhoneNumber { get; set; }
+    public ICollection<UserRole> Roles {get; set;} = new List<UserRole>();
     public DateOnly? ActiveStatusExpiryDate { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
@@ -14,9 +18,10 @@ public class UserDto
 
 public class CreateUserDto
 {
-    public string FullName { get; set; } = null!;
+    public string FirstName { get; set; } = null!;
+    public string LastName { get; set; } = null!;
     public string Email { get; set; } = null!;
-    public string PhoneNo { get; set; } = null!;
+    public string PhoneNumber { get; set; } = null!;
 }
 
 public class UpdateUserDetailsDto

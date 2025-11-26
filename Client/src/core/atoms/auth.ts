@@ -27,7 +27,13 @@ export const loginAtom = atom(null,
         await loginRequest(credentials).then((response)=>{
             console.log("LoginAtom response:", response);
             const user: User = {...response.user} as User;
-            set(authAtom, {...user, roles: user.roles ?? [], token: response.accessToken} as AuthUser);
+            set(authAtom, {
+                id: user.id,
+                name: `${user.firstName} ${user.lastName}`,
+                email: user.email,
+                roles: user.roles ?? [],
+                token: response.accessToken
+            });
         }).catch((err) => {throw err})
         .finally(() =>{});
     }

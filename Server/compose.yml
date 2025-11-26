@@ -21,14 +21,6 @@ services:
       - "5050:80"
     depends_on:
       - postgres
-
-  api:
-    build: .
-    container_name: lottery-api
-    environment:
-      ConnectionStrings__DefaultConnection: "Host=pg-local;Port=5432;Database=LotteryApp;Username=postgres;Password=postgres"
-    depends_on:
-      - postgres
-
+      
 volumes:
   pgdata:

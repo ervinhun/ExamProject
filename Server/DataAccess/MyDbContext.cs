@@ -51,7 +51,8 @@ public class MyDbContext(DbContextOptions<MyDbContext> options) : DbContext(opti
             userEntity
                 .HasMany(u => u.Roles)
                 .WithMany(r => r.Users)
-                .UsingEntity(j=>j.ToTable("RoleUser"));
+                .UsingEntity(j=>j.ToTable("RoleUser"))
+                .HasIndex(u=>u.Email).IsUnique();
         });
         
         modelBuilder.Entity<Player>(playerEntity =>

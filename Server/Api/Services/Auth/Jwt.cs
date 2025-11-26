@@ -42,7 +42,8 @@ public class Jwt(IOptions<JwtOptions> options, MyDbContext ctx): IJwt
             {
                 Id = user.Id,
                 Email = user.Email,
-                FullName = user.FullName,
+                FirstName = user.FirstName,
+                LastName = user.LastName,
                 Roles = user.Roles
                     .Select(r => r.Name)
                     .ToList()
