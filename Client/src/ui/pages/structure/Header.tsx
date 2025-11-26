@@ -1,18 +1,12 @@
-import { authAtom } from "@core/atoms/auth";
-import { isLoggedInAtom, logoutAtom } from "@core/atoms/auth";
+import {authAtom, isLoggedInAtom, logoutAtom} from "@core/atoms/auth";
 import Dock from "./Dock.tsx";
 import {useAtom} from "jotai";
-import {useNavigate} from "react-router-dom";
-// import {AuthAtom} from "@core/atoms/auth";
 
 export default function Header() {
 
     const [authUser,] = useAtom(authAtom);
-    // const   [currentUser, setCurrentUser] = useAtom(currentUserAtom);
-    const [,logout] = useAtom(logoutAtom);
-    const navigate = useNavigate();
+    const [, logout] = useAtom(logoutAtom);
     const [isLoggedIn,] = useAtom(isLoggedInAtom);
-
 
 
     function getTitle() {
@@ -30,24 +24,17 @@ export default function Header() {
                 {isLoggedIn && (
                     <>
                         <span className="font-medium">
-                            Hello, {authUser?.email ?? authUser?.name ?? 'User'}!
+                            Hello, {authUser?.name ?? authUser?.email ?? 'User'}!
                         </span>
 
                         <button
                             className="btn btn-sm btn-error text-white"
                             onClick={logout}
+                            hidden={!isLoggedIn}
                         >
                             Logout
                         </button>
                     </>
-                )}
-                {!isLoggedIn && (
-                    <button
-                        className="btn btn-sm btn-primary text-white"
-                        onClick={() => navigate("/login")}
-                    >
-                        Login
-                    </button>
                 )}
             </div>
         );
@@ -58,7 +45,7 @@ export default function Header() {
             <div className="w-full max-w-5xl px-6 py-12 bg-base-300 rounded-xl shadow-md space-y-6 text-center">
                 {getTitle()}
                 <div className="flex justify-center">
-                    <Dock />
+                    <Dock/>
                 </div>
             </div>
         </div>

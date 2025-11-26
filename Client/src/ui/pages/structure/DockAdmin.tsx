@@ -5,7 +5,6 @@ export default function DockAdmin() {
     const [openPlayers, setOpenPlayers] = useState(false);
     const [openGames, setOpenGames] = useState(false);
     const [openTransactions, setOpenTransactions] = useState(false);
-    const [openBoards, setOpenBoards] = useState(false);
 
     return (
         <div className="flex gap-4 items-start">
@@ -71,7 +70,7 @@ export default function DockAdmin() {
                         <NavLink to="/admin/games">Game History</NavLink>
                     </li>
                     <li>
-                        <NavLink to="/admin/games/winning-numbers">Enter Winning Numbers</NavLink>
+                        <NavLink to="/admin/games/boards">Boards/Winning boards</NavLink>
                     </li>
                 </ul>
             </div>
@@ -98,32 +97,6 @@ export default function DockAdmin() {
                     </li>
                     <li>
                         <NavLink to="/admin/transactions/all">All Transactions</NavLink>
-                    </li>
-                </ul>
-            </div>
-
-            {/* Boards Overview */}
-            <div className="dropdown dropdown-hover">
-                <div
-                    tabIndex={0}
-                    role="button"
-                    onClick={() => setOpenBoards(!openBoards)}
-                    className={`dock-button flex items-center ${openBoards ? "dock-active" : ""}`}
-                >
-                    <img
-                        src="https://img.icons8.com/?size=100&id=85462&format=png&color=FE9900"
-                        alt="Boards"
-                        className="dock-icon size-[1.7em]"
-                    />
-                    <span className="dock-label text-accent">Boards</span>
-                </div>
-
-                <ul tabIndex={0} className="dropdown-content menu p-2 shadow bg-base-200 rounded-box w-52">
-                    <li>
-                        <NavLink to="/admin/boards">All Boards</NavLink>
-                    </li>
-                    <li>
-                        <NavLink to="/admin/boards/winning">Winning Boards</NavLink>
                     </li>
                 </ul>
             </div>
