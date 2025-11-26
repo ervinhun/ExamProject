@@ -6,6 +6,7 @@ using DataAccess;
 using DataAccess.Entities.Auth;
 using DataAccess.Entities.Finance;
 using DataAccess.Enums;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Utils;
@@ -17,9 +18,13 @@ public class UserManagementService(MyDbContext ctx, IEmailService emailService) 
     
     public async Task<UserDto> RegisterUser(CreateUserDto createUserDto)
     {
-        HashUtils.CreatePasswordHash("player", out var hash, out var salt);
+        if (await ctx.Users.AnyAsync(u => u.Email == createUserDto.Email))
+        {
+            throw new InvalidOperationException("Email already exists");
+        }
         
-        var user = new User()
+        HashUtils.CreatePasswordHash("player", out var hash, out var salt);
+        var user = new User
         {
             FirstName = createUserDto.FirstName,
             LastName =  createUserDto.LastName,
@@ -28,8 +33,8 @@ public class UserManagementService(MyDbContext ctx, IEmailService emailService) 
             PasswordHash = hash,
             PasswordSalt = salt,
         };
+
         await ctx.Users.AddAsync(user);
-    
         await ctx.SaveChangesAsync();
         var userDto = new UserDto
         {
@@ -37,6 +42,7 @@ public class UserManagementService(MyDbContext ctx, IEmailService emailService) 
             FirstName =  user.FirstName,
             LastName =  user.LastName,
             Email = user.Email,
+            Roles = user.Roles.Select(r => r.Name).ToList(),
             PhoneNumber = user.PhoneNumber,
             CreatedAt = DateTimeHelper.ToCopenhagen(user.CreatedAt),
         };

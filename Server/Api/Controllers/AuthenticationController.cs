@@ -5,6 +5,8 @@ using api.Services;
 using Api.Services.Auth;
 using Microsoft.AspNetCore.Mvc;
 using Utils;
+using Utils.Exceptions;
+
 namespace Api.Controllers.Auth;
 
 [ApiController]
@@ -100,12 +102,11 @@ public class AuthenticationController(IMyAuthenticationService authenticationSer
                     result.User
                 });
             }
-            catch (Exception e)
+            catch (AuthenticationException e)
             {
-                return BadRequest(e.Message);
+                return Unauthorized(new {message = e.Message});
             }
-
-
+            
         }
         
 

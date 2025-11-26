@@ -2,6 +2,9 @@ import { loginRequest, logoutRequest } from '../api/controllers/auth';
 import { atom } from 'jotai'
 import type { User } from '../types/users';
 import { atomWithStorage } from 'jotai/utils';
+import { errorAtom } from './error';
+import { is } from 'zod/locales';
+import { log } from 'console';
 
 // Auth user shape used by the client convenience atoms
 export type AuthUser = {
@@ -28,13 +31,15 @@ export const loginAtom = atom(null,
             console.log("LoginAtom response:", response);
             const user: User = {...response.user} as User;
             set(authAtom, {
-                id: user.id,
+                id: user.id ?? null,
                 name: `${user.firstName} ${user.lastName}`,
                 email: user.email,
                 roles: user.roles ?? [],
                 token: response.accessToken
             });
-        }).catch((err) => {throw err})
+        }).catch((err) => {
+            set(errorAtom, err.message)
+        })
         .finally(() =>{});
     }
 )

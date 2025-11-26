@@ -2,6 +2,7 @@ import { atom } from 'jotai';
 import type { User } from '../types/users';
 import { fetchAllUsers, fetchUserById } from '../api/controllers/user';
 import type { CreateUserDto } from '../types/users';
+import { errorAtom } from './error';
 import { createUser } from '../api/controllers/user';
 
 // Primary atoms
@@ -51,7 +52,7 @@ export const createUserAtom = atom(null,
                         set(userListAtom,[...users,res]);
                         return res;
                 })
-                .catch((err) => {throw err})
+                .catch((err) => set(errorAtom, err.message))
                 .finally(() =>{});
        
 

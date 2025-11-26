@@ -13,10 +13,17 @@ namespace Api.Controllers.User;
 public class UsersController(IUserManagementService userManagementService) : ControllerBase
 {
     [HttpPost("create")]
-    public async Task<ActionResult<UserDto>> CreateUserAsync([FromBody] CreateUserDto createUserDto)
+    public async Task<ActionResult<UserDto>> Create([FromBody] CreateUserDto createUserDto)
     {
-        var user = await userManagementService.RegisterUser(createUserDto);
-        return Ok(user);
+        try
+        {
+            var user = await userManagementService.RegisterUser(createUserDto);
+            return Ok(user);
+        }
+        catch (InvalidOperationException e)
+        {
+            return Conflict(new {message = e.Message});
+        } 
     }
     
     

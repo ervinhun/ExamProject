@@ -4,26 +4,18 @@ import { type User } from "../../types/users";
 
 const endpoint = "/api/auth";
 export const loginRequest = async (loginRequest: LoginRequestDto): Promise<AuthResponseDto> =>{
-    try{
         const raw = await api<{ accessToken?: string | null; user: User }>(`${endpoint}/login`, {
                         init: {
                             method: "POST",
                             body: JSON.stringify(loginRequest)
                         }
                     });
-                console.log("Login raw response:", raw);
-                const response: AuthResponseDto = {
+
+        const response: AuthResponseDto = {
                     accessToken: raw.accessToken ?? null,
                     user: raw.user ?? null
                 };
-                return response;
-    }catch(err){
-        console.error("Login error:", err);
-        return {
-            accessToken: null,
-            user: null
-        };
-    }
+        return response;
 }
 
 export const logoutRequest = async (): Promise<void> => {
