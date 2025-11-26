@@ -1,5 +1,7 @@
 import {useMemo, useState} from "react";
-import {PlayerResult, calculateWinnersShare, generateWeeks, Week} from "@utils/WinnerCalculationHelper.ts";
+import type { PlayerResult, Week } from "@utils/WinnerCalculationHelper.ts";
+import { calculateWinnersShare, generateWeeks } from "@utils/WinnerCalculationHelper.ts";
+
 
 
 export default function WinningBoardsAdmin() {
