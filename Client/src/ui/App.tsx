@@ -13,16 +13,14 @@ import WinningBoards from "./pages/Player/History/WinningBoards.tsx";
 import Profile from "./pages/Player/Profile.tsx";
 import Dashboard from "./pages/Admin/Dashboard.tsx";
 import AllPlayers from "./pages/Admin/Players/AllPlayers.tsx";
-import WinningBoardsAdmin from "./pages/Admin/Boards/WinningBoardsAdmin.tsx";
+import WinningBoardsAdmin from "./pages/Admin/Games/WinningBoardsAdmin.tsx";
 import Pending from "./pages/Admin/Transactions/Pending.tsx";
 import AllTransactions from "./pages/Admin/Transactions/AllTransactions.tsx";
-import AllBoards from "./pages/Admin/Boards/AllBoards.tsx";
 import AddPlayer from "./pages/Admin/Players/AddPlayer.tsx";
 import Settings from "./pages/Admin/Settings.tsx";
 import RequirePlayer from "./pages/structure/Auth/RequiredPlayer.tsx";
 import RequireAdmin from "./pages/structure/Auth/RequiredAdmin.tsx";
 import Forbidden403 from "./pages/Errors/Forbidden403.tsx";
-import EnterWinningNumbers from "./pages/Admin/Games/EnterWinningNumbers.tsx";
 
 const router = createBrowserRouter([
     {
@@ -63,13 +61,10 @@ const router = createBrowserRouter([
                     {path: "/admin/players/new", element: <AddPlayer/>},
 
                     {path: "/admin/games", element: <GameHistory/>},
-                    {path: "/admin/games/winning-numbers", element: <EnterWinningNumbers/>},
+                    {path: "/admin/games/boards", element: <WinningBoardsAdmin/>},
 
                     {path: "/admin/transactions/pending", element: <Pending/>},
                     {path: "/admin/transactions/all", element: <AllTransactions/>},
-
-                    {path: "/admin/boards", element: <AllBoards/>},
-                    {path: "/admin/boards/winning", element: <WinningBoardsAdmin/>},
 
                     {path: "/admin/settings", element: <Settings/>}
                 ],
