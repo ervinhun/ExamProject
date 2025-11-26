@@ -23,12 +23,8 @@ public class UsersController(IUserManagementService userManagementService) : Con
     [HttpGet("all")]
     public async Task<ActionResult<List<UserDto>>> GetAllUsersAsync()
     {
-        foreach (var claim in User.FindAll(ClaimTypes.Role))
-        {
-            Console.WriteLine(claim.Type + ":" + claim.Value);
-            
-        }
-        return null;
+        var user = await userManagementService.GetAllUsersAsync();
+        return Ok(user);
     }
 
     [HttpPut("update/{userId:guid}")]

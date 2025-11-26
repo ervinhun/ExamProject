@@ -31,15 +31,14 @@ public class UserManagementService(MyDbContext ctx, IEmailService emailService) 
         await ctx.Users.AddAsync(user);
     
         await ctx.SaveChangesAsync();
-        var userDto =  new UserDto
+        var userDto = new UserDto
         {
-            UserId =  user.Id,
-            FirstName = user.FirstName,
-            LastName = user.LastName,
+            Id =  user.Id,
+            FirstName =  user.FirstName,
+            LastName =  user.LastName,
             Email = user.Email,
-            PhoneNumber =  user.PhoneNumber,
-            Roles = user.Roles.Select(r => r.Name).ToList(),
-            CreatedAt = DateTimeHelper.ToCopenhagen(user.CreatedAt)
+            PhoneNumber = user.PhoneNumber,
+            CreatedAt = DateTimeHelper.ToCopenhagen(user.CreatedAt),
         };
 
         return userDto;
@@ -47,9 +46,26 @@ public class UserManagementService(MyDbContext ctx, IEmailService emailService) 
 
     public async Task<PlayerDto> RegisterPlayer(CreatePlayerDto createPlayerDto)
     {
-        var createdUserDto = await RegisterUser(createPlayerDto);
-        await AssignRoleToUserByIdAsync(UserRole.Player, createdUserDto.UserId);
-        await ctx.SaveChangesAsync();
+        return new PlayerDto();
+    }
+
+    public async Task<ICollection<UserDto>> GetAllUsersAsync()
+    {
+        var users  = await ctx.Users.ToListAsync();
+        var userDtos = new List<UserDto>();
+        foreach (var user in users)
+        {
+            userDtos.Add(new PlayerDto
+            {
+                Id =  user.Id,
+                FirstName = user.FirstName,
+                LastName = user.LastName,
+                Email = user.Email,
+                PhoneNumber = user.PhoneNumber,
+                CreatedAt = DateTimeHelper.ToCopenhagen(user.CreatedAt)
+            });
+        }
+        return userDtos;
     }
 
     public Task<AdminDto> RegisterAdmin(CreateAdminDto createAdminDto)
@@ -88,18 +104,21 @@ public class UserManagementService(MyDbContext ctx, IEmailService emailService) 
         }
 
         user.Roles.Add(role);
+        user.UpdatedAt = DateTime.UtcNow;
         await ctx.SaveChangesAsync();
 
         return new UserDto
         {
+            Id = user.Id,
             FirstName = user.FirstName,
             LastName = user.LastName,
             Email = user.Email,
             PhoneNumber = user.PhoneNumber,
-            Roles = user.Roles.Select(r => r.Name).ToList(),
-            CreatedAt = DateTimeHelper.ToCopenhagen(user.CreatedAt)
+            CreatedAt = DateTimeHelper.ToCopenhagen(user.CreatedAt),
+            UpdatedAt = DateTimeHelper.ToCopenhagen(user.UpdatedAt)
         };
     }
+    
     private static string GeneratePassword(int length = 6)
     {
         const string chars =

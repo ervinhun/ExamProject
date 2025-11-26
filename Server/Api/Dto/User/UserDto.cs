@@ -4,12 +4,12 @@ namespace Api.Dto.User;
 
 public class UserDto
 {
-    public Guid UserId { get; set; }
+    public Guid Id { get; set; }
     public string FirstName { get; set; } = null!;
     public string LastName { get; set; } = null!;
     public string Email { get; set; } = null!;
     public string? PhoneNumber { get; set; }
-    public ICollection<UserRole> Roles {get; set;} = new List<UserRole>();
+    public List<UserRole> Roles {get; set;}
     public DateOnly? ActiveStatusExpiryDate { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }

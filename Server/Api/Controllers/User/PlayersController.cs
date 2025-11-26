@@ -13,8 +13,9 @@ public class PlayersController(IUserManagementService userManagementService) : C
 {
     
     [HttpGet("all")]
-    public async Task GetAllPlayersAsync()
+    public async Task<ActionResult<ICollection<PlayerDto>>> GetAllPlayersAsync()
     {
+        return Ok(200);
     }
 
     [HttpGet("{id:guid}")]

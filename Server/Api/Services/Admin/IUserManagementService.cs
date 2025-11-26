@@ -13,6 +13,8 @@ public interface IUserManagementService
     
     public Task<AdminDto> RegisterAdmin(CreateAdminDto createAdminDto);
     
+    public Task<ICollection<UserDto>> GetAllUsersAsync();
+    
     public Task<ActionResult<User>> UpdateUser(UpdateUserDetailsDto updateUserDto);
     public Task<ActionResult> DeleteUser(Guid userId);
 }
