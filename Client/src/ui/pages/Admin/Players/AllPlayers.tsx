@@ -1,6 +1,6 @@
 import { fetchPlayersAtom, playersAtom } from "@core/atoms/players";
 import { useAtom } from "jotai";
-import { useEffect, useState } from "react"
+import { useEffect } from "react"
 
 export default function AllPlayers() {
     const [players, ] = useAtom(playersAtom);
