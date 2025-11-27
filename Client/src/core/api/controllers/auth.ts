@@ -11,11 +11,11 @@ export const loginRequest = async (loginRequest: LoginRequestDto): Promise<AuthR
                         }
                     });
 
-        const response: AuthResponseDto = {
+                const response: AuthResponseDto = {
                     accessToken: raw.accessToken ?? null,
                     user: raw.user ?? null
                 };
-        return response;
+                return response;
 }
 
 export const logoutRequest = async (): Promise<void> => {

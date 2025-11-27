@@ -2,9 +2,11 @@ import { useAtom } from "jotai";
 import { createUserAtom } from "@core/atoms/user";
 import { useState } from "react";
 import { errorAtom } from "@core/atoms/error";
+import ErrorPopUp from "../../Errors/ErrorPopUp";
+import { createPlayerAtom } from "@core/atoms/players";
 
 export default function AddPlayer() {    
-    const [,createUser] = useAtom(createUserAtom)
+    const [,createPlayer] = useAtom(createPlayerAtom)
     const [error,] = useAtom(errorAtom);
     
     // Form state
@@ -21,16 +23,18 @@ export default function AddPlayer() {
     
     async function handleSubmit(e:React.FormEvent<HTMLFormElement>){
         e.preventDefault();
-        await createUser({
+        await createPlayer({
             firstName,
             lastName,
             email,
             phoneNumber
         });
     }
+
     return (
         <div className="flex justify-center mt-10 w-full">
-            <span>ERROR: {error}</span>
+            <ErrorPopUp />
+
             <form className="w-full max-w-lg p-6 bg-base-200 rounded-xl shadow-md space-y-4" onSubmit={handleSubmit}>
                 <h2 className="text-3xl font-semibold text-center mb-4">Registration</h2>
 
@@ -187,3 +191,4 @@ export default function AddPlayer() {
         </div>
     );
 }
+

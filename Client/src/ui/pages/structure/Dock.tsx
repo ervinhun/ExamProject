@@ -12,7 +12,7 @@ export default function Dock() {
     const [isLoggedIn,] = useAtom(isLoggedInAtom)
 
     return (
-        <div className="flex space-x-10 bg-base-300 shadow-sm navbar-center w-full">
+        <div id="dock-root" className="flex space-x-10 bg-base-300 shadow-sm navbar-center w-full">
             <NavLink
                 to="/"
                 className={({isActive}) =>

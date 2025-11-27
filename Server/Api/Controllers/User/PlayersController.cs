@@ -3,27 +3,52 @@ using Api.Dto.User;
 using Api.Services.Admin;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Utils.Exceptions;
 
 namespace Api.Controllers.User;
 
-[Authorize(Roles = "superadmin, admin, player")]
 [ApiController]
 [Route("api/players")]
 public class PlayersController(IUserManagementService userManagementService) : ControllerBase
 {
+    [Authorize(Roles = "superadmin,admin")]
+    [HttpPost("create")]
+    public async Task<IActionResult> CreatePlayer([FromBody] CreatePlayerDto createPlayerDto)
+    {
+        try
+        {
+            await userManagementService.RegisterPlayer(createPlayerDto);
+            return Ok(200);
+        }
+        catch (ServiceException e)
+        {
+            return Conflict(new {message = e.Message});
+        } 
+    }
     
+    [Authorize(Roles = "superadmin,admin")]
     [HttpGet("all")]
     public async Task<ActionResult<ICollection<PlayerDto>>> GetAllPlayersAsync()
     {
-        return Ok(200);
+        try
+        {
+            var players = await userManagementService.GetAllPlayersAsync();
+            return Ok(players);
+        }
+        catch (ServiceException e)
+        {
+            return Conflict(new {message = e.Message});
+        }
     }
 
+    [Authorize(Roles = "superadmin,admin,player")]
     [HttpGet("{id:guid}")]
     public async Task<ActionResult<UserDto>> GetPlayerByIdAsync(Guid id)
     {
         return await Task.FromResult(Ok(id));
     }
 
+    [Authorize(Roles = "superadmin,admin,player")]
     [HttpGet("{id:guid}/wallet")]
     public async Task<ActionResult<WalletDto>> GetWalletByPlayerIdAsync(Guid id)
     {
@@ -31,18 +56,21 @@ public class PlayersController(IUserManagementService userManagementService) : C
     }
     
 
+    [Authorize(Roles = "superadmin,admin,player")]
     [HttpPut("update/{id:guid}")]
     public async Task<ActionResult<UserDto>> UpdatePlayerDetailsByIdAsync(Guid id, [FromBody] UpdateUserDetailsDto updateUserDetailsDto)
     {
         return await Task.FromResult(Ok(id));
     }
 
+    [Authorize(Roles = "superadmin,admin")]
     [HttpPut("delete/{id:guid}")]
     public async Task<ActionResult> DeletePlayerByIdAsync(Guid id)
     {
         return await Task.FromResult(Ok(id));
     }
 
+    [Authorize(Roles = "superadmin,admin")]
     [HttpPost("{id:guid}/top-up")]
     public async Task<ActionResult<TransactionDto>> TopUpAmountForPlayerIdAsync(Guid id, [FromBody] CreateTransactionRequestDto createTransactionDto)
     {

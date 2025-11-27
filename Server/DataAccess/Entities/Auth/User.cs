@@ -18,7 +18,8 @@ public class User
     
     [EmailAddress]
     [MaxLength(255)]
-    public required string Email { get; set; }
+    [Required]
+    public string Email { get; set; } =  string.Empty;
     public byte[] PasswordHash { get; set; } =  null!;
     public byte[] PasswordSalt { get; set; } = null!;
 

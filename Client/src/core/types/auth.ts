@@ -22,3 +22,11 @@ export interface AuthResponseDto {
   accessToken: string | null;
   user: User | null;
 }
+
+export type AuthUser = {
+    id: string | null;
+    name: string | null;
+    email: string | null;
+    roles: number[];
+    token: string | null;
+};

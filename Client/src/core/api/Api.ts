@@ -14,21 +14,25 @@ export async function api<T>(
     console.log(schema, init);
 
     let token = ''
-    try {
-        const store = getDefaultStore()
-        const auth = store.get(authAtom)
-        token = auth?.token || ''
-    } catch {
-        // fallback if store not initialized
-        try {
-            token = localStorage.getItem('auth') || ''
-        } catch {
-            token = ''
-        }
-    }
+    // try {
+    //     const store = getDefaultStore()
+    //     const auth = store.get(authAtom)
+    //     token = auth?.token || ''
+    // } catch {
+    //     // fallback if store not initialized
+    //     try {
+    //         const authData = localStorage.getItem('auth')
+    //         if (authData) {
+    //             const parsed = JSON.parse(authData)
+    //             token = parsed?.token || ''
+    //         }
+    //     } catch {
+    //         token = ''
+    //     }
+    // }
 
     const headers = {
-        "content-type": "application/json",
+        "Content-Type": "application/json",
         ...init?.headers
     } as Record<string, string>
     

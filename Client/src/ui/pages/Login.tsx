@@ -3,6 +3,7 @@ import {useAtom} from "jotai";
 import {useNavigate} from "react-router-dom";
 import { isLoggedInAtom, loginAtom } from "@core/atoms/auth";
 import { errorAtom } from "@core/atoms/error";
+import ErrorPopUp from "./Errors/ErrorPopUp";
 
 export default function Login() {
     const [isLoggedIn, ] = useAtom(isLoggedInAtom);
@@ -30,7 +31,7 @@ export default function Login() {
 
     return (
         <div className="flex justify-center mt-10 w-full">
-            <span>Error: {error}</span>
+            <ErrorPopUp />
             <form
                 onSubmit={handleSubmit}
                 className="w-full max-w-sm p-6 bg-base-200 rounded-xl shadow-md space-y-4"

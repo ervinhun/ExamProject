@@ -71,7 +71,7 @@ public class AuthenticationController(IMyAuthenticationService authenticationSer
                 {
                     HttpOnly = true,
                     MaxAge = TimeSpan.FromMinutes(60),
-                    Path = "/",
+                    Path = "/"
                 };
                 
                 if (isDev)

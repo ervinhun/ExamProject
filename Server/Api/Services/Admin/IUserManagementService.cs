@@ -9,7 +9,7 @@ public interface IUserManagementService
 {
     public Task<UserDto> RegisterUser(CreateUserDto createUserDto);
     
-    public Task<PlayerDto> RegisterPlayer(CreatePlayerDto createPlayerDto);
+    public Task RegisterPlayer(CreatePlayerDto createPlayerDto);
     
     public Task<AdminDto> RegisterAdmin(CreateAdminDto createAdminDto);
     
@@ -17,4 +17,5 @@ public interface IUserManagementService
     
     public Task<ActionResult<User>> UpdateUser(UpdateUserDetailsDto updateUserDto);
     public Task<ActionResult> DeleteUser(Guid userId);
+    Task<ICollection<PlayerDto>> GetAllPlayersAsync();
 }

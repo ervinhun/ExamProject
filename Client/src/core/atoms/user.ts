@@ -1,9 +1,9 @@
 import { atom } from 'jotai';
 import type { User } from '../types/users';
-import { fetchAllUsers, fetchUserById } from '../api/controllers/user';
+import { playerApi } from '../api/controllers/player';
+import { userApi } from '../api/controllers/user';
 import type { CreateUserDto } from '../types/users';
 import { errorAtom } from './error';
-import { createUser } from '../api/controllers/user';
 
 // Primary atoms
 export const userListAtom = atom<User[]>([]);
@@ -14,9 +14,11 @@ export const userLoadingAtom = atom<boolean>(false);
 
 export const fetchUsersAtom = atom(null, 
     async (_, set) => {
-        await fetchAllUsers()
+        await userApi.getAll()
                     .then((res)=>set(userListAtom, res))
-                    .catch((err) => {throw err})
+                    .catch((err) => {
+                        set(errorAtom, err.message);
+                        throw err})
                     .finally(() =>{});
     }
 );
@@ -27,12 +29,14 @@ export const fetchUserByIdAtom = atom(null,
             return get(userListAtom).find(u => u.id === userId) as User;
         }
         else{
-            await fetchUserById(userId)
+            await playerApi.getById(userId)
                 .then((res)=>{
                         set(selectedUserAtom, res);
                         return res;
                 })
-                .catch((err) => {throw err})
+                .catch((err) => {
+                    set(errorAtom, err.message);
+                    throw err})
                 .finally(() =>{});
         }
     }
@@ -42,17 +46,16 @@ export const fetchUserByIdAtom = atom(null,
 export const createUserAtom = atom(null,
     async (get,set,createUserDto:CreateUserDto)=>{
         const users = get(userListAtom)
-        for(let i = 0; i< users.length;i++){
-            if(users[i].email === createUserDto.email){
-               throw new Error("This email already exists")
-            }
-        }
-        await createUser(createUserDto)
+
+        await userApi.createUser(createUserDto)
                 .then((res)=>{
                         set(userListAtom,[...users,res]);
                         return res;
                 })
-                .catch((err) => set(errorAtom, err.message))
+                .catch((err) => {
+                    set(errorAtom, err.message);
+                    throw err;
+                })
                 .finally(() =>{});
        
 

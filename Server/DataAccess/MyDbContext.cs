@@ -59,27 +59,22 @@ public class MyDbContext(DbContextOptions<MyDbContext> options) : DbContext(opti
         {
             // Player -> Wallet : One-to-One
             playerEntity
-                .HasOne(p => p.Wallet)
-                .WithOne(w => w.Player)
-                .HasForeignKey<Wallet>(w => w.PlayerId);
+                .HasOne(p => p.Wallet);
         });
 
         
         modelBuilder.Entity<Transaction>(transactionEntity =>
         {
-            // Transaction -> Player : Many-to-One
-            transactionEntity
-                .HasOne(t => t.Player)
-                .WithMany(p => p.Transactions)
-                .HasForeignKey(t => t.PlayerId)
-                .OnDelete(DeleteBehavior.Restrict);
-
             // Transaction -> Wallet : Many-to-One
             transactionEntity
                 .HasOne(t => t.Wallet)
                 .WithMany(w => w.Transactions)
                 .HasForeignKey(t => t.WalletId)
                 .OnDelete(DeleteBehavior.Restrict);
+            
+            // Transaction -> Player : Foreign key only (no navigation to avoid circular dependency)
+            transactionEntity
+                .HasIndex(t => t.PlayerId);
         });
 
         modelBuilder.Entity<GameInstance>(gameInstanceEntity =>

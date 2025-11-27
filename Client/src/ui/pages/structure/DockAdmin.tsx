@@ -7,7 +7,7 @@ export default function DockAdmin() {
     const [openTransactions, setOpenTransactions] = useState(false);
 
     return (
-        <div className="flex gap-4 items-start">
+        <div id="admin-dock" className="flex gap-4 items-start">
             {/* Dashboard */}
             <NavLink
                 to="/admin/dashboard"
@@ -36,7 +36,7 @@ export default function DockAdmin() {
                         alt="Players"
                         className="dock-icon size-[1.7em]"
                     />
-                    <span className="dock-label text-accent">Players</span>
+                    <span className="dock-label text-accent cursor-pointer">Players</span>
                 </div>
 
                 <ul tabIndex={0} className="dropdown-content menu p-2 shadow bg-base-200 rounded-box w-52">
@@ -44,7 +44,7 @@ export default function DockAdmin() {
                         <NavLink to="/admin/players">All Players</NavLink>
                     </li>
                     <li>
-                        <NavLink to="/admin/players/new">Add Player</NavLink>
+                        <NavLink to="/admin/players/new">Register Player</NavLink>
                     </li>
                 </ul>
             </div>
@@ -62,12 +62,12 @@ export default function DockAdmin() {
                         alt="Games"
                         className="dock-icon size-[1.7em]"
                     />
-                    <span className="dock-label text-accent">Games</span>
+                    <span className="dock-label text-accent cursor-pointer">Games</span>
                 </div>
 
                 <ul tabIndex={0} className="dropdown-content menu p-2 shadow bg-base-200 rounded-box w-52">
                     <li>
-                        <NavLink to="/admin/games">Game History</NavLink>
+                        <NavLink to="/admin/games">Game</NavLink>
                     </li>
                     <li>
                         <NavLink to="/admin/games/boards">Boards/Winning boards</NavLink>
@@ -88,7 +88,7 @@ export default function DockAdmin() {
                         alt="Transactions"
                         className="dock-icon size-[1.7em]"
                     />
-                    <span className="dock-label text-accent">Transactions</span>
+                    <span className="dock-label text-accent cursor-pointer">Transactions</span>
                 </div>
 
                 <ul tabIndex={0} className="dropdown-content menu p-2 shadow bg-base-200 rounded-box w-52">

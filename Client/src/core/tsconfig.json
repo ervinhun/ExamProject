@@ -3,6 +3,6 @@
   "compilerOptions": {
     "composite": true
   },
-  "include": ["**/*.ts", "**/*.tsx", "../../vite-env.d.ts", "./**/*.ts"],
+  "include": ["**/*.ts", "**/*.tsx", "../../vite-env.d.ts", "./**/*.ts", "./**/**/*.ts"],
   "references": []
 }

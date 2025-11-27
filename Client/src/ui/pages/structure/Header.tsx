@@ -24,7 +24,7 @@ export default function Header() {
                 {isLoggedIn && (
                     <>
                         <span className="font-medium">
-                            Hello, {authUser?.name ?? authUser?.email ?? 'User'}!
+                            Hello, {authUser.email}!
                         </span>
 
                         <button

@@ -5,15 +5,10 @@ import { atomWithStorage } from 'jotai/utils';
 import { errorAtom } from './error';
 import { is } from 'zod/locales';
 import { log } from 'console';
+import { AuthUser } from '@core/types/auth';
 
 // Auth user shape used by the client convenience atoms
-export type AuthUser = {
-    id: string | null;
-    name: string | null;
-    email: string | null;
-    roles: number[];
-    token: string | null;
-};
+
 
 export const authAtom = atomWithStorage<AuthUser>("auth", {
     id: null,
@@ -28,15 +23,22 @@ authAtom.debugLabel = "Auth User";
 export const loginAtom = atom(null,
     async (_, set, credentials: {email: string, password: string}) => {
         await loginRequest(credentials).then((response)=>{
+            const token = response.accessToken;
             console.log("LoginAtom response:", response);
             const user: User = {...response.user} as User;
-            set(authAtom, {
-                id: user.id ?? null,
-                name: `${user.firstName} ${user.lastName}`,
-                email: user.email,
-                roles: user.roles ?? [],
-                token: response.accessToken
-            });
+            try{
+                set(authAtom, {
+                    id: user.id ?? null,
+                    name: `${user.firstName} ${user.lastName}`,
+                    email: user.email,
+                    roles: user.roles ?? [],
+                    token: response.accessToken ?? null
+                });
+            }catch(err){
+                localStorage.setItem('auth', token || '');
+                throw err;
+            }
+
         }).catch((err) => {
             set(errorAtom, err.message)
         })

@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using Api.Dto.test;
 using Api.Dto.User;
+using Utils.Exceptions;
 using Api.Services.Admin;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -13,14 +14,14 @@ namespace Api.Controllers.User;
 public class UsersController(IUserManagementService userManagementService) : ControllerBase
 {
     [HttpPost("create")]
-    public async Task<ActionResult<UserDto>> Create([FromBody] CreateUserDto createUserDto)
+    public async Task<IActionResult> CreateUser([FromBody] CreateUserDto createUserDto)
     {
         try
         {
-            var user = await userManagementService.RegisterUser(createUserDto);
-            return Ok(user);
+            await userManagementService.RegisterUser(createUserDto);
+            return Ok(200);
         }
-        catch (InvalidOperationException e)
+        catch (ServiceException e)
         {
             return Conflict(new {message = e.Message});
         } 
