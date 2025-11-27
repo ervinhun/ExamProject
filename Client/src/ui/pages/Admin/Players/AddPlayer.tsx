@@ -1,13 +1,10 @@
 import { useAtom } from "jotai";
-import { createUserAtom } from "@core/atoms/user";
 import { useState } from "react";
-import { errorAtom } from "@core/atoms/error";
 import ErrorPopUp from "../../Errors/ErrorPopUp";
 import { createPlayerAtom } from "@core/atoms/players";
 
 export default function AddPlayer() {    
     const [,createPlayer] = useAtom(createPlayerAtom)
-    const [error,] = useAtom(errorAtom);
     
     // Form state
     const [firstName, setFirstName] = useState("");

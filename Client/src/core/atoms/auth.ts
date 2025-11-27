@@ -3,8 +3,6 @@ import { atom } from 'jotai'
 import type { User } from '../types/users';
 import { atomWithStorage } from 'jotai/utils';
 import { errorAtom } from './error';
-import { is } from 'zod/locales';
-import { log } from 'console';
 import { AuthUser } from '@core/types/auth';
 
 // Auth user shape used by the client convenience atoms

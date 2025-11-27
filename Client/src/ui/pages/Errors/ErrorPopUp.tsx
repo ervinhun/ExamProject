@@ -1,7 +1,6 @@
 import { errorAtom } from "@core/atoms/error";
 import { useAtom } from "jotai";
-import { use, useEffect } from "react";
-import { set } from "zod";
+import { useEffect } from "react";
 
 export default function ErrorPopUp() {
     const [error, setError] = useAtom(errorAtom);

@@ -1,5 +1,5 @@
 import { api } from "../Api";
-import { UserSchema, type CreateUserDto, type User } from "../../types/users";
+import { type CreateUserDto, type User } from "../../types/users";
 
 const endpoint = "/api/users";
 

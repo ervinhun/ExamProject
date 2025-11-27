@@ -1,7 +1,6 @@
 import { atom } from 'jotai';
-import type { Player, User } from '../types/users';
+import type { Player } from '../types/users';
 import { playerApi } from '@core/api/controllers/player';
-import { error } from 'console';
 import { errorAtom } from './error';
 
 

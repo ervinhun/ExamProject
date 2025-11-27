@@ -2,12 +2,10 @@ import {useEffect, useState} from "react";
 import {useAtom} from "jotai";
 import {useNavigate} from "react-router-dom";
 import { isLoggedInAtom, loginAtom } from "@core/atoms/auth";
-import { errorAtom } from "@core/atoms/error";
 import ErrorPopUp from "./Errors/ErrorPopUp";
 
 export default function Login() {
     const [isLoggedIn, ] = useAtom(isLoggedInAtom);
-    const [error, ] = useAtom(errorAtom);
 
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");

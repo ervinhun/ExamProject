@@ -46,7 +46,7 @@ export const playerApi = {
         });
     },
 
-    delete: async (id: string): Promise<void> => {
-        // await api.delete(`${endpoint}/${id}`);
-    },
+    // delete: async (id: string): Promise<void> => {
+    //     // await api.delete(`${endpoint}/${id}`);
+    // },
 };
