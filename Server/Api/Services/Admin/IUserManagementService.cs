@@ -7,9 +7,15 @@ namespace Api.Services.Admin;
 
 public interface IUserManagementService
 {
-    public Task<User> RegisterUser(CreateUserDto createUserDto);
-    public Task<DataAccess.Entities.Auth.Admin> RegisterAdmin(CreateAdminDto createAdminDto);
+    public Task<UserDto> RegisterUser(CreateUserDto createUserDto);
+    
+    public Task RegisterPlayer(CreatePlayerDto createPlayerDto);
+    
+    public Task<AdminDto> RegisterAdmin(CreateAdminDto createAdminDto);
+    
+    public Task<ICollection<UserDto>> GetAllUsersAsync();
     
     public Task<ActionResult<User>> UpdateUser(UpdateUserDetailsDto updateUserDto);
     public Task<ActionResult> DeleteUser(Guid userId);
+    Task<ICollection<PlayerDto>> GetAllPlayersAsync();
 }

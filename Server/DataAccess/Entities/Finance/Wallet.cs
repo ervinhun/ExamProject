@@ -6,11 +6,9 @@ namespace DataAccess.Entities.Finance;
 public class Wallet
 {
     public Guid Id { get; set; }
-    public required Guid PlayerId { get; set; }
-    
-    public Player Player { get; set; } = null!;
-
-    [Range(0, double.MaxValue)]
+    public Guid PlayerId { get; set; }
+    public required Player Player { get; set; }
+    [Range(0, double.MaxValue)] 
     public double Balance { get; set; }
-    public List<Transaction> Transactions { get; set; } = new();
+    public List<Transaction> Transactions { get; set; } = [];
 }

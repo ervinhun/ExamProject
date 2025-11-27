@@ -16,6 +16,7 @@ using Microsoft.IdentityModel.Tokens;
 using NSwag;
 using NSwag.Generation.Processors.Security;
 using Utils;
+using System;
 
 namespace Api;
 
@@ -24,6 +25,7 @@ public static class Program
     private static void ConfigureServices(IServiceCollection services,  ConfigurationManager configuration)
     {
         DotNetEnv.Env.Load("../.env");
+
         
         // Get Options 
         var dbOptions = configuration.GetSection("DbOptions").Get<DbOptions>();
@@ -63,6 +65,29 @@ public static class Program
                     ValidAudience = jwtOptions.Audience,
                     IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtOptions.Secret))
                 };
+                
+                // Read JWT from cookie instead of Authorization header
+                options.Events = new Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerEvents
+                {
+                    OnMessageReceived = context =>
+                    {
+                        // Try to get token from Authorization header first
+                        var token = context.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
+                        
+                        // If not in header, try cookie
+                        if (string.IsNullOrEmpty(token))
+                        {
+                            token = context.Request.Cookies["accessToken"];
+                        }
+                        
+                        if (!string.IsNullOrEmpty(token))
+                        {
+                            context.Token = token;
+                        }
+                        
+                        return Task.CompletedTask;
+                    }
+                };
             });
 
         services.AddOpenApiDocument(configure =>
@@ -81,6 +106,13 @@ public static class Program
         
         // Add controllers to the api
         services.AddControllers();
+                
+        services.AddControllers()
+            .AddJsonOptions(options =>
+            {
+                options.JsonSerializerOptions.Converters.Add(new DateTimeConverterCopenhagen());
+            });
+
         services.AddAuthorization();
 
 

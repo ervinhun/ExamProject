@@ -2,12 +2,13 @@ import {useEffect, useState} from "react";
 import {useAtom} from "jotai";
 import {useNavigate} from "react-router-dom";
 import { isLoggedInAtom, loginAtom } from "@core/atoms/auth";
+import ErrorPopUp from "./Errors/ErrorPopUp";
 
 export default function Login() {
+    const [isLoggedIn, ] = useAtom(isLoggedInAtom);
 
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
-    const [isLoggedIn, ] = useAtom(isLoggedInAtom);
 
     const [,login] = useAtom(loginAtom);
 
@@ -22,15 +23,13 @@ export default function Login() {
 
     async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
         e.preventDefault();
-        await login({email, password}).finally(() => {
-            navigate("/");
-        }); 
-
+        await login({email, password}); 
     }
 
 
     return (
         <div className="flex justify-center mt-10 w-full">
+            <ErrorPopUp />
             <form
                 onSubmit={handleSubmit}
                 className="w-full max-w-sm p-6 bg-base-200 rounded-xl shadow-md space-y-4"

@@ -2,3 +2,14 @@
 @plugin "daisyui" {
     themes: all;
 }
+ 
+#admin-dock{
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    margin: 0 5rem;
+}
+
+#dock-root{
+    padding-left: 2rem;
+}

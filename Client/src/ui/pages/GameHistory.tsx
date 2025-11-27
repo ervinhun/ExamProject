@@ -102,8 +102,7 @@ export default function GameHistory() {
                 <div className="my-dock rounded-xl bg-base-300 shadow-md p-6 mb-10 w-full max-w-5xl text-center">
                     <EnterWinningNumbers/>
                 </div>
-            )};
-
+            )}
             <div className="my-dock rounded-xl bg-base-300 shadow-md p-6 w-full max-w-5xl mx-auto mt-10">
 
                 <h1 className="text-3xl font-bold mb-6 text-center">

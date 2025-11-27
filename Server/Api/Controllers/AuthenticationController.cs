@@ -4,6 +4,9 @@ using Api.Dto.Auth.Response;
 using api.Services;
 using Api.Services.Auth;
 using Microsoft.AspNetCore.Mvc;
+using Utils;
+using Utils.Exceptions;
+
 namespace Api.Controllers.Auth;
 
 [ApiController]
@@ -20,7 +23,7 @@ public class AuthenticationController(IMyAuthenticationService authenticationSer
             var cookieOptions = new CookieOptions
             {
                 HttpOnly = true,
-                Expires = DateTimeOffset.UtcNow.AddDays(-1),
+                MaxAge = TimeSpan.Zero,
                 Path = "/"
             };
             
@@ -39,6 +42,7 @@ public class AuthenticationController(IMyAuthenticationService authenticationSer
 
             Console.Out.WriteLine(u);
             Response.Cookies.Append("refreshToken", "", cookieOptions);
+            Response.Cookies.Append("accessToken", "", cookieOptions);
             return Ok(200);
         }
 
@@ -59,14 +63,14 @@ public class AuthenticationController(IMyAuthenticationService authenticationSer
                 var cookieOptionsRefresh = new CookieOptions
                 {
                     HttpOnly = true,
-                    Expires = DateTimeOffset.UtcNow.AddDays(1),
+                    MaxAge = TimeSpan.FromDays(7),
                     Path = "/"
                 };
 
                 var cookieOptionsAccess = new CookieOptions
                 {
                     HttpOnly = true,
-                    Expires = DateTimeOffset.UtcNow.AddMinutes(60),
+                    MaxAge = TimeSpan.FromMinutes(60),
                     Path = "/"
                 };
                 
@@ -98,12 +102,11 @@ public class AuthenticationController(IMyAuthenticationService authenticationSer
                     result.User
                 });
             }
-            catch (Exception e)
+            catch (AuthenticationException e)
             {
-                return BadRequest(e.Message);
+                return Unauthorized(new {message = e.Message});
             }
-
-
+            
         }
         
 

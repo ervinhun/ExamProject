@@ -7,7 +7,10 @@ public class User
     public Guid Id { get; set; }
     
     [MaxLength(255)]
-    public string FullName { get; set; } = string.Empty;
+    public string FirstName { get; set; } = string.Empty;
+    
+    [MaxLength(255)]
+    public string LastName { get; set; } = string.Empty;
     
     [Phone]
     [MaxLength(255)]
@@ -15,7 +18,8 @@ public class User
     
     [EmailAddress]
     [MaxLength(255)]
-    public string Email { get; set; } = string.Empty;
+    [Required]
+    public string Email { get; set; } =  string.Empty;
     public byte[] PasswordHash { get; set; } =  null!;
     public byte[] PasswordSalt { get; set; } = null!;
 
@@ -25,5 +29,7 @@ public class User
     public string RefreshTokenHash { get; set; } = string.Empty;
     public DateTime RefreshTokenExpires { get; set; }
     
-    public Boolean IsDeleted { get; set; }
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime UpdatedAt { get; set; }
+    public bool IsDeleted { get; set; }
 }

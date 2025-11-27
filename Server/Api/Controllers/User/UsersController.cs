@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using Api.Dto.test;
 using Api.Dto.User;
+using Utils.Exceptions;
 using Api.Services.Admin;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -13,22 +14,25 @@ namespace Api.Controllers.User;
 public class UsersController(IUserManagementService userManagementService) : ControllerBase
 {
     [HttpPost("create")]
-    public async Task<ActionResult<UserDto>> CreateUserAsync([FromBody] CreateUserDto createUserDto)
+    public async Task<IActionResult> CreateUser([FromBody] CreateUserDto createUserDto)
     {
-        var user = await userManagementService.RegisterUser(createUserDto);
-        return Ok(user);
+        try
+        {
+            await userManagementService.RegisterUser(createUserDto);
+            return Ok(200);
+        }
+        catch (ServiceException e)
+        {
+            return Conflict(new {message = e.Message});
+        } 
     }
     
     
     [HttpGet("all")]
     public async Task<ActionResult<List<UserDto>>> GetAllUsersAsync()
     {
-        foreach (var claim in User.FindAll(ClaimTypes.Role))
-        {
-            Console.WriteLine(claim.Type + ":" + claim.Value);
-            
-        }
-        return null;
+        var user = await userManagementService.GetAllUsersAsync();
+        return Ok(user);
     }
 
     [HttpPut("update/{userId:guid}")]
