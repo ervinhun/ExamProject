@@ -1,8 +1,11 @@
 using System.Reflection.Metadata;
+using Api.Configuration;
 using Api.Dto.Auth.Request;
 using Api.Dto.Auth.Response;
+using Api.Dto.User;
 using api.Services;
 using Api.Services.Auth;
+using DataAccess.Enums;
 using Microsoft.AspNetCore.Mvc;
 using Utils;
 using Utils.Exceptions;
@@ -11,7 +14,7 @@ namespace Api.Controllers.Auth;
 
 [ApiController]
 [Route("api/auth")]
-public class AuthenticationController(IMyAuthenticationService authenticationService, IJwt jwt) : ControllerBase
+public class AuthenticationController(IMyAuthenticationService authenticationService, IJwt jwt, AppSettings appSettings) : ControllerBase
 {
         [HttpPost("logout")]
         public IActionResult Logout()
@@ -63,14 +66,14 @@ public class AuthenticationController(IMyAuthenticationService authenticationSer
                 var cookieOptionsRefresh = new CookieOptions
                 {
                     HttpOnly = true,
-                    MaxAge = TimeSpan.FromDays(7),
+                    MaxAge = TimeSpan.FromDays(appSettings.Jwt.RefreshTokenDays),
                     Path = "/"
                 };
 
                 var cookieOptionsAccess = new CookieOptions
                 {
                     HttpOnly = true,
-                    MaxAge = TimeSpan.FromMinutes(60),
+                    MaxAge = TimeSpan.FromMinutes(appSettings.Jwt.ExpirationMinutes),
                     Path = "/"
                 };
                 
@@ -97,9 +100,8 @@ public class AuthenticationController(IMyAuthenticationService authenticationSer
                 
                 return Ok(new
                 {
-                    // Never return the refresh token in the response body!
-                    accessToken = result.AccessToken,
-                    result.User
+                    // Tokens are securely stored in HttpOnly cookies - no need to expose in body
+                    user = result.User
                 });
             }
             catch (AuthenticationException e)
@@ -122,25 +124,59 @@ public class AuthenticationController(IMyAuthenticationService authenticationSer
         }
     
         [HttpPost("refresh-token")]
-        public async Task<ActionResult<JwtResponseDto>> RefreshToken(RefreshTokenRequestDto request)
+        public async Task<ActionResult<JwtResponseDto>> RefreshToken(Guid userId)
         {
-            var result = await jwt.RefreshTokenAsync(request);
-        
-            if (result is null || result.AccessToken is null || result.RefreshToken is null)
-                return Unauthorized("Invalid refresh token.");
+            var refreshToken = Request.Cookies["refreshToken"];
+            if(refreshToken == null) throw new NullReferenceException("refreshToken is null");
 
-            return Ok(result);
+            try
+            {
+                await jwt.RefreshTokenAsync(new RefreshTokenRequestDto
+                {
+                    RefreshToken =  refreshToken,
+                    UserId = userId
+                });
+    
+                return Ok(200);
+            }
+            catch
+            {
+                return BadRequest("refreshToken is invalid");
+            }
+
         }
 
-        [HttpGet("me")]
-        public async Task<ActionResult<JwtResponseDto>> Me()
+        [HttpGet("profile")]
+        public ActionResult<UserDto> Profile()
         {
-            Console.Out.WriteLine(User.Identity?.Name);
-            if (User.Identity is { IsAuthenticated: true })
+            if (User.Identity is { IsAuthenticated: false })
             {
-                var user = User;
-                Console.Out.WriteLine(user);
+                return Unauthorized(new { message = "User is not authenticated" });
             }
-            return null;
+
+            try
+            {
+                var userId = User.FindFirst("sub")?.Value;
+                var email = User.FindFirst("email")?.Value;
+                var roles = User.FindAll("role")
+                    .Select(c => Enum.Parse<UserRole>(c.Value))
+                    .ToList();
+                var name = User.FindFirst("name")?.Value;
+                var surname = User.FindFirst("surname")?.Value;
+                
+                 
+                return Ok(new UserDto
+                {
+                    Id = Guid.Parse(userId!),
+                    FirstName = name!,
+                    LastName = surname!,
+                    Email = email!,
+                    Roles = roles,
+                });
+            }catch(ArgumentNullException e)
+            {
+                return BadRequest(new { message = e.Message});
+            }
+ 
         }
 }

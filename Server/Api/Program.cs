@@ -1,12 +1,10 @@
 using System.Text;
-using Api.Configuration;
 using api.Services;
 using Api.Services.Admin;
 using api.Services.Auth;
 using Api.Services.Auth;
 using Api.Services.Email;
 using DataAccess;
-using DataAccess.Configuration;
 using DataAccess.Entities.Auth;
 using DataAccess.Enums;
 using Microsoft.AspNetCore.Identity;
@@ -17,40 +15,103 @@ using NSwag;
 using NSwag.Generation.Processors.Security;
 using Utils;
 using System;
+using System.Security;
+using Api.Configuration;
+using DotNetEnv;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Npgsql;
 
 namespace Api;
 
 public static class Program
 {
-    private static void ConfigureServices(IServiceCollection services,  ConfigurationManager configuration)
+    private static void LoadEnvironmentVariables()
     {
-        DotNetEnv.Env.Load("../.env");
-
-        
-        // Get Options 
-        var dbOptions = configuration.GetSection("DbOptions").Get<DbOptions>();
-        var jwtOptions = configuration.GetSection("JwtOptions").Get<JwtOptions>();
-
-        if (dbOptions == null || jwtOptions == null)
+        // Load .env file only in Development
+        if (EnvironmentHelper.IsDevelopment())
         {
-            throw new Exception("Missing options configuration");
+            var envPath = Path.Combine(Directory.GetCurrentDirectory(), "..", ".env");
+            if (File.Exists(envPath))
+            {
+                Env.Load(envPath);
+            }
+            else
+            {
+                Console.WriteLine("Warning: .env file not found. Using system environment variables.");
+            }
         }
         
-        // Adds db context 
-        services.AddDbContext<MyDbContext>((serviceProvider, options) =>
+        // Validate required environment variables
+        EnvironmentHelper.ValidateRequired(
+            "CONNECTION_STRING",
+            "JWT_SECRET",
+            "JWT_ISSUER",
+            "JWT_AUDIENCE",
+            "SUPER_EMAIL",
+            "SUPER_PASSWORD",
+            "CLIENT_HOST"
+        );
+    }
+    
+    private static AppSettings BuildAppSettings()
+    {
+        return new AppSettings
         {
-            options.UseNpgsql(dbOptions.ConnectionString);
+            Database = new DatabaseSettings
+            {
+                ConnectionString = EnvironmentHelper.GetRequired("CONNECTION_STRING")
+            },
+            Jwt = new JwtSettings
+            {
+                Secret = EnvironmentHelper.GetRequired("JWT_SECRET"),
+                Issuer = EnvironmentHelper.GetRequired("JWT_ISSUER"),
+                Audience = EnvironmentHelper.GetRequired("JWT_AUDIENCE"),
+                ExpirationMinutes = EnvironmentHelper.GetIntOrDefault("JWT_EXPIRATION_MINUTES", 60),
+                RefreshTokenDays = EnvironmentHelper.GetIntOrDefault("JWT_REFRESH_TOKEN_DAYS", 7)
+            },
+            Email = new EmailSettings
+            {
+                SmtpHost = EnvironmentHelper.GetOrDefault("SMTP_HOST", ""),
+                SmtpPort = EnvironmentHelper.GetIntOrDefault("SMTP_PORT", 587),
+                Username = EnvironmentHelper.GetOrDefault("SMTP_USERNAME", ""),
+                Password = EnvironmentHelper.GetOrDefault("SMTP_PASSWORD", ""),
+                FromAddress = EnvironmentHelper.GetOrDefault("EMAIL_FROM", "noreply@lotteryapp.com")
+            },
+            Cors = new CorsSettings
+            {
+                AllowedOrigins = EnvironmentHelper.GetOrDefault("CLIENT_HOST", "http://localhost:5173")
+                    .Split(',', StringSplitOptions.RemoveEmptyEntries)
+            },
+            Super = new SuperSettings
+            {
+                Email = EnvironmentHelper.GetRequired("SUPER_EMAIL"),
+                Password = EnvironmentHelper.GetRequired("SUPER_PASSWORD")
+            }
+        };
+    }
+    
+    private static void ConfigureServices(IServiceCollection services, AppSettings appSettings)
+    {
+        // Register AppSettings for dependency injection
+        services.AddSingleton(appSettings);
+        services.AddSingleton(appSettings.Database);
+        services.AddSingleton(appSettings.Jwt);
+        services.AddSingleton(appSettings.Email);
+        services.AddSingleton(appSettings.Cors);
+        
+        // Add DbContext
+        services.AddDbContext<MyDbContext>(options =>
+        {
+            options.UseNpgsql(appSettings.Database.ConnectionString);
         });
-
-        /*
-         *  Add service to the scope,  means that a new instance is created per request -> each request, new instance of service
-         */
+        
+        // Add scoped services
         services.AddScoped<IJwt, Jwt>();
         services.AddScoped<IMyAuthenticationService, MyAuthenticationService>();
         services.AddScoped<IUserManagementService, UserManagementService>();
         services.AddScoped<IEmailService, EmailService>();
         
-        
+        // Configure JWT Authentication
         services
             .AddAuthentication("Bearer")
             .AddJwtBearer("Bearer", options =>
@@ -61,83 +122,74 @@ public static class Program
                     ValidateAudience = true,
                     ValidateLifetime = true,
                     ValidateIssuerSigningKey = true,
-                    ValidIssuer = jwtOptions.Issuer,
-                    ValidAudience = jwtOptions.Audience,
-                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtOptions.Secret))
+                    ValidIssuer = appSettings.Jwt.Issuer,
+                    ValidAudience = appSettings.Jwt.Audience,
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(appSettings.Jwt.Secret))
                 };
                 
-                // Read JWT from cookie instead of Authorization header
-                options.Events = new Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerEvents
+                // Read JWT from cookie or Authorization header
+                options.Events = new JwtBearerEvents
                 {
                     OnMessageReceived = context =>
                     {
-                        // Try to get token from Authorization header first
-                        var token = context.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
-                        
-                        // If not in header, try cookie
-                        if (string.IsNullOrEmpty(token))
-                        {
-                            token = context.Request.Cookies["accessToken"];
-                        }
-                        
-                        if (!string.IsNullOrEmpty(token))
+                        // Try Authorization header first
+                        var token = context.Request.Cookies["accessToken"];
+                        if (token != null)
                         {
                             context.Token = token;
-                        }
+                        } 
                         
                         return Task.CompletedTask;
                     }
                 };
             });
-
-        services.AddOpenApiDocument(configure =>
+        
+        // Configure CORS
+        services.AddCors(options =>
         {
-            configure.Title = "Swagger UI";
-
-            configure.AddSecurity("JWT", new OpenApiSecurityScheme
+            options.AddPolicy("AllowFrontend", policy =>
             {
-                Type = OpenApiSecuritySchemeType.ApiKey,
-                Name = "Authorization",
-                In = OpenApiSecurityApiKeyLocation.Header,
-                Description = "JWT Authorization header using the Bearer scheme.",
+                policy
+                    .WithOrigins(appSettings.Cors.AllowedOrigins)
+                    .AllowAnyHeader()
+                    .AllowAnyMethod()
+                    .AllowCredentials();
             });
-            configure.OperationProcessors.Add(new AspNetCoreOperationSecurityScopeProcessor("JWT"));
         });
+
+        // Add Swagger in Development
+        if (EnvironmentHelper.IsDevelopment())
+        {
+            services.AddOpenApiDocument(configure =>
+            {
+                configure.Title = "Swagger UI";
+
+                configure.AddSecurity(name: "JWT", swaggerSecurityScheme: new OpenApiSecurityScheme
+                {
+                    Type = OpenApiSecuritySchemeType.ApiKey,
+                    Name = "Authorization",
+                    In = OpenApiSecurityApiKeyLocation.Header,
+                    Description = "JWT Authorization header using the Bearer scheme.",
+                });
+                configure.OperationProcessors.Add(item: new AspNetCoreOperationSecurityScopeProcessor(name: "JWT"));
+            });
+        }
+
         
         // Add controllers to the api
         services.AddControllers();
                 
         services.AddControllers()
-            .AddJsonOptions(options =>
+            .AddJsonOptions(configure: options =>
             {
-                options.JsonSerializerOptions.Converters.Add(new DateTimeConverterCopenhagen());
+                options.JsonSerializerOptions.Converters.Add(item: new DateTimeConverterCopenhagen());
             });
 
         services.AddAuthorization();
-
-
-        /*
-         *  Add service as a singleton, means that one instance of a service is shared across the app -> longer lifetime (configuration, logging, cashing)
-         */
-        // services.AddSingleton();
-
-
-
-    }
-
-    private static void ConfigureOptions(IServiceCollection services,  ConfigurationManager configuration)
-    {
-        services.AddOptions<JwtOptions>()
-            .Bind(configuration.GetSection("JwtOptions"))
-            .ValidateDataAnnotations()
-            .ValidateOnStart();
         
-        services.AddOptions<DbOptions>()
-            .Bind(configuration.GetSection("DbOptions"))
-            .ValidateDataAnnotations()
-            .ValidateOnStart();
-    }
 
+    }
+    
     private static async Task EnsureRolesAreCreatedAsync(IServiceProvider serviceProvider)
     {
         using var  scope = serviceProvider.CreateScope();
@@ -150,7 +202,6 @@ public static class Program
 
         foreach (var roleEnum in Enum.GetValues<UserRole>())
         {
-
             if (!existingRoleNames.Contains(roleEnum))
             {
                 dbContext.Roles.Add(new Role
@@ -163,76 +214,117 @@ public static class Program
         await dbContext.SaveChangesAsync();
     }
     
-    private static async Task EnsureSuperAdminIsCreatedAsync(IServiceProvider serviceProvider)
+    private static async Task EnsureSuperAdminIsCreatedAsync(IServiceProvider serviceProvider, AppSettings appSettings)
     {
-        using var  scope = serviceProvider.CreateScope();
+        using var scope = serviceProvider.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<MyDbContext>();
-        
-        var email = Environment.GetEnvironmentVariable("SUPER_ADMIN_EMAIL");
-        var password = Environment.GetEnvironmentVariable("SUPER_ADMIN_PASSWORD");
 
-        if (email == null || password == null)
+        var user = await dbContext.Users.AnyAsync(x => x.Email == appSettings.Super.Email);
+        var superAdminRole = await dbContext.Roles.FirstOrDefaultAsync(r => r.Name == UserRole.SuperAdmin);
+        
+        if (superAdminRole == null)
         {
-            throw new Exception("Missing environment configuration");
+            throw new Exception("SuperAdmin role not found in database");
         }
-    
-        var user = await dbContext.Users.AnyAsync(x => x.Email == email);
-        var superAdminRole = await dbContext.Roles.FirstOrDefaultAsync(r=>r.Name == UserRole.SuperAdmin);
         
-        if (!user && superAdminRole != null)
+        if (!user)
         {
-            HashUtils.CreatePasswordHash(password, out var passwordHash, out var passwordSalt);
+            HashUtils.CreatePasswordHash(appSettings.Super.Password, out var passwordHash, out var passwordSalt);
 
-            var superAdmin = new Admin()
+            var superAdmin = new Admin
             {
-                Email = email,
+                Email = appSettings.Super.Email,
                 PasswordHash = passwordHash,
                 PasswordSalt = passwordSalt
             };
-            
             
             superAdmin.Roles.Add(superAdminRole);
             superAdminRole.Users.Add(superAdmin);
 
             dbContext.Users.Add(superAdmin);
+            await dbContext.SaveChangesAsync();
+            
+            Console.WriteLine($"SuperAdmin created: {appSettings.Super.Email}");
         }
-        await dbContext.SaveChangesAsync();
     }
 
     public static async Task Main(string[] args)
     {
-        var builder = WebApplication.CreateBuilder(args);
-        
-        ConfigureOptions(builder.Services, builder.Configuration);
-        ConfigureServices(builder.Services, builder.Configuration);
-        builder.Services.AddCors(options =>
+        try
         {
-            options.AddPolicy("AllowFrontend", policy =>
+            // Load and validate environment variables
+            LoadEnvironmentVariables();
+            
+            // Build configuration from environment
+            var appSettings = BuildAppSettings();
+            
+            var builder = WebApplication.CreateBuilder(args);
+            
+            // Configure services with validated settings
+            ConfigureServices(builder.Services, appSettings);
+            
+            // Add controllers
+            builder.Services.AddControllers()
+                .AddJsonOptions(options =>
+                {
+                    options.JsonSerializerOptions.Converters.Add(new DateTimeConverterCopenhagen());
+                });
+            
+            builder.Services.AddAuthorization();
+
+            var app = builder.Build();
+            
+            // Development-only middleware
+            if (app.Environment.IsDevelopment())
             {
-                policy
-                    .WithOrigins("http://localhost:5173") // ← React App
-                    .AllowAnyHeader()
-                    .AllowAnyMethod()
-                    .AllowCredentials(); // ← REQUIRED when using cookies
-            });
-        });
-
-        var app = builder.Build();
-        app.UseCors("AllowFrontend");
-        app.UseAuthentication();
-        app.UseAuthorization();
-        
-        // Maps added controllers to the API 
-        app.MapControllers();
-
-        // Needed for Swagger to work   
-        app.UseOpenApi();
-        app.UseSwaggerUi();
-
-        await EnsureRolesAreCreatedAsync(app.Services);
-        await EnsureSuperAdminIsCreatedAsync(app.Services);
-        
-        await app.RunAsync();
-        
+                Console.WriteLine("✓ Running in Development mode");
+                app.UseOpenApi();
+                app.UseSwaggerUi();
+            }
+            else
+            {
+                Console.WriteLine("✓ Running in Production mode");
+            }
+            
+            // Configure middleware pipeline
+            app.UseCors("AllowFrontend");
+            app.UseAuthentication();
+            app.UseAuthorization();
+            app.MapControllers();
+            
+            // Apply pending migrations automatically
+            using (var scope = app.Services.CreateScope())
+            {
+                var dbContext = scope.ServiceProvider.GetRequiredService<MyDbContext>();
+                var pendingMigrations = await dbContext.Database.GetPendingMigrationsAsync();
+                if (pendingMigrations.Any())
+                {
+                    Console.WriteLine($"[DB] Applying {pendingMigrations.Count()} pending migration(s)...");
+                    await dbContext.Database.MigrateAsync();
+                    Console.WriteLine("[DB] ✓ Migrations applied successfully");
+                }
+                else
+                {
+                    Console.WriteLine("[DB] ✓ Database schema is up to date");
+                }
+            }
+            
+            // Initialize database
+            await EnsureRolesAreCreatedAsync(app.Services);
+            await EnsureSuperAdminIsCreatedAsync(app.Services, appSettings);
+            
+            Console.WriteLine($"  Application started successfully");
+            Console.WriteLine($"  Environment: {EnvironmentHelper.GetEnvironment()}");
+            Console.WriteLine($"  Database: {appSettings.Database.ConnectionString.Split(';')[0]}");
+            Console.WriteLine($"  CORS Origins: {string.Join(", ", appSettings.Cors.AllowedOrigins)}");
+            
+            await app.RunAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Application failed to start: {ex.Message}");
+            Console.WriteLine(ex.StackTrace);
+            throw;
+        }
     }
 }
