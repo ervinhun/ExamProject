@@ -3,7 +3,7 @@ import { atom } from 'jotai'
 import type { User } from '../types/users';
 import { atomWithStorage } from 'jotai/utils';
 import { errorAtom } from './error';
-import { AuthUser } from '@core/types/auth';
+import type { AuthUser } from '@core/types/auth';
 
 // Auth user shape used by the client convenience atoms
 
