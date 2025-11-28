@@ -1,20 +1,42 @@
-﻿using DataAccess.Entities.Auth;
+﻿using System;
+using DataAccess.Entities.Auth;
 using DataAccess.Entities.Finance;
 using DataAccess.Entities.Game;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.Extensions.Options;
-
+using DotNetEnv;
+using Utils;
 
 
 namespace DataAccess;
 
+/// <summary>
+/// Design-time factory used only by EF Core tools (migrations add/update).
+/// At runtime the application builds the DbContext via dependency injection in Program.cs.
+/// This factory resolves the connection string from environment variable CONNECTION_STRING so
+/// migrations can target Neon or local Postgres without hardcoding secrets.
+/// </summary>
 public class MyDbContextFactory : IDesignTimeDbContextFactory<MyDbContext>
 {
+    private const string ConnectionStringEnv = "CONNECTION_STRING";
+
+
+
     public MyDbContext CreateDbContext(string[] args)
     {
         var optionsBuilder = new DbContextOptionsBuilder<MyDbContext>();
-        optionsBuilder.UseNpgsql("Host=localhost;Port=5432;Database=LotteryApp;Username=postgres;Password=postgres");
+
+        var connectionString = EnvironmentHelper.GetRequired(ConnectionStringEnv);
+
+        if (string.IsNullOrWhiteSpace(connectionString))
+        {
+            // Fallback for local design-time usage if env var not set.
+            connectionString = "Host=localhost;Port=5432;Database=LotteryApp;Username=postgres;Password=postgres;SslMode=Disable";
+            Console.WriteLine($"[MyDbContextFactory] WARNING: {ConnectionStringEnv} not set. Falling back to local connection string.");
+        }
+
+        optionsBuilder.UseNpgsql(connectionString);
         return new MyDbContext(optionsBuilder.Options);
     }
 }
