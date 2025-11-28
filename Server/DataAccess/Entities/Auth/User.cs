@@ -16,6 +16,8 @@ public class User
     [MaxLength(255)]
     public string PhoneNumber { get; set; } = string.Empty;
     
+    public DateTime DateOfBirth { get; set; }
+    
     [EmailAddress]
     [MaxLength(255)]
     [Required]
