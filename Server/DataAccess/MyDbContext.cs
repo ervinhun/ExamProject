@@ -20,9 +20,7 @@ namespace DataAccess;
 public class MyDbContextFactory : IDesignTimeDbContextFactory<MyDbContext>
 {
     private const string ConnectionStringEnv = "CONNECTION_STRING";
-
-
-
+    
     public MyDbContext CreateDbContext(string[] args)
     {
         var optionsBuilder = new DbContextOptionsBuilder<MyDbContext>();
