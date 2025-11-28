@@ -1,5 +1,6 @@
 using Api.Dto.Auth.Request;
 using Api.Dto.Auth.Response;
+using Api.Dto.User;
 using Api.Services.Auth;
 using DataAccess;
 using DataAccess.Entities.Auth;
@@ -48,5 +49,24 @@ public class MyAuthenticationService(MyDbContext ctx, IJwt jwt) : IMyAuthenticat
         
         return newUser;
     }
-    
+
+    public Task<UserDto> GetAuthenticatedUserById(Guid id)
+    {
+        var user =  ctx.Users.Include(user => user.Roles).FirstOrDefault(u => u.Id == id);
+        if (user == null) throw new ServiceException("User not found");
+        return Task.FromResult(new UserDto
+        {
+            Id = user.Id,
+            Email = user.Email,
+            FirstName = user.FirstName,
+            LastName = user.LastName,
+            CreatedAt = DateTimeHelper.ToCopenhagen(user.CreatedAt),
+            UpdatedAt = DateTimeHelper.ToCopenhagen(user.UpdatedAt),
+        });
+    }
+
+    public Task<UserDto> GetAuthenticatedUserByEmail(string email)
+    {
+        throw new NotImplementedException();
+    }
 }

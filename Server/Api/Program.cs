@@ -47,6 +47,8 @@ public static class Program
             "JWT_SECRET",
             "JWT_ISSUER",
             "JWT_AUDIENCE",
+            "JWT_EXPIRATION_MINUTES",
+            "JWT_REFRESH_TOKEN_DAYS",
             "SUPER_EMAIL",
             "SUPER_PASSWORD",
             "CLIENT_HOST"
@@ -132,7 +134,6 @@ public static class Program
                 {
                     OnMessageReceived = context =>
                     {
-                        // Try Authorization header first
                         var token = context.Request.Cookies["accessToken"];
                         if (token != null)
                         {
@@ -156,7 +157,19 @@ public static class Program
                     .AllowCredentials();
             });
         });
+        
+        // Add controllers to the api
+        services.AddControllers();
+                
+        services.AddControllers()
+            .AddJsonOptions(configure: options =>
+            {
+                options.JsonSerializerOptions.Converters.Add(item: new DateTimeConverterCopenhagen());
+            });
 
+        services.AddAuthorization();
+        
+        
         // Add Swagger in Development
         if (EnvironmentHelper.IsDevelopment())
         {
@@ -174,19 +187,6 @@ public static class Program
                 configure.OperationProcessors.Add(item: new AspNetCoreOperationSecurityScopeProcessor(name: "JWT"));
             });
         }
-
-        
-        // Add controllers to the api
-        services.AddControllers();
-                
-        services.AddControllers()
-            .AddJsonOptions(configure: options =>
-            {
-                options.JsonSerializerOptions.Converters.Add(item: new DateTimeConverterCopenhagen());
-            });
-
-        services.AddAuthorization();
-        
 
     }
     
@@ -214,12 +214,12 @@ public static class Program
         await dbContext.SaveChangesAsync();
     }
     
-    private static async Task EnsureSuperAdminIsCreatedAsync(IServiceProvider serviceProvider, AppSettings appSettings)
+    private static async Task EnsureSuperAdminIsCreatedAsync(IServiceProvider serviceProvider, SuperSettings superSettings)
     {
         using var scope = serviceProvider.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<MyDbContext>();
 
-        var user = await dbContext.Users.AnyAsync(x => x.Email == appSettings.Super.Email);
+        var user = await dbContext.Users.AnyAsync(x => x.Email == superSettings.Email);
         var superAdminRole = await dbContext.Roles.FirstOrDefaultAsync(r => r.Name == UserRole.SuperAdmin);
         
         if (superAdminRole == null)
@@ -229,11 +229,11 @@ public static class Program
         
         if (!user)
         {
-            HashUtils.CreatePasswordHash(appSettings.Super.Password, out var passwordHash, out var passwordSalt);
+            HashUtils.CreatePasswordHash(superSettings.Password, out var passwordHash, out var passwordSalt);
 
             var superAdmin = new Admin
             {
-                Email = appSettings.Super.Email,
+                Email = superSettings.Email,
                 PasswordHash = passwordHash,
                 PasswordSalt = passwordSalt
             };
@@ -244,7 +244,7 @@ public static class Program
             dbContext.Users.Add(superAdmin);
             await dbContext.SaveChangesAsync();
             
-            Console.WriteLine($"SuperAdmin created: {appSettings.Super.Email}");
+            Console.WriteLine($"SuperAdmin created: {superSettings.Email}");
         }
     }
 
@@ -297,9 +297,10 @@ public static class Program
             {
                 var dbContext = scope.ServiceProvider.GetRequiredService<MyDbContext>();
                 var pendingMigrations = await dbContext.Database.GetPendingMigrationsAsync();
-                if (pendingMigrations.Any())
+                var migrations = pendingMigrations as string[] ?? pendingMigrations.ToArray();
+                if (migrations.Any())
                 {
-                    Console.WriteLine($"[DB] Applying {pendingMigrations.Count()} pending migration(s)...");
+                    Console.WriteLine($"[DB] Applying {migrations.Count()} pending migration(s)...");
                     await dbContext.Database.MigrateAsync();
                     Console.WriteLine("[DB] ✓ Migrations applied successfully");
                 }
@@ -311,7 +312,7 @@ public static class Program
             
             // Initialize database
             await EnsureRolesAreCreatedAsync(app.Services);
-            await EnsureSuperAdminIsCreatedAsync(app.Services, appSettings);
+            await EnsureSuperAdminIsCreatedAsync(app.Services, appSettings.Super);
             
             Console.WriteLine($"  Application started successfully");
             Console.WriteLine($"  Environment: {EnvironmentHelper.GetEnvironment()}");

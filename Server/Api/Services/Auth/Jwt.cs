@@ -9,6 +9,7 @@ using Api.Dto.Auth.Response;
 using DataAccess;
 using DataAccess.Entities.Auth;
 using DataAccess.Enums;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Utils.Exceptions;
@@ -22,7 +23,7 @@ public class Jwt(JwtSettings jwtSettings, MyDbContext ctx): IJwt
     {
         try
         {
-            var user = await ValidateRefreshTokenForUserIdAsync(refreshTokenRequest.UserId, refreshTokenRequest.RefreshToken);
+            var user = await ValidateRefreshTokenForUserIdAsync(Guid.Parse(refreshTokenRequest.UserId), refreshTokenRequest.RefreshToken);
             if (user != null) return await CreateTokenResponse(user);
         }
         catch (AuthenticationException e)
@@ -35,9 +36,10 @@ public class Jwt(JwtSettings jwtSettings, MyDbContext ctx): IJwt
 
     public async Task<JwtResponseDto> CreateTokenResponse(User user)
     {
+        var accessToken = GenerateAccessToken(user);
         return new JwtResponseDto
         {
-            AccessToken = GenerateAccessToken(user),
+            AccessToken = accessToken,
             RefreshToken = await GenerateAndSaveRefreshTokenAsync(user) ?? user.RefreshTokenHash,
             User = new UserResponseDto()
             {
@@ -55,9 +57,17 @@ public class Jwt(JwtSettings jwtSettings, MyDbContext ctx): IJwt
 
     private async Task<User?> ValidateRefreshTokenForUserIdAsync(Guid userId, string refreshToken)
     {
-        var user = await ctx.Users.FindAsync(userId);
+        // Must include Roles to generate new access token with roles claims
+        var user = await ctx.Users
+            .Include(u => u.Roles)
+            .FirstOrDefaultAsync(u => u.Id == userId);
+            
         if(user is null) throw new AuthenticationException("User not found while refreshing token");
-        if(user.RefreshTokenHash != refreshToken) throw new AuthenticationException("Invalid refresh token");
+        
+        // Hash the incoming token to compare with stored hash
+        var hashedRefreshToken = HashUtils.HashRefreshToken(refreshToken);
+        if(user.RefreshTokenHash != hashedRefreshToken) throw new AuthenticationException("Failed while validating refreshToken");
+        
         if(user.RefreshTokenExpires < DateTime.UtcNow) throw new AuthenticationException("Refresh token expired");
         
         return user;
@@ -65,11 +75,6 @@ public class Jwt(JwtSettings jwtSettings, MyDbContext ctx): IJwt
     
     private async Task<string?> GenerateAndSaveRefreshTokenAsync(User user)
     {
-        if (user.RefreshTokenExpires > DateTime.UtcNow)
-        {
-            return null;
-        }
-        
         var refreshToken = HashUtils.GenerateRefreshToken(); 
         user.RefreshTokenHash = HashUtils.HashRefreshToken(refreshToken);
         user.RefreshTokenExpires = DateTime.UtcNow.AddDays(jwtSettings.RefreshTokenDays);
@@ -84,9 +89,9 @@ public class Jwt(JwtSettings jwtSettings, MyDbContext ctx): IJwt
         {
             new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
             new Claim(ClaimTypes.Email, user.Email),
-            new  Claim(ClaimTypes.DateOfBirth, DateTimeHelper.ToCopenhagen(user.DateOfBirth).ToString(CultureInfo.CurrentCulture)),
-            new  Claim(ClaimTypes.Name , user.FirstName ),
-            new  Claim(ClaimTypes.Surname, user.LastName ),
+            new Claim(ClaimTypes.Name, user.FirstName),
+            new Claim(ClaimTypes.Surname, user.LastName),
+            new Claim(ClaimTypes.DateOfBirth, DateTimeHelper.ToCopenhagen(user.DateOfBirth).ToString(CultureInfo.CurrentCulture)),
         };
 
         foreach (var role in user.Roles)

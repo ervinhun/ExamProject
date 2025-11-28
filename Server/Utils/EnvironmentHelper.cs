@@ -1,3 +1,5 @@
+using DotNetEnv;
+
 namespace Utils;
 
 public static class EnvironmentHelper
@@ -115,4 +117,5 @@ public static class EnvironmentHelper
     {
         return GetEnvironment().Equals("Production", StringComparison.OrdinalIgnoreCase);
     }
+    
 }

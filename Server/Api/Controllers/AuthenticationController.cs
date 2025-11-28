@@ -1,10 +1,12 @@
 using System.Reflection.Metadata;
+using System.Security.Claims;
 using Api.Configuration;
 using Api.Dto.Auth.Request;
 using Api.Dto.Auth.Response;
 using Api.Dto.User;
 using api.Services;
 using Api.Services.Auth;
+using Api.Helpers;
 using DataAccess.Enums;
 using Microsoft.AspNetCore.Mvc;
 using Utils;
@@ -19,34 +21,14 @@ public class AuthenticationController(IMyAuthenticationService authenticationSer
         [HttpPost("logout")]
         public IActionResult Logout()
         {
-            var u = User.FindFirst("sub");
-            var isDev = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development";
-                
-         
-            var cookieOptions = new CookieOptions
+            if (User.Identity is { IsAuthenticated: true })
             {
-                HttpOnly = true,
-                MaxAge = TimeSpan.Zero,
-                Path = "/"
-            };
-            
-            if (isDev)
-            {
-                // Localhost (HTTP) configuration
-                cookieOptions.Secure = false;
-                cookieOptions.SameSite = SameSiteMode.Lax; 
+                var cookieOptions = CookieHelper.CreateExpiredCookieOptions();
+                Response.Cookies.Append("accessToken", "", cookieOptions);
+                Response.Cookies.Append("refreshToken", "", cookieOptions);
+                return Ok(200);
             }
-            else
-            {
-                // Production (HTTPS) configuration
-                cookieOptions.Secure = true;
-                cookieOptions.SameSite = SameSiteMode.None; 
-            }
-
-            Console.Out.WriteLine(u);
-            Response.Cookies.Append("refreshToken", "", cookieOptions);
-            Response.Cookies.Append("accessToken", "", cookieOptions);
-            return Ok(200);
+            return BadRequest("User is not authenticated");
         }
 
         [HttpPost("login")]
@@ -60,43 +42,12 @@ public class AuthenticationController(IMyAuthenticationService authenticationSer
                 }
                 
                 var result = await authenticationService.Login(loginRequestDto);
-                var isDev = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development";
                 
-         
-                var cookieOptionsRefresh = new CookieOptions
-                {
-                    HttpOnly = true,
-                    MaxAge = TimeSpan.FromDays(appSettings.Jwt.RefreshTokenDays),
-                    Path = "/"
-                };
+                var cookieOptionsAccess = CookieHelper.CreateAccessTokenCookieOptions(appSettings.Jwt.ExpirationMinutes);
+                var cookieOptionsRefresh = CookieHelper.CreateRefreshTokenCookieOptions(appSettings.Jwt.RefreshTokenDays);
 
-                var cookieOptionsAccess = new CookieOptions
-                {
-                    HttpOnly = true,
-                    MaxAge = TimeSpan.FromMinutes(appSettings.Jwt.ExpirationMinutes),
-                    Path = "/"
-                };
-                
-                if (isDev)
-                {
-                    // Localhost (HTTP) configuration
-                    cookieOptionsAccess.Secure = false;
-                    cookieOptionsRefresh.Secure = false;
-                    cookieOptionsAccess.SameSite = SameSiteMode.Lax; 
-                    cookieOptionsRefresh.SameSite = SameSiteMode.Lax; 
-                }
-                else
-                {
-                    // Production (HTTPS) configuration
-                    cookieOptionsAccess.Secure = true;
-                    cookieOptionsRefresh.Secure = true;
-                    cookieOptionsAccess.SameSite = SameSiteMode.None;
-                    cookieOptionsRefresh.SameSite = SameSiteMode.None;
-                }
-                
-
-                Response.Cookies.Append("refreshToken", result.RefreshToken, cookieOptionsRefresh);
                 Response.Cookies.Append("accessToken", result.AccessToken, cookieOptionsAccess);
+                Response.Cookies.Append("refreshToken", result.RefreshToken, cookieOptionsRefresh);
                 
                 return Ok(new
                 {
@@ -124,26 +75,30 @@ public class AuthenticationController(IMyAuthenticationService authenticationSer
         }
     
         [HttpPost("refresh-token")]
-        public async Task<ActionResult<JwtResponseDto>> RefreshToken(Guid userId)
+        public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenRequestDto request)
         {
             var refreshToken = Request.Cookies["refreshToken"];
-            if(refreshToken == null) throw new NullReferenceException("refreshToken is null");
-
+            if(refreshToken == null) return Unauthorized(new { message = "Refresh token not found" });
             try
             {
-                await jwt.RefreshTokenAsync(new RefreshTokenRequestDto
+                var result = await jwt.RefreshTokenAsync(new RefreshTokenRequestDto
                 {
-                    RefreshToken =  refreshToken,
-                    UserId = userId
+                    RefreshToken = refreshToken,
+                    UserId = request.UserId
                 });
+
+                var cookieOptionsAccess = CookieHelper.CreateAccessTokenCookieOptions(appSettings.Jwt.ExpirationMinutes);
+                var cookieOptionsRefresh = CookieHelper.CreateRefreshTokenCookieOptions(appSettings.Jwt.RefreshTokenDays);
+
+                Response.Cookies.Append("accessToken", result.AccessToken, cookieOptionsAccess);
+                Response.Cookies.Append("refreshToken", result.RefreshToken, cookieOptionsRefresh);
     
-                return Ok(200);
+                return Ok(new { user = result.User });
             }
             catch
             {
-                return BadRequest("refreshToken is invalid");
+                return BadRequest(new { message = "Refresh token is invalid" });
             }
-
         }
 
         [HttpGet("profile")]
@@ -157,26 +112,25 @@ public class AuthenticationController(IMyAuthenticationService authenticationSer
             try
             {
                 var userId = User.FindFirst("sub")?.Value;
-                var email = User.FindFirst("email")?.Value;
-                var roles = User.FindAll("role")
-                    .Select(c => Enum.Parse<UserRole>(c.Value))
+                var email = User.FindFirst(ClaimTypes.Email)?.Value;
+                var firstName = User.FindFirst(ClaimTypes.Name)?.Value;
+                var lastName = User.FindFirst(ClaimTypes.Surname)?.Value;
+                var roles = User.FindAll(ClaimTypes.Role)
+                    .Select(c => Enum.Parse<UserRole>(c.Value, ignoreCase: true))
                     .ToList();
-                var name = User.FindFirst("name")?.Value;
-                var surname = User.FindFirst("surname")?.Value;
                 
-                 
                 return Ok(new UserDto
                 {
                     Id = Guid.Parse(userId!),
-                    FirstName = name!,
-                    LastName = surname!,
+                    FirstName = firstName!,
+                    LastName = lastName!,
                     Email = email!,
-                    Roles = roles,
+                    Roles = roles
                 });
-            }catch(ArgumentNullException e)
-            {
-                return BadRequest(new { message = e.Message});
             }
- 
+            catch (ArgumentNullException e)
+            {
+                return BadRequest(new { message = e.Message });
+            }
         }
 }
