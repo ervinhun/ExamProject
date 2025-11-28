@@ -84,10 +84,14 @@ export async function api<T>(
     const {schema, init, skipRetry = false} = options || {};
     console.log(schema, init);
 
-    const headers = {
-        "Content-Type": "application/json",
+    const headers: Record<string, string> = {
         ...init?.headers
     } as Record<string, string>
+    
+    // Only add Content-Type if there's a body
+    if (init?.body) {
+        headers["Content-Type"] = "application/json";
+    }
     
     if (headers["authorization"]) {
         throw new Error("Authorization header not allowed - using httpOnly cookies");
