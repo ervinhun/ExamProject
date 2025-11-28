@@ -102,35 +102,47 @@ public class AuthenticationController(IMyAuthenticationService authenticationSer
         }
 
         [HttpGet("profile")]
-        public ActionResult<UserDto> Profile()
+        public IActionResult Profile()
         {
-            if (User.Identity is { IsAuthenticated: false })
+            if (User.Identity is not { IsAuthenticated: true })
             {
                 return Unauthorized(new { message = "User is not authenticated" });
             }
 
             try
             {
-                var userId = User.FindFirst("sub")?.Value;
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value 
+                           ?? User.FindFirst("sub")?.Value;
                 var email = User.FindFirst(ClaimTypes.Email)?.Value;
                 var firstName = User.FindFirst(ClaimTypes.Name)?.Value;
                 var lastName = User.FindFirst(ClaimTypes.Surname)?.Value;
+                
+                if (string.IsNullOrEmpty(userId))
+                {
+                    return BadRequest(new { message = "User ID claim not found in token" });
+                }
+                
+                if (string.IsNullOrEmpty(email))
+                {
+                    return BadRequest(new { message = "Email claim not found in token" });
+                }
+                
                 var roles = User.FindAll(ClaimTypes.Role)
                     .Select(c => Enum.Parse<UserRole>(c.Value, ignoreCase: true))
                     .ToList();
                 
                 return Ok(new UserDto
                 {
-                    Id = Guid.Parse(userId!),
-                    FirstName = firstName!,
-                    LastName = lastName!,
-                    Email = email!,
+                    Id = Guid.Parse(userId),
+                    FirstName = firstName ?? "",
+                    LastName = lastName ?? "",
+                    Email = email,
                     Roles = roles
                 });
             }
-            catch (ArgumentNullException e)
+            catch (Exception e)
             {
-                return BadRequest(new { message = e.Message });
+                return BadRequest(new { message = $"Profile error: {e.Message}" });
             }
         }
 }
