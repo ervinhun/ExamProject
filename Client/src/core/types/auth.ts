@@ -19,7 +19,7 @@ export interface RegisterRequest {
 
 // Keep naming consistent with backend DTO names AccessToken = accessToken
 export interface AuthResponseDto {
-  accessToken: string | null;
+  // accessToken: string | null;
   user: User | null;
 }
 
@@ -28,5 +28,5 @@ export type AuthUser = {
     name: string | null;
     email: string | null;
     roles: number[];
-    token: string | null;
+    // token: string | null;
 };

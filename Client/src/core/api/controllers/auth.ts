@@ -3,53 +3,37 @@ import { api } from "../Api";
 import { type User } from "../../types/users";
 
 const endpoint = "/api/auth";
-export const loginRequest = async (loginRequest: LoginRequestDto): Promise<AuthResponseDto> =>{
-        const raw = await api<{ accessToken?: string | null; user: User }>(`${endpoint}/login`, {
-                        init: {
-                            method: "POST",
-                            body: JSON.stringify(loginRequest)
-                        }
-                    });
 
-                const response: AuthResponseDto = {
-                    accessToken: raw.accessToken ?? null,
-                    user: raw.user ?? null
-                };
-                return response;
-}
+export const authApi = {
+    login: async (loginRequest: LoginRequestDto): Promise<AuthResponseDto> => {
+        return await api<{ user: User }>(`${endpoint}/login`, {
+            init: {
+                method: "POST",
+                body: JSON.stringify(loginRequest)
+            }
+        }).then((raw) => {
+            const response: AuthResponseDto = {
+                user: raw.user ?? null
+            };
+            return response;
+        }).catch((err) => {
+            throw err;
+        });
+    },
 
-export const logoutRequest = async (): Promise<void> => {
-    try{
+    logout: async (): Promise<void> => {
         return await api<void>(`${endpoint}/logout`, {
                 init: {
                     method: "POST"
                 }
-            });
-    }catch(err){
-        // throw err;
-        console.error("Logout error:", err);
-        return;
-    }
-}
+            }).catch((err) => { err.message; throw err; });
+    },
 
-
-export const meRequest = async (): Promise<AuthResponseDto> => {
-    try{
-        const raw = await api<{accessToken?: string | null; user: User}>(`${endpoint}/me`, {
+    profile: async (): Promise<User> => {
+        return await api<User>(`${endpoint}/profile`, {
                 init: {
                     method: "GET"
                 }
-            });
-        const response: AuthResponseDto = {
-            accessToken: raw.accessToken ?? null,
-            user: raw.user ?? null
-        };
-        return response;
-    }catch(err){
-        console.error("Me error:", err);
-        return {
-            accessToken: null,
-            user: null
-        };
+            }).catch((err) => { err.message; throw err; });
     }
-}
+};

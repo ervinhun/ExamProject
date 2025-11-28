@@ -8,7 +8,6 @@ export default function AllPlayers() {
     useEffect(() => {
         fetchPlayers();
     }, []);
-
     return (
         <div className="w-full p-6">
             <div className="mb-6">

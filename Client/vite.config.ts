@@ -1,6 +1,8 @@
 import {defineConfig} from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from "@tailwindcss/vite";
+import {envConfig} from './src/core/config/EnvConfig';
+
 import path from 'path';
 // import {envConfig}
 
@@ -17,7 +19,7 @@ export default defineConfig({
     port: 5173,
     proxy: {
       '/api': {
-        target: 'http://localhost:5152',
+        target: envConfig.API_URL,
         changeOrigin: true,
         secure: false,
         rewrite: (path) => path.replace(/^\/api/, '/api'),
@@ -25,3 +27,4 @@ export default defineConfig({
     },
   },
 })
+
