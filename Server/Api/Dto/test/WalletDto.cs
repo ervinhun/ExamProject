@@ -1,6 +1,6 @@
 namespace Api.Dto.test;
 
-public record WalletDto
+public class WalletDto
 {
     public Guid Id { get; set; }
     public Guid PlayerId { get; set; }
