@@ -4,5 +4,5 @@ namespace Api.Services.Game;
 
 public interface IWalletTransactionsService
 {
-    Task<WalletDto>
+    
 }
