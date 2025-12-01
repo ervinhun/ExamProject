@@ -1,8 +1,12 @@
+using Api.Dto.Game;
 using Api.Dto.test;
+using Api.Services.Admin;
 using Api.Services.Auth;
+using Api.Services.Management;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
+using Utils.Exceptions;
 
 namespace Api.Controllers.Game;
 
@@ -10,7 +14,7 @@ namespace Api.Controllers.Game;
 [Authorize(Roles = "superadmin,admin,player")]
 [ApiController]
 [Route("api/games")]
-public class GameController
+public class GameController(IGameManagementService gameManagementService) : ControllerBase
 {
 
     [HttpGet("all")]
@@ -20,16 +24,44 @@ public class GameController
     }
 
     [HttpGet("active")]
-    public async Task<ActionResult<List<GameInstanceDto>>> GetAllActiveGamesAsync()
+    public async Task<IActionResult> GetAllActiveGamesAsync()
     {
-        return null;
+        try
+        {
+            var activeGames = gameManagementService.GetAllActiveGamesAsync().Result;
+            return Ok(activeGames);
+        }
+        catch (ServiceException ex)
+        {
+            return Conflict(ex.Message);
+        }
+    }
+
+    [HttpPost("start")]
+    public async Task StartGameInstanceAsync([FromBody] GameInstanceDto gameInstanceDto)
+    {
+        try
+        {
+            await gameManagementService.StartGameInstance(gameInstanceDto);
+        }catch(Exception ex)
+        {
+            Conflict(ex.Message);
+        }
     }
     
     [Authorize(Roles = "admin,superadmin")]
-    [HttpGet("templates")]
-    public async Task<ActionResult<List<GameTemplateResponseDto>>> GetAllTemplatesAsync()
+    [HttpGet("templates/all")]
+    public async Task<IActionResult> GetAllTemplatesAsync()
     {
-        return null;
+        try
+        {
+            var templates = await gameManagementService.GetGameTemplates();
+            return Ok(templates);
+        }
+        catch (Exception ex)
+        {
+            return Conflict(ex.Message);
+        }
     }
 
     [Authorize(Roles = "admin,superadmin")]
@@ -41,9 +73,17 @@ public class GameController
     
     [Authorize(Roles = "admin,superadmin")]
     [HttpPost("templates/create")]
-    public async Task<ActionResult> CreateGameTemplate([FromBody] CreateGameTemplateRequestDto dto)
+    public async Task<IActionResult> CreateGameTemplate([FromBody] CreateGameTemplateRequestDto dto)
     {
-        return null;
+        try
+        {
+            await gameManagementService.CreateGameTemplate(dto);
+            return Ok(dto);
+        }
+        catch (ServiceException ex)
+        {
+            return Conflict(ex.Message);
+        }
     }
 
     [Authorize(Roles = "admin,superadmin")]

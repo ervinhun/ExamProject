@@ -2,6 +2,7 @@ using System.Security.Cryptography;
 using Api.Dto.test;
 using Api.Dto.User;
 using Api.Services.Email;
+using Api.Services.Management;
 using DataAccess;
 using DataAccess.Entities.Auth;
 using DataAccess.Entities.Finance;
@@ -79,7 +80,7 @@ public class UserManagementService(MyDbContext ctx, IEmailService emailService) 
             PhoneNumber = createPlayerDto.PhoneNumber,
             PasswordHash = hash,
             PasswordSalt = salt,
-            Activated = false
+            Activated = true
         };
         
         // Assign player role

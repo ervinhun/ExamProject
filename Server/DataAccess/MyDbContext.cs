@@ -2,6 +2,7 @@
 using DataAccess.Entities.Auth;
 using DataAccess.Entities.Finance;
 using DataAccess.Entities.Game;
+using DataAccess.Enums;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.Extensions.Options;
@@ -19,20 +20,12 @@ namespace DataAccess;
 /// </summary>
 public class MyDbContextFactory : IDesignTimeDbContextFactory<MyDbContext>
 {
-    private const string ConnectionStringEnv = "CONNECTION_STRING";
-    
     public MyDbContext CreateDbContext(string[] args)
     {
         var optionsBuilder = new DbContextOptionsBuilder<MyDbContext>();
 
-        var connectionString = EnvironmentHelper.GetRequired(ConnectionStringEnv);
-
-        if (string.IsNullOrWhiteSpace(connectionString))
-        {
-            // Fallback for local design-time usage if env var not set.
-            connectionString = "Host=localhost;Port=5432;Database=LotteryApp;Username=postgres;Password=postgres;SslMode=Disable";
-            Console.WriteLine($"[MyDbContextFactory] WARNING: {ConnectionStringEnv} not set. Falling back to local connection string.");
-        }
+        // Use EnvironmentHelper to automatically find and load .env file
+        var connectionString = EnvironmentHelper.LoadAndGetConnectionString();
 
         optionsBuilder.UseNpgsql(connectionString);
         return new MyDbContext(optionsBuilder.Options);
@@ -45,19 +38,18 @@ public class MyDbContext(DbContextOptions<MyDbContext> options) : DbContext(opti
     public DbSet<Player> Players => Set<Player>();
     public DbSet<Wallet> Wallets => Set<Wallet>();
     public DbSet<Transaction> Transactions => Set<Transaction>();
+    public DbSet<TransactionHistory> TransactionHistories => Set<TransactionHistory>();
     public DbSet<Role> Roles => Set<Role>();
     public DbSet<Admin> Admins => Set<Admin>();
     public DbSet<GameInstance> GameInstances => Set<GameInstance>();
     public DbSet<GameTemplate> GameTemplates => Set<GameTemplate>();
     public DbSet<WinningNumber> WinningNumbers => Set<WinningNumber>();
-    
+    public DbSet<LotteryTicket>  LotteryTickets => Set<LotteryTicket>();
+    public DbSet<PickedNumber> PickedNumbers => Set<PickedNumber>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        /*
-         * Define global schema
-         */
-        modelBuilder.HasDefaultSchema("LotteryApp");
-        
+
         /*
          * TPT - Table Per Type Strategy -> Each type/class has its own table in DataBase
          */
@@ -71,18 +63,23 @@ public class MyDbContext(DbContextOptions<MyDbContext> options) : DbContext(opti
             userEntity
                 .HasMany(u => u.Roles)
                 .WithMany(r => r.Users)
-                .UsingEntity(j=>j.ToTable("RoleUser"))
-                .HasIndex(u=>u.Email).IsUnique();
+                .UsingEntity(j => j.ToTable("RoleUser"))
+                .HasIndex(u => u.Email).IsUnique();
         });
-        
+
         modelBuilder.Entity<Player>(playerEntity =>
         {
             // Player -> Wallet : One-to-One
             playerEntity
                 .HasOne(p => p.Wallet);
+
+            playerEntity
+                .HasMany(p => p.LotteryTickets)
+                .WithOne(t => t.Player)
+                .OnDelete(DeleteBehavior.Restrict);
         });
 
-        
+
         modelBuilder.Entity<Transaction>(transactionEntity =>
         {
             // Transaction -> Wallet : Many-to-One
@@ -91,31 +88,57 @@ public class MyDbContext(DbContextOptions<MyDbContext> options) : DbContext(opti
                 .WithMany(w => w.Transactions)
                 .HasForeignKey(t => t.WalletId)
                 .OnDelete(DeleteBehavior.Restrict);
-            
+
             // Transaction -> Player : Foreign key only (no navigation to avoid circular dependency)
             transactionEntity
-                .HasIndex(t => t.PlayerId);
+                .HasIndex(t => t.ActionUser);
+
+        });
+
+        modelBuilder.Entity<TransactionHistory>(transactionHistoryEntity =>
+        {
+            transactionHistoryEntity
+                .HasOne(t => t.Transaction)
+                .WithMany(t => t.TransactionHistory)
+                .HasForeignKey(t => t.TransactionId)
+                .OnDelete(DeleteBehavior.Restrict);
         });
 
         modelBuilder.Entity<GameInstance>(gameInstanceEntity =>
         {
             // GameInstance -> GameTemplate : One-to-One Unidirectional
             gameInstanceEntity
-                .HasOne(g => g.GameTemplate)
-                .WithOne()
-                .HasForeignKey<GameInstance>(g => g.GameTemplateId)
-                .IsRequired()
-                .OnDelete(DeleteBehavior.Restrict);
+                .HasIndex(g => new { g.GameTemplateId, g.Status })
+                .IsUnique()
+                .HasFilter(
+                    $"\"Status\" = {(int)GameStatus.Active}"); // Only one record in database can be active with one template
+
             // GameInstance -> WinningNumbers : One-To-Many
             gameInstanceEntity
-                .HasMany(g=>g.WinningNumbers)
-                .WithOne(w=>w.GameInstance)
-                .HasForeignKey(w=>w.GameInstanceId)
+                .HasMany(g => g.WinningNumbers)
+                .WithOne(w => w.GameInstance)
+                .HasForeignKey(w => w.GameInstanceId)
                 .OnDelete(DeleteBehavior.Restrict);
-        });   
-        
-        
-        
-        base.OnModelCreating(modelBuilder);
+
+        });
+
+        modelBuilder.Entity<LotteryTicket>(lotteryTicketEntity =>
+        {
+            lotteryTicketEntity
+                .HasOne(lt => lt.Player)
+                .WithMany(p => p.LotteryTickets)
+                .HasForeignKey(lt => lt.PlayerId)
+                .OnDelete(DeleteBehavior.Restrict);
+            
+            lotteryTicketEntity
+                .HasMany(lt => lt.PickedNumbers)
+                .WithOne(pn => pn.Ticket)
+                .HasForeignKey(pn=>pn.TicketId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+
+
+    base.OnModelCreating(modelBuilder);
     }
 }
