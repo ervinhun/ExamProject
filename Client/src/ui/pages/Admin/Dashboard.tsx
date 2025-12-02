@@ -99,11 +99,6 @@ export default function Dashboard() {
         {id: 2, name: "Anette Lassen", email: "anette@example.com", balance: 0, status: "Pending", confirmed: false}
     ]);
 
-    const activeGames: Game[] = [
-        {id: "1", name: "Weekly Lottery", status: "Active", drawDate: "2025-12-01T14:00:00", participants: 45, ticketsSold: 123},
-        {id: "2", name: "Mega Draw", status: "Active", drawDate: "2025-11-30T18:00:00", participants: 82, ticketsSold: 246},
-        {id: "3", name: "Daily Special", status: "Pending Draw", drawDate: "2025-11-29T20:00:00", participants: 28, ticketsSold: 67}
-    ];
 
     const recentPlayers = [
         {id: 101, name: "Emma Nielsen", email: "emma@example.com", joinDate: "2025-11-26", balance: 150},
@@ -140,25 +135,25 @@ export default function Dashboard() {
         }, 2600);
     };
 
-    const formatDate = (dateStr: string) => {
-        const date = new Date(dateStr);
-        return date.toLocaleDateString("en-US", { 
-            month: "short", 
-            day: "numeric", 
-            hour: "2-digit", 
-            minute: "2-digit" 
-        });
-    };
+    // const formatDate = (dateStr: string) => {
+    //     const date = new Date(dateStr);
+    //     return date.toLocaleDateString("en-US", { 
+    //         month: "short", 
+    //         day: "numeric", 
+    //         hour: "2-digit", 
+    //         minute: "2-digit" 
+    //     });
+    // };
 
-    const getStatusColor = (status: string) => {
-        switch (status) {
-            case "Active": return "badge-success";
-            case "Pending Draw": return "badge-warning";
-            case "Pending": return "badge-warning";
-            case "Completed": return "badge-info";
-            default: return "badge-ghost";
-        }
-    };
+    // const getStatusColor = (status: string) => {
+    //     switch (status) {
+    //         case "Active": return "badge-success";
+    //         case "Pending Draw": return "badge-warning";
+    //         case "Pending": return "badge-warning";
+    //         case "Completed": return "badge-info";
+    //         default: return "badge-ghost";
+    //     }
+    // };
 
     return (
         <div className="container mx-auto px-4 py-6 my-7">
