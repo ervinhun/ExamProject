@@ -26,7 +26,7 @@ export const authApi = {
                 init: {
                     method: "POST"
                 }
-            }).catch((err) => { err.message; throw err; });
+            }).catch((err) => { throw new Error(err.message); });
     },
 
     profile: async (): Promise<User> => {
@@ -34,6 +34,6 @@ export const authApi = {
                 init: {
                     method: "GET"
                 }
-            }).catch((err) => { err.message; throw err; });
+            }).catch((err) => { throw new Error(err.message); });
     }
 };

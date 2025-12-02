@@ -24,9 +24,7 @@ export const isLoggedInAtom = atom<boolean, [boolean], void>(
         const auth = get(authAtom);
         return auth?.id !== null;
     },
-    (_get, _set, _newValue) => {
-        // Write function for compatibility - actual state derived from authAtom
-    }
+    () => {}
 );
 isLoggedInAtom.debugLabel = "Is Logged In";
 
@@ -56,7 +54,7 @@ isLoggedInAtom.onMount = (setAtom) => {
                     setAtom(true);
                     return;
                 }
-            } catch (err) {
+            } catch {
                 console.log('[Auth] Session invalid, clearing auth...');
                 store.set(authAtom, {
                     id: null,
@@ -86,7 +84,7 @@ isLoggedInAtom.onMount = (setAtom) => {
                     setAtom(true);
                     return;
                 }
-            } catch (err) {
+            } catch {
                 console.log('[Auth] No valid session found, user must login...');
                 store.set(authAtom, {
                     id: null,

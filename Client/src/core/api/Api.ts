@@ -125,7 +125,7 @@ export async function api<T>(
 
     if(!response.ok){
         const error = await response.json().catch((err) => {
-            throw new Error(`HTTP ${response.status}`)
+            throw new Error(err.message || `HTTP ${response.status}`);
         });
         throw new Error(error.message || error.errors || `HTTP ${response.status}`)
     }

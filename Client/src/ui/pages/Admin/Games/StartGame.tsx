@@ -1,9 +1,8 @@
 import { useEffect, useState } from "react";
 import { NavLink } from "react-router-dom";
-import { GameTemplateDto, GameInstanceDto, mapGameStatus } from "@core/types/game";
+import type { GameInstanceDto } from "@core/types/game";
 import { useAtom } from "jotai";
 import { activeGamesAtom, gameTemplatesAtom, fetchActiveGamesAtom, fetchGameTemplatesAtom, startGameInstanceAtom } from "@core/atoms/game";
-import { start } from "repl";
 import { authAtom } from "@core/atoms/auth";
 
 export const StartGame: React.FC = () => {
@@ -19,8 +18,8 @@ export const StartGame: React.FC = () => {
     const [,startGameInstance] = useAtom(startGameInstanceAtom);
     const [,fetchActiveGames] = useAtom(fetchActiveGamesAtom);
     const [,fetchGameTemplates] = useAtom(fetchGameTemplatesAtom);
-    const [templates, setTemplates] = useAtom(gameTemplatesAtom);
-    const [activeGames, setActiveGames] = useAtom(activeGamesAtom);
+    const [templates,] = useAtom(gameTemplatesAtom);
+    const [activeGames,] = useAtom(activeGamesAtom);
 
     useEffect(() => {
         fetchGameTemplates();
@@ -65,26 +64,26 @@ export const StartGame: React.FC = () => {
         setExpirationTimeOfDay("17:00");
     };
 
-    const formatDate = (dateStr: string) => {
-        const date = new Date(dateStr);
-        return date.toLocaleDateString("da-DK", { 
-            day: "2-digit",
-            month: "2-digit",
-            year: "numeric",
-            hour: "2-digit", 
-            minute: "2-digit",
-            hour12: false
-        });
-    };
+    // const formatDate = (dateStr: string) => {
+    //     const date = new Date(dateStr);
+    //     return date.toLocaleDateString("da-DK", { 
+    //         day: "2-digit",
+    //         month: "2-digit",
+    //         year: "numeric",
+    //         hour: "2-digit", 
+    //         minute: "2-digit",
+    //         hour12: false
+    //     });
+    // };
 
-    const getStatusColor = (status: string) => {
-        switch (status) {
-            case "Active": return "badge-success";
-            case "Pending Draw": return "badge-warning";
-            case "Completed": return "badge-info";
-            default: return "badge-ghost";
-        }
-    };
+    // const getStatusColor = (status: string) => {
+    //     switch (status) {
+    //         case "Active": return "badge-success";
+    //         case "Pending Draw": return "badge-warning";
+    //         case "Completed": return "badge-info";
+    //         default: return "badge-ghost";
+    //     }
+    // };
 
     const getGameTypeColor = (type: string) => {
         return type === "Lotto" ? "badge-primary" : "badge-secondary";
