@@ -23,7 +23,7 @@ export const createGameTemplateAtom = atom(null,
 );
 
 export const startGameInstanceAtom = atom(null,
-    async (get, set, gameInstance: Partial<GameInstanceDto>) => {
+    async (_get, _set, gameInstance: Partial<GameInstanceDto>) => {
         await gameApi.startGameInstance(gameInstance).then((res) => {
             return res;
         }).catch((err) => {
@@ -33,7 +33,7 @@ export const startGameInstanceAtom = atom(null,
 );
 
 export const fetchGameTemplatesAtom = atom(null,
-    async (get, set) => {
+    async (_get, set) => {
         await gameApi.getAllGameTemplates().then((res) => {
             set(gameTemplatesAtom, res);
         }).catch((err) => {
@@ -43,7 +43,7 @@ export const fetchGameTemplatesAtom = atom(null,
 );
 
 export const fetchGameInstancesAtom = atom(null,
-    async (get, set) => {
+    async (_get, set) => {
         await gameApi.getAllGameInstances().then((res) => {
             // Handle game instances as needed
             set(activeGamesAtom, res);
@@ -55,7 +55,7 @@ export const fetchGameInstancesAtom = atom(null,
 );
 
 export const fetchActiveGamesAtom = atom(null,
-    async (get, set) => {
+    async (_get, set) => {
         await gameApi.getAllActiveGames().then((res) => {
             set(activeGamesAtom, res);
             return res;

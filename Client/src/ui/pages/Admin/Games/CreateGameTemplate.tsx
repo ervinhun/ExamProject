@@ -1,6 +1,6 @@
 import { useState } from "react";
 import ErrorPopUp from "../../Errors/ErrorPopUp";
-import { GameTemplateDto } from "@core/types/game";
+import type { GameTemplateDto } from "@core/types/game";
 import { useAtom } from "jotai";
 import { createGameTemplateAtom } from "@core/atoms/game";
 

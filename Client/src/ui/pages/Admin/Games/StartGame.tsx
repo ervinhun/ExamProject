@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { NavLink } from "react-router-dom";
-import { GameInstanceDto} from "@core/types/game";
+import type { GameInstanceDto } from "@core/types/game";
 import { useAtom } from "jotai";
 import { activeGamesAtom, gameTemplatesAtom, fetchActiveGamesAtom, fetchGameTemplatesAtom, startGameInstanceAtom } from "@core/atoms/game";
 import { authAtom } from "@core/atoms/auth";
