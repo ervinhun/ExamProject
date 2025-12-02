@@ -6,8 +6,8 @@ namespace DataAccess.Entities.Game;
 public class GameTemplate
 {
     public Guid Id { get; set; }
-    public string Name { get; set; }
-    public string Description { get; set; }
+    public string? Name { get; set; }
+    public string? Description { get; set; }
     public GameType GameType { get; set; }
     
     [Range(0, 500)]

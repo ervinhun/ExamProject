@@ -80,18 +80,20 @@ public class MyDbContext(DbContextOptions<MyDbContext> options) : DbContext(opti
         });
 
 
+        modelBuilder.Entity<Wallet>(walletEntity =>
+        {
+            walletEntity
+                .HasMany(w => w.Transactions)
+                .WithOne(t => t.Wallet)
+                .HasForeignKey(t=>t.WalletId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
         modelBuilder.Entity<Transaction>(transactionEntity =>
         {
-            // Transaction -> Wallet : Many-to-One
+            // Transaction -> User : Foreign key only (no navigation to avoid circular dependency)
             transactionEntity
-                .HasOne(t => t.Wallet)
-                .WithMany(w => w.Transactions)
-                .HasForeignKey(t => t.WalletId)
-                .OnDelete(DeleteBehavior.Restrict);
-
-            // Transaction -> Player : Foreign key only (no navigation to avoid circular dependency)
-            transactionEntity
-                .HasIndex(t => t.ActionUser);
+                .HasIndex(t => t.UserId);
 
         });
 
@@ -111,7 +113,7 @@ public class MyDbContext(DbContextOptions<MyDbContext> options) : DbContext(opti
                 .HasIndex(g => new { g.GameTemplateId, g.Status })
                 .IsUnique()
                 .HasFilter(
-                    $"\"Status\" = {(int)GameStatus.Active}"); // Only one record in database can be active with one template
+                    $"\"Status\" = {(int)GameStatus.Active}"); // Only one instance in database can be active with one template
 
             // GameInstance -> WinningNumbers : One-To-Many
             gameInstanceEntity

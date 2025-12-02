@@ -1,11 +1,31 @@
 import { NavLink } from "react-router-dom";
 import { useState } from "react";
+import dicesIcon from "@ui/assets/dices.svg";
+import walletIcon from "@ui/assets/wallet.svg";
+import ticketsIcon from "@ui/assets/tickets.svg";
+import historyIcon from "@ui/assets/history.svg";
+import userIcon from "@ui/assets/circle-user-round.svg";
 
 export default function DockPlayer() {
     const [openHistory, setOpenHistory] = useState(false);
 
     return (
         <div id="dock"className="flex gap-10 items-center">
+            {/* Games */}
+            <NavLink
+                to="/games"
+                className={({ isActive }) =>
+                    `dock-button ${isActive ? "dock-active" : ""} flex items-center gap-2`
+                }
+            >
+                <img
+                    src={dicesIcon}
+                    alt="Games"
+                    className="dock-icon h-7 w-7 object-contain"
+                />
+                <span className="dock-label text-accent text-base">Games</span>
+            </NavLink>
+
             {/* Wallet */}
             <NavLink
                 to="/wallet"
@@ -14,9 +34,9 @@ export default function DockPlayer() {
                 }
             >
                 <img
-                    src="https://img.icons8.com/?size=100&id=LOoB110eJTzD&format=png&color=FE9900"
+                    src={walletIcon}
                     alt="Wallet"
-                    className="dock-icon h-7 w-7"
+                    className="dock-icon h-7 w-7 object-contain"
                 />
                 <span className="dock-label text-accent text-base">Wallet</span>
             </NavLink>
@@ -29,9 +49,9 @@ export default function DockPlayer() {
                 }
             >
                 <img
-                    src="https://img.icons8.com/?size=100&id=85462&format=png&color=FE9900"
+                    src={ticketsIcon}
                     alt="My Tickets"
-                    className="dock-icon h-7 w-7"
+                    className="dock-icon h-7 w-7 object-contain"
                 />
                 <span className="dock-label text-accent text-base">My Tickets</span>
             </NavLink>
@@ -45,9 +65,9 @@ export default function DockPlayer() {
                     className={`dock-button flex items-center gap-2 ${openHistory ? "dock-active" : ""}`}
                 >
                     <img
-                        src="https://img.icons8.com/?size=100&id=6904&format=png&color=FE9900"
+                        src={historyIcon}
                         alt="History"
-                        className="dock-icon h-7 w-7"
+                        className="dock-icon h-7 w-7 object-contain"
                     />
                     <span className="dock-label text-accent text-base cursor-default">History</span>
                     <svg
@@ -82,9 +102,9 @@ export default function DockPlayer() {
                 }
             >
                 <img
-                    src="https://img.icons8.com/?size=100&id=23264&format=png&color=FE9900"
+                    src={userIcon}
                     alt="Account"
-                    className="dock-icon h-7 w-7"
+                    className="dock-icon h-7 w-7 object-contain"
                 />
                 <span className="dock-label text-accent text-base">Account</span>
             </NavLink>

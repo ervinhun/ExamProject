@@ -1,57 +1,129 @@
-import { fetchPlayersAtom, playersAtom } from "@core/atoms/players";
-import { useAtom } from "jotai";
-import { useEffect } from "react"
+import { fetchPlayersAtom, playersAtom, togglePlayerStatusAtom } from "@core/atoms/players";
+import { useAtom, useSetAtom } from "jotai";
+import { format } from "path";
+import { useEffect } from "react";
+import { NavLink } from "react-router-dom";
+import { pl } from "zod/locales";
+import { userApi } from "@core/api/controllers/user";
+import { addNotificationAtom } from "@core/atoms/error";
 
 export default function AllPlayers() {
-    const [players, ] = useAtom(playersAtom);
+    const [players,] = useAtom(playersAtom);
     const [,fetchPlayers] = useAtom(fetchPlayersAtom);
+    const togglePlayerStatus = useSetAtom(togglePlayerStatusAtom);
+    const addNotification = useSetAtom(addNotificationAtom);
+    
     useEffect(() => {
-        fetchPlayers();
+        if(players.length === 0){
+            fetchPlayers();
+        }
     }, []);
-    return (
-        <div className="w-full p-6">
-            <div className="mb-6">
-                <h1 className="text-3xl font-bold">All Players</h1>
-                <p className="text-gray-600 mt-2">Total: {players.length} players</p>
-            </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {players.map((player) => (
-                    <div 
-                        key={player.id} 
-                        className="card bg-base-200 shadow-lg hover:shadow-xl transition-shadow"
-                    >
-                        <div className="card-body">
-                            <h2 className="card-title text-lg">
-                                {player.firstName} {player.lastName}
-                            </h2>
-                            <div className="space-y-2 text-sm">
-                                <p>
-                                    <span className="font-semibold">Email:</span> {player.email}
-                                </p>
-                                <p>
-                                    <span className="font-semibold">Phone:</span> {player.phoneNumber}
-                                </p>
-                                {player.createdAt && (
-                                    <p className="text-xs text-gray-500">
-                                        <span className="font-semibold">Joined:</span> {new Date(player.createdAt).toLocaleDateString()}
-                                    </p>
-                                )}
-                            </div>
-                            <div className="card-actions justify-end mt-4">
-                                <button className="btn btn-sm btn-primary">View Details</button>
-                                <button className="btn btn-sm btn-outline">Edit</button>
-                            </div>
+    const formatDate = (dateString: string) => {
+        const date = new Date(dateString);
+        return date.toLocaleDateString(undefined, {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+        });
+    }
+
+    const handleToggleStatus = async (userId: string, currentStatus: boolean, playerName: string) => {
+        try {
+            // await userApi.toggleStatus(userId);
+            await togglePlayerStatus(userId);
+            addNotification({
+                message: `${playerName} has been ${currentStatus ? 'deactivated' : 'activated'} successfully`,
+                type: 'success'
+            });
+        } catch (error) {
+            console.error('Failed to toggle user status:', error);
+            addNotification({
+                message: 'Failed to update player status. Please try again.',
+                type: 'error'
+            });
+        }
+    }
+
+    return (
+        <div className="container mx-auto px-4 py-6 my-7">
+            <div className="space-y-8">
+                {/* Header */}
+                <div className="flex items-center gap-4 pb-4 border-b-2 border-primary">
+                    <div className="flex-1">
+                        <h1 className="text-4xl font-bold text-primary">All Players</h1>
+                        <p className="text-base text-base-content/70 mt-1">
+                            Manage all registered players - Total: {players.length} players
+                        </p>
+                    </div>
+                    <NavLink to="/admin/players/register" className="btn btn-primary">
+                        + Register Player
+                    </NavLink>
+                </div>
+
+                {/* Players Table */}
+                <div className="card bg-base-200 shadow-lg">
+                    <div className="card-body">
+                        <h2 className="card-title text-2xl mb-4">Players List</h2>
+                        
+                        <div className="overflow-x-auto">
+                            <table className="table table-zebra">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Email</th>
+                                        <th>Phone</th>
+                                        <th>Status</th>
+                                        <th>Joined Date</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {players.length === 0 ? (
+                                        <tr>
+                                            <td colSpan={6} className="text-center py-8 text-base-content/60">
+                                                No players found
+                                            </td>
+                                        </tr>
+                                    ) : (
+                                        players.map((player) => (
+                                            <tr key={player.id}>
+                                                <td className="font-semibold">
+                                                    {player.firstName} {player.lastName}
+                                                </td>
+                                                <td>{player.email}</td>
+                                                <td>{player.phoneNumber}</td>
+                                                <td>
+                                                    <span className={`badge ${player.isActive ? 'badge-success' : 'badge-error'}`}>
+                                                        {player.isActive ? 'Active' : 'Inactive'}
+                                                    </span>
+                                                </td>
+                                                <td>{player.createdAt ? formatDate(player.createdAt) : "N/A"}</td>
+                                                <td>
+                                                    <div className="flex gap-2">
+                                                        <button className="btn btn-xs btn-info">View</button>
+                                                        <button className="btn btn-xs btn-ghost">Edit</button>
+                                                        <button 
+                                                            className={`btn btn-xs ${player.isActive ? 'btn-warning' : 'btn-success'}`}
+                                                            onClick={() => handleToggleStatus(
+                                                                player.id!,
+                                                                player.isActive!,
+                                                                `${player.firstName} ${player.lastName}`
+                                                            )}
+                                                        >
+                                                            {player.isActive ? 'Deactivate' : 'Activate'}
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        ))
+                                    )}
+                                </tbody>
+                            </table>
                         </div>
                     </div>
-                ))}
-            </div>
-
-            {players.length === 0 && (
-                <div className="text-center py-12">
-                    <p className="text-xl text-gray-500">No players found</p>
                 </div>
-            )}
+            </div>
         </div>
-    )
+    );
 }

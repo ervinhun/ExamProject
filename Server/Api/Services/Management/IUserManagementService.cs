@@ -7,15 +7,19 @@ namespace Api.Services.Management;
 
 public interface IUserManagementService
 {
-    public Task<UserDto> RegisterUser(CreateUserDto createUserDto);
+    Task<UserDto> RegisterUser(CreateUserDto createUserDto);
     
-    public Task RegisterPlayer(CreatePlayerDto createPlayerDto);
+    Task<PlayerDto> RegisterPlayer(CreatePlayerDto createPlayerDto);
     
-    public Task<AdminDto> RegisterAdmin(CreateAdminDto createAdminDto);
+    Task<AdminDto> RegisterAdmin(CreateAdminDto createAdminDto);
     
-    public Task<ICollection<UserDto>> GetAllUsersAsync();
+    Task<ICollection<UserDto>> GetAllUsersAsync();
     
-    public Task<ActionResult<User>> UpdateUser(UpdateUserDetailsDto updateUserDto);
-    public Task<ActionResult> DeleteUser(Guid userId);
+    Task<PlayerDto> GetPlayerByIdAsync(Guid id);
+    
+    Task<UserDto> UpdateUser(UpdateUserDetailsDto updateUserDto);
+    Task DeleteUser(Guid userId);
     Task<ICollection<PlayerDto>> GetAllPlayersAsync();
+    Task ToggleStatus(Guid userId);
+    
 }

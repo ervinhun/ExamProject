@@ -10,6 +10,5 @@ public interface IMyAuthenticationService
 {
     Task<JwtResponseDto> Login(LoginRequestDto dto);
     Task<User> Register(RegisterRequestDto dto);
-    Task<UserDto> GetAuthenticatedUserById(Guid id);
-    Task<UserDto> GetAuthenticatedUserByEmail(string email);
+
 }
