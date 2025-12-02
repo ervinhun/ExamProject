@@ -12,7 +12,7 @@ export const createGameTemplateAtom = atom(null,
         set(isCreatingGameTemplateAtom, true);
         await gameApi.createGameTemplate(template).then((res) => {
             const currentTemplates = get(gameTemplatesAtom);
-            // set(gameTemplatesAtom, [...currentTemplates, res]);
+            set(gameTemplatesAtom, [...currentTemplates, res]);
             return res;
         }).catch((err) => {
             throw err;

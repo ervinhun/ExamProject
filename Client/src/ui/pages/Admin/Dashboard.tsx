@@ -22,14 +22,14 @@ type Player = {
     removing?: boolean;
 };
 
-type Game = {
-    id: string;
-    name: string;
-    status: string;
-    drawDate: string;
-    participants: number;
-    ticketsSold: number;
-};
+// type Game = {
+//     id: string;
+//     name: string;
+//     status: string;
+//     drawDate: string;
+//     participants: number;
+//     ticketsSold: number;
+// };
 
 // ---------- UTILS ----------
 function getNextSaturdayAt17() {
