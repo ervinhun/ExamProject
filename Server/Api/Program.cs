@@ -7,16 +7,13 @@ using Api.Services.Email;
 using DataAccess;
 using DataAccess.Entities.Auth;
 using DataAccess.Enums;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using NSwag;
 using NSwag.Generation.Processors.Security;
 using Utils;
-using System;
-using System.Security;
 using Api.Configuration;
+using Api.Services.Management;
 using DotNetEnv;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Npgsql;
@@ -111,6 +108,7 @@ public static class Program
         services.AddScoped<IJwt, Jwt>();
         services.AddScoped<IMyAuthenticationService, MyAuthenticationService>();
         services.AddScoped<IUserManagementService, UserManagementService>();
+        services.AddScoped<IGameManagementService, GameManagementService>();
         services.AddScoped<IEmailService, EmailService>();
         
         // Configure JWT Authentication
@@ -293,7 +291,7 @@ public static class Program
             app.MapControllers();
             
             // Apply pending migrations automatically
-            using (var scope = app.Services.CreateScope())
+            /*using (var scope = app.Services.CreateScope())
             {
                 var dbContext = scope.ServiceProvider.GetRequiredService<MyDbContext>();
                 var pendingMigrations = await dbContext.Database.GetPendingMigrationsAsync();
@@ -308,7 +306,7 @@ public static class Program
                 {
                     Console.WriteLine("[DB] ✓ Database schema is up to date");
                 }
-            }
+            }*/
             
             // Initialize database
             await EnsureRolesAreCreatedAsync(app.Services);

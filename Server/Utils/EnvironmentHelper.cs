@@ -117,5 +117,55 @@ public static class EnvironmentHelper
     {
         return GetEnvironment().Equals("Production", StringComparison.OrdinalIgnoreCase);
     }
-    
+
+    /// <summary>
+    /// Special method for DbContext design-time factory to load and get connection string.
+    /// Searches for .env file in current, parent, and grandparent directories.
+    /// </summary>
+    public static string LoadAndGetConnectionString()
+    {
+        const string connectionStringKey = "CONNECTION_STRING";
+        
+        // First check if already set in environment
+        var existing = Environment.GetEnvironmentVariable(connectionStringKey);
+        if (!string.IsNullOrWhiteSpace(existing))
+        {
+            return existing;
+        }
+        
+        // Search for .env file upward from current directory
+        var searchPaths = new[]
+        {
+            Directory.GetCurrentDirectory(),
+            Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), "..")),
+            Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), "..", "..")),
+            Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), "..", "..", ".."))
+        };
+
+        foreach (var basePath in searchPaths)
+        {
+            var envPath = Path.Combine(basePath, ".env");
+            if (File.Exists(envPath))
+            {
+                try
+                {
+                    Env.Load(envPath);
+                    var connectionString = Environment.GetEnvironmentVariable(connectionStringKey);
+                    if (!string.IsNullOrWhiteSpace(connectionString))
+                    {
+                        Console.WriteLine($"[EnvironmentHelper] Loaded {connectionStringKey} from {envPath}");
+                        return connectionString;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[EnvironmentHelper] Failed to load {envPath}: {ex.Message}");
+                }
+            }
+        }
+        
+        // Fallback to local development connection string
+        return Environment.GetEnvironmentVariable(connectionStringKey) 
+               ?? "Host=localhost;Port=5432;Database=lotteryapp_dev;Username=postgres;Password=postgres";
+    }
 }

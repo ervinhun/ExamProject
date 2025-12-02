@@ -3,7 +3,7 @@ using Api.Dto.User;
 using DataAccess.Entities.Auth;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Api.Services.Admin;
+namespace Api.Services.Management;
 
 public interface IUserManagementService
 {

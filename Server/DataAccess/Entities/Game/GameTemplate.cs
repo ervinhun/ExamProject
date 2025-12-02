@@ -1,26 +1,30 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using DataAccess.Enums;
 
 namespace DataAccess.Entities.Game;
 
 public class GameTemplate
 {
     public Guid Id { get; set; }
-    /*  0 - Sunday
-        6 - Saturday */
-    [Range(0,6)]
-    public uint ExpirationDayOfWeek {get; set;}
-   
-    public TimeOnly ExpirationTime { get; set; }
-    public uint NumberRangeMin { get; set; }
-    public uint NumberRangeMax { get; set; }
-    public uint MaxNumbersPerBoard { get; set; }
-    public uint MinNumbersPerBoard { get; set; }
+    public string Name { get; set; }
+    public string Description { get; set; }
+    public GameType GameType { get; set; }
+    
+    [Range(0, 500)]
+    public int PoolOfNumbers { get; set; }
+    
+    [Range(0, int.MaxValue)]
+    public int MaxWinningNumbers { get; set; }
+    
+    [Range(0, int.MaxValue)]
+    public int MaxNumbersPerTicket { get; set; }
+    
+    [Range(0, int.MaxValue)]
+    public int MinNumbersPerTicket { get; set; }
     
     [Range(0, double.MaxValue)]
     public double BasePrice { get; set; }
-    public uint Multiplier { get; set; }
     
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; }
-    
 }

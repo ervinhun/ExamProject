@@ -1,11 +1,12 @@
 using DataAccess.Entities.Finance;
+using DataAccess.Entities.Game;
 
 namespace DataAccess.Entities.Auth;
 
 public class Player : User
 {
     public Wallet? Wallet { get; set; }
-    public ICollection<Transaction> Transactions { get; set; } = new  List<Transaction>();
+    public ICollection<LotteryTicket> LotteryTickets { get; set; } = new  List<LotteryTicket>();
     public bool Activated { get; set; }
     
 }
