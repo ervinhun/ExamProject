@@ -35,10 +35,10 @@ public class UsersController(IUserManagementService userManagementService) : Con
     }
 
     [HttpPut("update/{userId:guid}")]
-    public async Task<ActionResult<UserDto>> UpdateUserDetailsByIdAsync(Guid userId,
+    public Task<ActionResult<UserDto>> UpdateUserDetailsByIdAsync(Guid userId,
         [FromBody] UpdateUserDetailsDto updateUserDetailsDto)
     {
-        return Ok(200);
+        return Task.FromResult<ActionResult<UserDto>>(Ok(200));
     }
 
     [HttpGet("{userId:guid}")]
