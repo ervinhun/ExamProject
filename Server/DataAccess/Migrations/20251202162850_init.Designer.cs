@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace DataAccess.Migrations
 {
     [DbContext(typeof(MyDbContext))]
-    [Migration("20251201171905_INIT")]
-    partial class INIT
+    [Migration("20251202162850_init")]
+    partial class init
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -139,8 +139,6 @@ namespace DataAccess.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("ActionUser");
-
-                    b.HasIndex("PlayerId");
 
                     b.HasIndex("UserId");
 
@@ -282,6 +280,55 @@ namespace DataAccess.Migrations
                     b.ToTable("GameTemplates");
                 });
 
+            modelBuilder.Entity("DataAccess.Entities.Game.LotteryTicket", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("BoughtAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<double>("FullPrice")
+                        .HasColumnType("double precision");
+
+                    b.Property<Guid>("GameInstanceId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsPaid")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsWinning")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid>("PlayerId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("GameInstanceId");
+
+                    b.HasIndex("PlayerId");
+
+                    b.ToTable("LotteryTickets");
+                });
+
+            modelBuilder.Entity("DataAccess.Entities.Game.PickedNumber", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("TicketId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TicketId");
+
+                    b.ToTable("PickedNumbers");
+                });
+
             modelBuilder.Entity("DataAccess.Entities.Game.WinningNumber", b =>
                 {
                     b.Property<Guid>("Id")
@@ -335,12 +382,6 @@ namespace DataAccess.Migrations
 
             modelBuilder.Entity("DataAccess.Entities.Finance.Transaction", b =>
                 {
-                    b.HasOne("DataAccess.Entities.Auth.Player", null)
-                        .WithMany("Transactions")
-                        .HasForeignKey("PlayerId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.HasOne("DataAccess.Entities.Auth.User", "User")
                         .WithMany()
                         .HasForeignKey("UserId");
@@ -387,6 +428,36 @@ namespace DataAccess.Migrations
                         .IsRequired();
 
                     b.Navigation("GameTemplate");
+                });
+
+            modelBuilder.Entity("DataAccess.Entities.Game.LotteryTicket", b =>
+                {
+                    b.HasOne("DataAccess.Entities.Game.GameInstance", "GameInstance")
+                        .WithMany()
+                        .HasForeignKey("GameInstanceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("DataAccess.Entities.Auth.Player", "Player")
+                        .WithMany("LotteryTickets")
+                        .HasForeignKey("PlayerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("GameInstance");
+
+                    b.Navigation("Player");
+                });
+
+            modelBuilder.Entity("DataAccess.Entities.Game.PickedNumber", b =>
+                {
+                    b.HasOne("DataAccess.Entities.Game.LotteryTicket", "Ticket")
+                        .WithMany("PickedNumbers")
+                        .HasForeignKey("TicketId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Ticket");
                 });
 
             modelBuilder.Entity("DataAccess.Entities.Game.WinningNumber", b =>
@@ -448,9 +519,14 @@ namespace DataAccess.Migrations
                     b.Navigation("WinningNumbers");
                 });
 
+            modelBuilder.Entity("DataAccess.Entities.Game.LotteryTicket", b =>
+                {
+                    b.Navigation("PickedNumbers");
+                });
+
             modelBuilder.Entity("DataAccess.Entities.Auth.Player", b =>
                 {
-                    b.Navigation("Transactions");
+                    b.Navigation("LotteryTickets");
 
                     b.Navigation("Wallet");
                 });

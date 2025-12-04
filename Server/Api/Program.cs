@@ -1,6 +1,5 @@
 using System.Text;
 using api.Services;
-using Api.Services.Admin;
 using api.Services.Auth;
 using Api.Services.Auth;
 using Api.Services.Email;
@@ -13,6 +12,7 @@ using NSwag;
 using NSwag.Generation.Processors.Security;
 using Utils;
 using Api.Configuration;
+using Api.Services.Admin;
 using Api.Services.Game;
 using Api.Services.Management;
 using DotNetEnv;

@@ -1,14 +1,10 @@
 using Api.Dto.Game;
-using Api.Dto.test;
-using Api.Services.Admin;
-using Api.Services.Auth;
 using Api.Services.Management;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Utils.Exceptions;
 
-namespace Api.Controllers.Game;
+namespace Api.Controllers;
 
     
 [Authorize(Roles = "superadmin,admin,player")]
