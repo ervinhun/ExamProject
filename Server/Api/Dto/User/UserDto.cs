@@ -35,3 +35,12 @@ public class UpdatePasswordDto
 {
     public string? Password { get; set; }
 }
+
+public class RequestRegistrationDto
+{
+    public String FirstName { get; set; } = null;
+    public String LastName { get; set; } = null;
+    public String Email { get; set; } = null;
+    public String PhoneNo { get; set; } = null;
+    public String Password { get; set; } = null;
+}

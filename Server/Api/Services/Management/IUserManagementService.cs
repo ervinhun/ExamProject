@@ -18,4 +18,9 @@ public interface IUserManagementService
     public Task<ActionResult<User>> UpdateUser(UpdateUserDetailsDto updateUserDto);
     public Task<ActionResult> DeleteUser(Guid userId);
     Task<ICollection<PlayerDto>> GetAllPlayersAsync();
+    
+    public Task<ActionResult<User>> GetUserById(Guid userId);
+    public Task<ActionResult> RequestPasswordReset(string email);
+    public Task<ActionResult<User>> RequestMembership(RequestRegistrationDto requestRegistrationDto);
+    public Task<PlayerDto> ConfirmMembership(Guid userId, UserConfirmationEntity userConfirmationEntity);
 }

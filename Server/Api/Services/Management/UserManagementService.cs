@@ -7,11 +7,11 @@ using DataAccess;
 using DataAccess.Entities.Auth;
 using DataAccess.Entities.Finance;
 using DataAccess.Enums;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Utils;
 using Utils.Exceptions;
+using static Api.Services.Management.UserConverter;
 
 namespace Api.Services.Admin;
 
@@ -64,14 +64,14 @@ public class UserManagementService(MyDbContext ctx, IEmailService emailService) 
         }
 
         HashUtils.CreatePasswordHash("user", out var hash, out var salt);
-        
+
         // Get the Player role from database
         var playerRole = await ctx.Roles.FirstOrDefaultAsync(r => r.Name == UserRole.Player);
         if (playerRole == null)
         {
             throw new ServiceException("Player role not found in database", new InvalidOperationException());
         }
-        
+
         var player = new Player
         {
             FirstName = createPlayerDto.FirstName,
@@ -82,20 +82,14 @@ public class UserManagementService(MyDbContext ctx, IEmailService emailService) 
             PasswordSalt = salt,
             Activated = true
         };
-        
-        // Assign player role
-        player.Roles.Add(playerRole);
 
-        var wallet = new Wallet
-        {
-            Player = player,
-            Balance = 0
-        };
-        
+        // Assign player role, and a wallet
+        var role = await AssignUserAsPlayer(player);
+        player.Roles.Add(role);
+
         try
         {
             await ctx.Players.AddAsync(player);
-            await ctx.Wallets.AddAsync(wallet);
             await ctx.SaveChangesAsync();
         }
         catch (DbUpdateException e)
@@ -127,7 +121,7 @@ public class UserManagementService(MyDbContext ctx, IEmailService emailService) 
     public async Task<ICollection<PlayerDto>> GetAllPlayersAsync()
     {
         var players = await ctx.Players.ToListAsync();
-        if(players == null) throw new ServiceException("No players found");
+        if (players == null) throw new ServiceException("No players found");
         var playerDtos = new List<PlayerDto>();
         foreach (var player in players)
         {
@@ -144,7 +138,101 @@ public class UserManagementService(MyDbContext ctx, IEmailService emailService) 
 
         return playerDtos;
     }
-    
+
+    public Task<ActionResult<User>> GetUserById(Guid userId)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<ActionResult> RequestPasswordReset(string email)
+    {
+        throw new NotImplementedException();
+    }
+
+    public async Task<ActionResult<User>> RequestMembership(RequestRegistrationDto requestRegistrationDto)
+    {
+        if (await ctx.Users.AnyAsync(u => u.Email == requestRegistrationDto.Email))
+        {
+            throw new ServiceException("Email already exists", new InvalidOperationException());
+        }
+
+        HashUtils.CreatePasswordHash(requestRegistrationDto.Password, out var hash, out var salt);
+
+        // Get the Player role from database
+        var playerRole = await ctx.Roles.FirstOrDefaultAsync(r => r.Name == UserRole.Player);
+        if (playerRole == null)
+        {
+            throw new ServiceException("Player role not found in database", new InvalidOperationException());
+        }
+
+        var request = new Player
+        {
+            FirstName = requestRegistrationDto.FirstName,
+            LastName = requestRegistrationDto.LastName,
+            Email = requestRegistrationDto.Email,
+            PhoneNumber = requestRegistrationDto.PhoneNo,
+            PasswordHash = hash,
+            PasswordSalt = salt,
+            Activated = false
+        };
+
+        try
+        {
+            await ctx.Players.AddAsync(request);
+            await ctx.SaveChangesAsync();
+        }
+        catch (DbUpdateException e)
+        {
+            throw new ServiceException(e.Message, e);
+        }
+
+        return request;
+    }
+
+    public async Task<PlayerDto> ConfirmMembership(Guid userId, UserConfirmationEntity userConfirmationEntity)
+    {
+        var player = new Player();
+        var admin = CheckWhoIsLoggedInFromToken(userConfirmationEntity.ConfirmationToken ?? string.Empty);
+        if (admin.Roles.Any(r => r.Name != UserRole.SuperAdmin || r.Name != UserRole.Admin))
+            throw new UnauthorizedAccessException("Only admins can confirm membership");
+
+        // Admin can assign only Player role to a request. User can not request for other roles.
+        if (Enum.TryParse<UserRole>(userConfirmationEntity.Role, out var parsedRole) &&
+            parsedRole == UserRole.Player)
+        {
+            var user = await ctx.Users.FirstOrDefaultAsync(u => u.Id == userId);
+            if (user == null)
+                throw new ServiceException("User not found");
+
+            // Assign role and wallet
+            player = GetPlayerFromUser(user);
+            var role = await AssignUserAsPlayer(player);
+            player.Roles.Add(role);
+            player.UpdatedAt = DateTime.UtcNow;
+            player.Activated = userConfirmationEntity.isActive;
+
+            // Update WhoApplied table
+            var entry = await ctx.WhoApplied
+                .FirstOrDefaultAsync(x => x.playerId == userConfirmationEntity.PlayerId);
+
+            if (entry != null)
+            {
+                entry.status = userConfirmationEntity.Result;
+                entry.updatedAt = DateTime.UtcNow;
+                entry.reviewedBy = admin.Id;
+            }
+
+            await ctx.SaveChangesAsync();
+        }
+        else
+        {
+            throw new ServiceException("Invalid role in request");
+        }
+
+        return GetPlayerDtoFromPlayer(player);
+    }
+
+
     public Task<AdminDto> RegisterAdmin(CreateAdminDto createAdminDto)
     {
         throw new NotImplementedException();
@@ -159,7 +247,6 @@ public class UserManagementService(MyDbContext ctx, IEmailService emailService) 
     {
         throw new NotImplementedException();
     }
-
 
 
     public async Task<UserDto> AssignRoleToUserByIdAsync(UserRole userRole, Guid userId)
@@ -217,5 +304,39 @@ public class UserManagementService(MyDbContext ctx, IEmailService emailService) 
         }
 
         return new string(result);
+    }
+
+    private User CheckWhoIsLoggedInFromToken(string token)
+    {
+        return ctx.Users.Include(u => u.Roles).SingleOrDefault(u => u.RefreshTokenHash == token)
+               ?? throw new UnauthorizedAccessException();
+    }
+
+    private async Task<Role> AssignUserAsPlayer(User user)
+    {
+        var playerRole = await ctx.Roles
+            .FirstOrDefaultAsync(r => r.Name == UserRole.Player);
+
+        if (playerRole == null)
+            throw new ServiceException("Player role not found in database");
+
+        var player = new Player
+        {
+            Id = user.Id,
+            FirstName = user.FirstName,
+            LastName = user.LastName,
+            Email = user.Email,
+            PhoneNumber = user.PhoneNumber,
+            Activated = true,
+            CreatedAt = user.CreatedAt,
+            UpdatedAt = DateTime.UtcNow
+        };
+        var wallet = new Wallet
+        {
+            Player = player,
+            Balance = 0
+        };
+        await ctx.Wallets.AddAsync(wallet);
+        return playerRole;
     }
 }

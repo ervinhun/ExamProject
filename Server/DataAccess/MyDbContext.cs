@@ -36,6 +36,7 @@ public class MyDbContext(DbContextOptions<MyDbContext> options) : DbContext(opti
 {
     public DbSet<User> Users => Set<User>();
     public DbSet<Player> Players => Set<Player>();
+    public DbSet<PlayerWhoApplied> WhoApplied => Set<PlayerWhoApplied>();
     public DbSet<Wallet> Wallets => Set<Wallet>();
     public DbSet<Transaction> Transactions => Set<Transaction>();
     public DbSet<TransactionHistory> TransactionHistories => Set<TransactionHistory>();
@@ -76,6 +77,15 @@ public class MyDbContext(DbContextOptions<MyDbContext> options) : DbContext(opti
             playerEntity
                 .HasMany(p => p.LotteryTickets)
                 .WithOne(t => t.Player)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<PlayerWhoApplied>(playerWhoAppliedEntity =>
+        {
+            playerWhoAppliedEntity
+                .HasOne(e => e.Player)
+                .WithOne(p => p.PlayerWhoApplied)
+                .HasForeignKey<PlayerWhoApplied>(e => e.playerId)
                 .OnDelete(DeleteBehavior.Restrict);
         });
 
