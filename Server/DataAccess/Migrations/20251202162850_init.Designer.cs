@@ -3,7 +3,6 @@ using System;
 using DataAccess;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
-using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -12,11 +11,9 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace DataAccess.Migrations
 {
     [DbContext(typeof(MyDbContext))]
-    [Migration("20251201171905_INIT")]
-    partial class INIT
+    partial class MyDbContextModelSnapshot : ModelSnapshot
     {
-        /// <inheritdoc />
-        protected override void BuildTargetModel(ModelBuilder modelBuilder)
+        protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -45,6 +42,9 @@ namespace DataAccess.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<bool>("Activated")
+                        .HasColumnType("boolean");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -55,6 +55,9 @@ namespace DataAccess.Migrations
                         .IsRequired()
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)");
+
+                    b.Property<DateTime?>("ExpireDate")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("FirstName")
                         .IsRequired()
@@ -109,17 +112,14 @@ namespace DataAccess.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<Guid>("ActionUser")
-                        .HasColumnType("uuid");
-
                     b.Property<double>("Amount")
                         .HasColumnType("double precision");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<Guid>("PlayerId")
-                        .HasColumnType("uuid");
+                    b.Property<string>("Name")
+                        .HasColumnType("text");
 
                     b.Property<int>("Status")
                         .HasColumnType("integer");
@@ -130,17 +130,13 @@ namespace DataAccess.Migrations
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<Guid?>("UserId")
+                    b.Property<Guid>("UserId")
                         .HasColumnType("uuid");
 
                     b.Property<Guid>("WalletId")
                         .HasColumnType("uuid");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("ActionUser");
-
-                    b.HasIndex("PlayerId");
 
                     b.HasIndex("UserId");
 
@@ -155,8 +151,17 @@ namespace DataAccess.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<Guid>("ActionUser")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
                     b.Property<Guid>("TransactionId")
                         .HasColumnType("uuid");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -171,11 +176,20 @@ namespace DataAccess.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<string>("AccountNumber")
+                        .HasColumnType("text");
+
                     b.Property<double>("Balance")
                         .HasColumnType("double precision");
 
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<Guid>("PlayerId")
                         .HasColumnType("uuid");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
 
@@ -252,7 +266,6 @@ namespace DataAccess.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Description")
-                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<int>("GameType")
@@ -268,7 +281,6 @@ namespace DataAccess.Migrations
                         .HasColumnType("integer");
 
                     b.Property<string>("Name")
-                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<int>("PoolOfNumbers")
@@ -280,6 +292,55 @@ namespace DataAccess.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("GameTemplates");
+                });
+
+            modelBuilder.Entity("DataAccess.Entities.Game.LotteryTicket", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("BoughtAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<double>("FullPrice")
+                        .HasColumnType("double precision");
+
+                    b.Property<Guid>("GameInstanceId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsPaid")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsWinning")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid>("PlayerId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("GameInstanceId");
+
+                    b.HasIndex("PlayerId");
+
+                    b.ToTable("LotteryTickets");
+                });
+
+            modelBuilder.Entity("DataAccess.Entities.Game.PickedNumber", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("TicketId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TicketId");
+
+                    b.ToTable("PickedNumbers");
                 });
 
             modelBuilder.Entity("DataAccess.Entities.Game.WinningNumber", b =>
@@ -327,31 +388,16 @@ namespace DataAccess.Migrations
                 {
                     b.HasBaseType("DataAccess.Entities.Auth.User");
 
-                    b.Property<bool>("Activated")
-                        .HasColumnType("boolean");
-
                     b.ToTable("Players", (string)null);
                 });
 
             modelBuilder.Entity("DataAccess.Entities.Finance.Transaction", b =>
                 {
-                    b.HasOne("DataAccess.Entities.Auth.Player", null)
-                        .WithMany("Transactions")
-                        .HasForeignKey("PlayerId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("DataAccess.Entities.Auth.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId");
-
                     b.HasOne("DataAccess.Entities.Finance.Wallet", "Wallet")
                         .WithMany("Transactions")
                         .HasForeignKey("WalletId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
-
-                    b.Navigation("User");
 
                     b.Navigation("Wallet");
                 });
@@ -387,6 +433,36 @@ namespace DataAccess.Migrations
                         .IsRequired();
 
                     b.Navigation("GameTemplate");
+                });
+
+            modelBuilder.Entity("DataAccess.Entities.Game.LotteryTicket", b =>
+                {
+                    b.HasOne("DataAccess.Entities.Game.GameInstance", "GameInstance")
+                        .WithMany()
+                        .HasForeignKey("GameInstanceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("DataAccess.Entities.Auth.Player", "Player")
+                        .WithMany("LotteryTickets")
+                        .HasForeignKey("PlayerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("GameInstance");
+
+                    b.Navigation("Player");
+                });
+
+            modelBuilder.Entity("DataAccess.Entities.Game.PickedNumber", b =>
+                {
+                    b.HasOne("DataAccess.Entities.Game.LotteryTicket", "Ticket")
+                        .WithMany("PickedNumbers")
+                        .HasForeignKey("TicketId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Ticket");
                 });
 
             modelBuilder.Entity("DataAccess.Entities.Game.WinningNumber", b =>
@@ -448,9 +524,14 @@ namespace DataAccess.Migrations
                     b.Navigation("WinningNumbers");
                 });
 
+            modelBuilder.Entity("DataAccess.Entities.Game.LotteryTicket", b =>
+                {
+                    b.Navigation("PickedNumbers");
+                });
+
             modelBuilder.Entity("DataAccess.Entities.Auth.Player", b =>
                 {
-                    b.Navigation("Transactions");
+                    b.Navigation("LotteryTickets");
 
                     b.Navigation("Wallet");
                 });

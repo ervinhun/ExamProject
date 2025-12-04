@@ -1,11 +1,9 @@
-using System.Security.Claims;
-using Api.Dto.test;
 using Api.Dto.User;
-using Utils.Exceptions;
-using Api.Services.Admin;
 using Api.Services.Management;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc;
+using Utils.Exceptions;
 
 namespace Api.Controllers.User;
 
@@ -24,9 +22,12 @@ public class UsersController(IUserManagementService userManagementService) : Con
         }
         catch (ServiceException e)
         {
-            return Conflict(new {message = e.Message});
-        } 
+            return Conflict(new { message = e.Message });
+        }
     }
+
+
+    [HttpGet("all")]
 
     [HttpPatch("toggle-status/{userId:guid}")]
     public async Task<IActionResult> ToggleStatusByIdAsync(Guid userId)
@@ -48,18 +49,17 @@ public class UsersController(IUserManagementService userManagementService) : Con
         var user = await userManagementService.GetAllUsersAsync();
         return Ok(user);
     }
-
+    
     [HttpPut("update-user/{userId:guid}")]
     public async Task<ActionResult<UserDto>> UpdateUserDetailsByIdAsync(Guid userId, [FromBody] UpdateUserDetailsDto updateUserDetailsDto)
     {
-        return Ok(200);
+        return await Task.FromResult<ActionResult<UserDto>>(Ok(200));
     }
 
     [HttpGet("get-user/{userId:guid}")]
     public async Task<ActionResult<UserDto>> GetUserByIdAsync(Guid userId)
     {
         return await Task.FromResult(Ok(200));
-
     }
 
     [HttpPut("delete-user/{userId:guid}")]
@@ -68,7 +68,7 @@ public class UsersController(IUserManagementService userManagementService) : Con
         await Task.FromResult(Ok(200));
     }
 
-    
+
     [Authorize(Roles = "superadmin,admin,player")]
     [HttpPost("update-password/{id:guid}")]
     public async Task<IActionResult> UpdatePasswordByIdAsync(Guid id,
@@ -76,11 +76,4 @@ public class UsersController(IUserManagementService userManagementService) : Con
     {
         return await Task.FromResult(Ok(id));
     }
-
-    
-    
-    
-    
-    
-    
 }
