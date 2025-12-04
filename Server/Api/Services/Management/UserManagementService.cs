@@ -2,6 +2,7 @@ using System.Security.Cryptography;
 using Api.Dto.test;
 using Api.Dto.User;
 using Api.Services.Email;
+using Api.Services.Management;
 using DataAccess;
 using DataAccess.Entities.Auth;
 using DataAccess.Entities.Finance;
@@ -202,21 +203,7 @@ public class UserManagementService(MyDbContext ctx, IEmailService emailService) 
         throw new NotImplementedException();
     }
 
-    public async Task<string> RequestPasswordReset(string email)
-    {
-        var user = await ctx.Users.FirstOrDefaultAsync(u => u.Email == email);
-        if (user == null)
-            throw new ServiceException("User not found", new InvalidOperationException());
-        var passwordResetToken = GeneratePassword(128);
-        HashUtils.CreatePasswordHash(passwordResetToken, out var hash, out var salt);
-
-        user.ResetPasswordToken = hash.ToString();
-        user.ResetPasswordTokenExpiry = DateTime.UtcNow.AddHours(12);
-        await ctx.SaveChangesAsync();
-        // Returning the ResetPasswordToken to the controller to send email
-        // TODO: sending e-mail part in Controller
-        return passwordResetToken;
-    }
+    
 
     public async Task<ActionResult<User>> RequestMembership(RequestRegistrationDto requestRegistrationDto)
     {
@@ -303,30 +290,7 @@ public class UserManagementService(MyDbContext ctx, IEmailService emailService) 
         return GetPlayerDtoFromPlayer(player);
     }
 
-    public async Task<bool> ResetPassword(string resetToken, ResetPasswordRequest request)
-    {
-        var user = await ctx.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
-        if (user == null)
-            return false;
-
-        var tokenValid =
-            user.ResetPasswordToken == resetToken &&
-            user.ResetPasswordTokenExpiry > DateTime.UtcNow;
-
-        if (!tokenValid)
-            return false;
-
-        // Hash new password
-        HashUtils.CreatePasswordHash(request.NewPassword, out var hash, out var salt);
-        user.PasswordHash = hash;
-        user.PasswordSalt = salt;
-
-        // Clear the reset token
-        user.ResetPasswordToken = null;
-        user.ResetPasswordTokenExpiry = null;
-
-        return await ctx.SaveChangesAsync() > 0;
-    }
+    
 
 
     public Task<AdminDto> RegisterAdmin(CreateAdminDto createAdminDto)

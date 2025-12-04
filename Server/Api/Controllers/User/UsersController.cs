@@ -49,14 +49,11 @@ public class UsersController(IUserManagementService userManagementService) : Con
         var user = await userManagementService.GetAllUsersAsync();
         return Ok(user);
     }
-
-    [HttpPut("update/{userId:guid}")]
-    public Task<ActionResult<UserDto>> UpdateUserDetailsByIdAsync(Guid userId,
-        [FromBody] UpdateUserDetailsDto updateUserDetailsDto)
+    
     [HttpPut("update-user/{userId:guid}")]
     public async Task<ActionResult<UserDto>> UpdateUserDetailsByIdAsync(Guid userId, [FromBody] UpdateUserDetailsDto updateUserDetailsDto)
     {
-        return Task.FromResult<ActionResult<UserDto>>(Ok(200));
+        return await Task.FromResult<ActionResult<UserDto>>(Ok(200));
     }
 
     [HttpGet("get-user/{userId:guid}")]
@@ -78,39 +75,5 @@ public class UsersController(IUserManagementService userManagementService) : Con
         [FromBody] UpdatePasswordDto updatePasswordDto)
     {
         return await Task.FromResult(Ok(id));
-    }
-
-
-    [HttpPost("reset-password")]
-    public async Task<IActionResult> RequestPasswordReset([FromBody] string email)
-    {
-        var newPassToken = await userManagementService.RequestPasswordReset(email);
-
-        var baseUrl = $"{Request.Scheme}://{Request.Host}";
-        var message = $"To reset the password click on the link: {baseUrl}/reset-password/{newPassToken}";
-
-        emailToUser(email, message);
-
-        return Ok("Password reset email sent.");
-    }
-
-    [HttpPost("reset-password/{resetToken}")]
-    public async Task<IActionResult> ResetPassword(
-        [FromRoute] string resetToken,
-        [FromBody] ResetPasswordRequest request)
-    {
-        var success = await userManagementService.ResetPassword(resetToken, request);
-
-        if (!success)
-            return BadRequest("Invalid or expired reset token.");
-
-        return Ok("Password has been reset.");
-    }
-
-
-    private static void emailToUser(string email, string message)
-    {
-        // TODO: Implement the feature - https://easv365-team-bokczyi7.atlassian.net/browse/SEM-60
-        throw new NotImplementedException();
     }
 }

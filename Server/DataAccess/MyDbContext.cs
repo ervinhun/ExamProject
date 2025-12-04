@@ -45,8 +45,10 @@ public class MyDbContext(DbContextOptions<MyDbContext> options) : DbContext(opti
     public DbSet<GameInstance> GameInstances => Set<GameInstance>();
     public DbSet<GameTemplate> GameTemplates => Set<GameTemplate>();
     public DbSet<WinningNumber> WinningNumbers => Set<WinningNumber>();
-    public DbSet<LotteryTicket>  LotteryTickets => Set<LotteryTicket>();
+    public DbSet<LotteryTicket> LotteryTickets => Set<LotteryTicket>();
     public DbSet<PickedNumber> PickedNumbers => Set<PickedNumber>();
+    public DbSet<UserConfirmationEntity> UserConfirmations => Set<UserConfirmationEntity>();
+
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -64,8 +66,13 @@ public class MyDbContext(DbContextOptions<MyDbContext> options) : DbContext(opti
             userEntity
                 .HasMany(u => u.Roles)
                 .WithMany(r => r.Users)
-                .UsingEntity(j => j.ToTable("RoleUser"))
-                .HasIndex(u => u.Email).IsUnique();
+                .UsingEntity(j => j.ToTable("RoleUser"));
+
+            userEntity.HasIndex(u => u.Email).IsUnique();
+
+            // Reset password token column size
+            userEntity.Property(u => u.ResetPasswordToken)
+                .HasMaxLength(512);
         });
 
         modelBuilder.Entity<Player>(playerEntity =>
@@ -77,6 +84,7 @@ public class MyDbContext(DbContextOptions<MyDbContext> options) : DbContext(opti
             playerEntity
                 .HasMany(p => p.LotteryTickets)
                 .WithOne(t => t.Player)
+                .HasForeignKey(t => t.PlayerId)
                 .OnDelete(DeleteBehavior.Restrict);
         });
 
@@ -95,7 +103,7 @@ public class MyDbContext(DbContextOptions<MyDbContext> options) : DbContext(opti
             walletEntity
                 .HasMany(w => w.Transactions)
                 .WithOne(t => t.Wallet)
-                .HasForeignKey(t=>t.WalletId)
+                .HasForeignKey(t => t.WalletId)
                 .OnDelete(DeleteBehavior.Restrict);
         });
 
@@ -122,8 +130,7 @@ public class MyDbContext(DbContextOptions<MyDbContext> options) : DbContext(opti
             gameInstanceEntity
                 .HasIndex(g => new { g.GameTemplateId, g.Status })
                 .IsUnique()
-                .HasFilter(
-                    $"\"Status\" = {(int)GameStatus.Active}"); // Only one instance in database can be active with one template
+                .HasFilter($"\"Status\" = {(int)GameStatus.Active}");
 
             // GameInstance -> WinningNumbers : One-To-Many
             gameInstanceEntity
@@ -150,7 +157,29 @@ public class MyDbContext(DbContextOptions<MyDbContext> options) : DbContext(opti
         });
 
 
+        // =============================
+        // USER CONFIRMATION ENTITY (NEW)
+        // =============================
+        modelBuilder.Entity<UserConfirmationEntity>(entity =>
+        {
+            entity.ToTable("UserConfirmations");
 
-    base.OnModelCreating(modelBuilder);
+            entity.HasKey(e => e.PlayerId);
+
+            entity.Property(e => e.ConfirmationToken)
+                .HasMaxLength(512);
+
+            entity.Property(e => e.Result)
+                .IsRequired();
+
+            // FK to Player
+            entity.HasOne<Player>()
+                .WithMany()
+                .HasForeignKey(e => e.PlayerId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+
+        base.OnModelCreating(modelBuilder);
     }
 }

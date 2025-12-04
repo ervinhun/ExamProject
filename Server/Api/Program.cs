@@ -12,6 +12,7 @@ using NSwag;
 using NSwag.Generation.Processors.Security;
 using Utils;
 using Api.Configuration;
+using Api.Services.Admin;
 using Api.Services.Game;
 using Api.Services.Management;
 using DotNetEnv;
