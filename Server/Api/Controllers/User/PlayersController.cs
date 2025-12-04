@@ -88,18 +88,19 @@ public class PlayersController(IUserManagementService userManagementService, IWa
         {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value 
                          ?? User.FindFirst("sub")?.Value;
+            if (userId == null) return Unauthorized("Invalid user id");
+            if(id != Guid.Parse(userId)) return BadRequest("Ids won't match");
+            
             var firstName = User.FindFirst(ClaimTypes.Name)?.Value;
             var lastName = User.FindFirst(ClaimTypes.Surname)?.Value;
-            if (userId == null) return Unauthorized("Invalid user id");
             
-            if(id != Guid.Parse(userId)) return BadRequest("Ids won't match");
             
             var transaction = new TransactionDto
             {
                 UserId = id,
                 WalletId = depositRequestDto.WalletId,
                 Name = $"{firstName} {lastName}",
-                TransactionNumber = null,
+                MobilePayTransactionNumber = depositRequestDto.MobilePayTransactionNumber,
                 Amount = depositRequestDto.Amount,
                 Status = TransactionStatus.Requested,
                 Type = TransactionType.Deposit,

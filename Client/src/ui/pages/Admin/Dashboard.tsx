@@ -1,8 +1,9 @@
 import {useEffect} from "react";
 import { NavLink } from "react-router-dom";
-import { useAtom } from "jotai";
+import { useAtom, useSetAtom } from "jotai";
 import { approveTransactionAtom, fetchPendingTransactionsAtom, pendingTransactionsAtom } from "@core/atoms/transaction";
 import { mapTransactionStatus, mapTransactionType } from "@core/types/transaction";
+import { addNotificationAtom } from "@core/atoms/error";
 
 
 // ---------- UTILS ----------
@@ -54,6 +55,7 @@ export default function Dashboard() {
     const [pendingTransactions] = useAtom(pendingTransactionsAtom);
     const [,fetchPendingTransactions] = useAtom(fetchPendingTransactionsAtom);
     const [,approveTransaction] = useAtom(approveTransactionAtom);
+    const addNotification = useSetAtom(addNotificationAtom);
 
     const stats = {
         activeGames: 3,
@@ -72,12 +74,13 @@ export default function Dashboard() {
         }
     }, []);
 
-    const confirmTransaction = async (id: number) => {
+    const confirmTransaction = async (id: string) => {
         // TODO: Implement actual transaction confirmation API call
         await approveTransaction(id).then(() => {
-            console.log("Transaction confirmed:", id);
+            addNotification({ type: "success", message: "Transaction confirmed successfully." });
         }).catch((err) => {
             console.error("Error confirming transaction:", err);
+            addNotification({ type: "error", message: `Error confirming transaction: ${err.message}`});
         }).finally(() => {
             fetchPendingTransactions().catch((err) => {
                 console.error("Error fetching pending transactions:", err);
@@ -108,14 +111,14 @@ export default function Dashboard() {
     };
 
     return (
-        <div className="container mx-auto px-4 py-6 my-7">
+        <div className="container mx-auto ">
             <div className="space-y-8">
             {/* Header */}
             <div className="flex items-center gap-4 pb-4 border-b-2 border-primary">
 
                 <div>
-                    <h1 className="text-4xl font-bold text-primary">Dashboard</h1>
-                    <p className="text-base text-base-content/70 mt-1">Overview of your lottery system</p>
+                    <h1 className="text-4xl font-bold text-primary ml-3">Dashboard</h1>
+                    <p className="text-base text-base-content/70 mt-1 ml-3">Overview of your lottery system</p>
                 </div>
             </div>
 

@@ -130,6 +130,7 @@ export async function api<T>(
         throw new Error(error.message || error.errors || `HTTP ${response.status}`)
     }
 
+
     const data = await response.json();
 
     if(!schema){

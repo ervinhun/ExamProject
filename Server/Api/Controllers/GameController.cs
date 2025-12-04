@@ -33,19 +33,25 @@ public class GameController(IGameManagementService gameManagementService) : Cont
         }
         catch (ServiceException ex)
         {
-            return Conflict(ex.Message);
+            return Conflict(new {message = ex.Message});
         }
     }
 
     [HttpPost("start-game")]
-    public async Task StartGameInstanceAsync([FromBody] GameInstanceDto gameInstanceDto)
+    public async Task<IActionResult> StartGameInstanceAsync([FromBody] GameInstanceDto gameInstanceDto)
     {
         try
         {
             await gameManagementService.StartGameInstance(gameInstanceDto);
-        }catch(Exception ex)
+            return Ok(new { message = "Game instance started successfully" });
+        }
+        catch (ServiceException serviceException)
         {
-            Conflict(ex.Message);
+            return StatusCode(500, new { message = serviceException.Message });
+        }
+        catch(Exception ex)
+        {
+            return Conflict(new { message = ex.Message });
         }
     }
     
@@ -55,12 +61,12 @@ public class GameController(IGameManagementService gameManagementService) : Cont
     {
         try
         {
-            var templates = await gameManagementService.GetGameTemplates();
+            var templates = await gameManagementService.GetGameTemplatesAsync();
             return Ok(templates);
         }
-        catch (Exception ex)
+        catch (ServiceException ex)
         {
-            return Conflict(ex.Message);
+            return Conflict(new { message = ex.Message });
         }
     }
 
@@ -82,7 +88,7 @@ public class GameController(IGameManagementService gameManagementService) : Cont
         }
         catch (ServiceException ex)
         {
-            return Conflict(ex.Message);
+            return Conflict(new {message = ex.Message});
         }
     }
 

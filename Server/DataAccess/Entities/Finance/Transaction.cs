@@ -10,6 +10,7 @@ public class Transaction
     public required Guid UserId { get; set; }
     public required Guid WalletId { get; set; }
     public string? Name { get; set; }
+    public string? MobilePayTransactionNumber { get; set; } 
     public TransactionStatus Status { get; set; }
     public TransactionType Type { get; set; }
     public List<TransactionHistory>? TransactionHistory { get; set; }

@@ -12,11 +12,10 @@ public class GameInstance
     public GameTemplate? GameTemplate { get; set; }
     
     [Range(1,6)] // 1-Sunday 6-Saturday
-    public int? ExpirationDayOfWeek { get; set; }
-    public TimeOnly? ExpirationTimeOfDay { get; set; }
-    public DateTime? ExpirationDate { get; set; }
+    public int? DrawDayOfWeek { get; set; }
+    public TimeOnly? DrawTimeOfDay { get; set; }
+    public DateTime? DrawDate { get; set; }
     public bool IsAutoRepeatable { get; set; }
-    public DateTime DrawDate { get; set; }
     public GameStatus Status { get; set; } 
     public required Guid CreatedById { get; set; }
     public ICollection<WinningNumber> WinningNumbers { get; set; } = new HashSet<WinningNumber>();

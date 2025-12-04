@@ -33,7 +33,6 @@ export const removeNotificationAtom = atom(
     }
 );
 
-// Backward compatibility
 export const errorAtom = atom<string | null>(null);
 errorAtom.debugLabel = "Error Message";
 

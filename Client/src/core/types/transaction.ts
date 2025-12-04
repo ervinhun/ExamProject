@@ -1,5 +1,5 @@
 export interface TransactionDto{
-    id: number;
+    id: string;
     name: string;
     amount: number;
     type: number | string;
@@ -11,6 +11,7 @@ export interface DepositRequestDto{
     amount: number;
     walletId: string;
     playerId: string;
+    mobilePayTransactionNumber: string;
 }
 
 // Transaction Status Mapping

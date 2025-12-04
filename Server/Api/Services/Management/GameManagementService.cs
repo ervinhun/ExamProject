@@ -16,12 +16,16 @@ public class GameManagementService(MyDbContext ctx) : IGameManagementService
     {
         try
         {
+            if(gameTemplateDto.Name == null) throw new ServiceException("Name cannot be null");
+            if(gameTemplateDto.Description == null) throw new ServiceException("Description cannot be null");
+            if(gameTemplateDto.GameType == null ) throw new ServiceException("Game type cannot be null");
+            if(gameTemplateDto.BasePrice <= 0) throw new ServiceException("Base price cannot be less or equals than 0");
             
             var newGameTemplate = new GameTemplate
             {
-                Name = gameTemplateDto.Name!,
-                Description = gameTemplateDto.Description!,
-                GameType = Enum.Parse<GameType>(gameTemplateDto.GameType!),
+                Name = gameTemplateDto.Name,
+                Description = gameTemplateDto.Description,
+                GameType = Enum.Parse<GameType>(gameTemplateDto.GameType),
                 PoolOfNumbers = gameTemplateDto.PoolOfNumbers,
                 MaxWinningNumbers =  gameTemplateDto.MaxWinningNumbers,
                 MinNumbersPerTicket = gameTemplateDto.MinNumbersPerTicket,
@@ -40,7 +44,7 @@ public class GameManagementService(MyDbContext ctx) : IGameManagementService
         }
     }
 
-    public Task<ICollection<GameTemplateResponseDto>> GetGameTemplates()
+    public Task<ICollection<GameTemplateResponseDto>> GetGameTemplatesAsync()
     {
         try
         {
@@ -109,10 +113,8 @@ public class GameManagementService(MyDbContext ctx) : IGameManagementService
                     Participants = participants,
                     IsAutoRepeatable = game.IsAutoRepeatable,
                     DrawDate = game.DrawDate,
-                    ExpirationDate = game.ExpirationDate,
-                    ExpirationDayOfWeek = game.ExpirationDayOfWeek,
-                    ExpirationTimeOfDay = game.ExpirationTimeOfDay,
-                    
+                    DrawDayOfWeek = game.DrawDayOfWeek,
+                    DrawTimeOfDay = game.DrawTimeOfDay,
                     IsDrawn = game.IsDrawn,
                     CreatedAt = game.CreatedAt,
                     UpdatedAt = game.UpdatedAt
@@ -142,17 +144,18 @@ public class GameManagementService(MyDbContext ctx) : IGameManagementService
     }
     
 
-    public async Task StartGameInstance(GameInstanceDto  gameInstanceDto)
+    public async Task StartGameInstance(GameInstanceDto gameInstanceDto)
     {
         try
         {
+            if(gameInstanceDto.DrawDate < DateTime.Now) throw new ServiceException("Draw date cannot be in the past");
+            
             var currentWeek = ISOWeek.GetWeekOfYear(DateTime.Now);
 
             var gameInstance = new GameInstance
             {
                 GameTemplateId = gameInstanceDto.TemplateId,
                 IsAutoRepeatable = gameInstanceDto.IsAutoRepeatable,
-                DrawDate = DateTimeHelper.ToUtc(gameInstanceDto.DrawDate),
                 Status = GameStatus.Active,
                 CreatedById = gameInstanceDto.CreatedById,
                 Week = currentWeek,
@@ -163,15 +166,15 @@ public class GameManagementService(MyDbContext ctx) : IGameManagementService
             };
             if (gameInstanceDto.IsAutoRepeatable)
             {
-                gameInstance.ExpirationDayOfWeek = gameInstanceDto.ExpirationDayOfWeek;
-                gameInstance.ExpirationTimeOfDay = gameInstanceDto.ExpirationTimeOfDay;
-                gameInstance.ExpirationDate = null;
+                gameInstance.DrawDayOfWeek = gameInstanceDto.DrawDayOfWeek;
+                gameInstance.DrawTimeOfDay = gameInstanceDto.DrawTimeOfDay;
+                gameInstance.DrawDate = null;
             }
             else
             {
-                gameInstance.ExpirationDayOfWeek = null;
-                gameInstance.ExpirationTimeOfDay = null;
-                gameInstance.ExpirationDate = gameInstance.ExpirationDate;
+                gameInstance.DrawDayOfWeek = null;
+                gameInstance.DrawTimeOfDay = null;
+                gameInstance.DrawDate = gameInstance.DrawDate;
             }
 
             await ctx.GameInstances.AddAsync(gameInstance);

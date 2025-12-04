@@ -16,7 +16,7 @@ export const fetchPendingTransactionsAtom = atom(null,
 );
 
 export const approveTransactionAtom = atom(null,
-    async (get, set, transactionId: number) => {
+    async (get, set, transactionId: string) => {
         await transactionApi.approveTransaction(transactionId)
             .then(() => {
                 const updatedTransactions = get(pendingTransactionsAtom).filter(t => t.id !== transactionId);

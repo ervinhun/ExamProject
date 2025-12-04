@@ -30,3 +30,83 @@
 .animate-slide-in-right {
     animation: slide-in-right 0.3s ease-out;
 }
+
+.shadow-base-200 {
+    box-shadow: 0 10px 15px -3px rgb(var(--b2) / 0.3), 0 4px 6px -4px rgb(var(--b2) / 0.3);
+}
+
+.shadow-amber-900 {
+    box-shadow: 0 10px 15px -3px rgba(158, 77, 30, 0.322), 0 4px 6px -4px rgb(120 53 15 / 0.4);
+}
+
+/* Custom Color Palette */
+:root {
+    --color-pink: #df338b;
+    --color-yellow: #f8d538;
+    --color-blue: #38b0f4;
+    --color-light-blue: #9edef1;
+    --color-navy: #004587;
+}
+
+/* Badge Color Classes */
+.badge-custom-pink {
+    background-color: #df338b;
+    color: white;
+    border-color: #df338b;
+}
+
+.badge-custom-yellow {
+    background-color: #f8d538;
+    color: #004587;
+    border-color: #f8d538;
+}
+
+.badge-custom-blue {
+    background-color: #38b0f4;
+    color: white;
+    border-color: #38b0f4;
+}
+
+.badge-custom-light-blue {
+    background-color: #9edef1;
+    color: #004587;
+    border-color: #9edef1;
+}
+
+.badge-custom-navy {
+    background-color: #004587;
+    color: white;
+    border-color: #004587;
+}
+
+/* Accent Color Override */
+.text-accent-custom {
+    color: #38b0f4 !important;
+}
+
+.bg-accent-custom {
+    background-color: #38b0f4 !important;
+}
+
+.game-badge {
+    width: auto;
+    font-weight: 600;
+    /* text-transform: uppercase; */
+    text-align: center;
+    /* letter-spacing: .5rem; */
+    font-size: 0.75rem;
+    /* padding: 0.25rem 0.5rem; */
+    border-radius: 0.375rem;
+}
+
+.game-badge::before{
+    content: "";
+    display: inline-block;
+    position: absolute;
+    margin-left: 3.5rem;
+    z-index: 1;
+    width: 5rem;
+    height: 5rem;
+    border-radius: 50%;
+    background-color: currentColor;
+}
