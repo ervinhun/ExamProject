@@ -1,10 +1,12 @@
 import { api } from '../Api';
+import type { WalletDto } from '../../types/wallet';
 import { PlayerSchema, type Player } from '../../types/users';
+import { DepositRequestDto } from '@core/types/transaction';
 
 const endpoint = '/api/players';
 export const playerApi = {
     getAll: async (): Promise<Player[]> => {
-        return await api<Player[]>(`${endpoint}/all`, {
+        return await api<Player[]>(`${endpoint}/all-players`, {
             init: {
                 method: 'GET'
             }
@@ -12,7 +14,7 @@ export const playerApi = {
     },
 
     getById: async (id: string): Promise<Player> => {
-        return await api<Player>(`${endpoint}/${id}`, {
+        return await api<Player>(`${endpoint}/get-player/${id}`, {
             init: {
                 method: 'GET'
             }
@@ -20,7 +22,7 @@ export const playerApi = {
     },
 
     create: async (player: Omit<Player, 'id'>): Promise<Player> => {
-        return await api<Player>(`${endpoint}/create`, {
+        return await api<Player>(`${endpoint}/register-player`, {
             // schema: PlayerSchema,
             init: {
                 credentials: 'include',
@@ -34,7 +36,7 @@ export const playerApi = {
     },
 
     update: async (id: string, player: Partial<Player>): Promise<Player> => {
-        return await api<Player>(`${endpoint}/${id}`, {
+        return await api<Player>(`${endpoint}/update-player/${id}`, {
             schema: PlayerSchema,
             init: {
                 method: 'PUT',
@@ -46,7 +48,23 @@ export const playerApi = {
         });
     },
 
-    // delete: async (id: string): Promise<void> => {
-    //     // await api.delete(`${endpoint}/${id}`);
-    // },
+    getWalletForPlayerId: async (playerId: string): Promise<WalletDto> => {
+        return await api<WalletDto>(`${endpoint}/${playerId}/wallet`, {
+            init: {
+                method: 'GET'
+            }
+        });
+    },
+
+    requestForDeposit: async (depositRequest: DepositRequestDto): Promise<void> => {
+        return await api<void>(`${endpoint}/${depositRequest.playerId}/wallet/deposit`, {
+            init: {
+                method: 'POST',
+                body: JSON.stringify(depositRequest),
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            }
+        });
+    }   
 };

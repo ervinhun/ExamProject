@@ -12,7 +12,7 @@ namespace Api.Controllers.User;
 [Route("api/users")]
 public class UsersController(IUserManagementService userManagementService) : ControllerBase
 {
-    [HttpPost("create")]
+    [HttpPost("register-user")]
     public async Task<IActionResult> CreateUser([FromBody] CreateUserDto createUserDto)
     {
         try
@@ -28,6 +28,22 @@ public class UsersController(IUserManagementService userManagementService) : Con
 
 
     [HttpGet("all")]
+
+    [HttpPatch("toggle-status/{userId:guid}")]
+    public async Task<IActionResult> ToggleStatusByIdAsync(Guid userId)
+    {
+        try
+        {
+            await userManagementService.ToggleStatus(userId);
+            return Ok(200);
+        }
+        catch (Exception e)
+        {
+            return Conflict(new {message = e.Message});
+        }
+    }
+    
+    [HttpGet("all-users")]
     public async Task<ActionResult<List<UserDto>>> GetAllUsersAsync()
     {
         var user = await userManagementService.GetAllUsersAsync();
@@ -37,17 +53,19 @@ public class UsersController(IUserManagementService userManagementService) : Con
     [HttpPut("update/{userId:guid}")]
     public Task<ActionResult<UserDto>> UpdateUserDetailsByIdAsync(Guid userId,
         [FromBody] UpdateUserDetailsDto updateUserDetailsDto)
+    [HttpPut("update-user/{userId:guid}")]
+    public async Task<ActionResult<UserDto>> UpdateUserDetailsByIdAsync(Guid userId, [FromBody] UpdateUserDetailsDto updateUserDetailsDto)
     {
         return Task.FromResult<ActionResult<UserDto>>(Ok(200));
     }
 
-    [HttpGet("{userId:guid}")]
+    [HttpGet("get-user/{userId:guid}")]
     public async Task<ActionResult<UserDto>> GetUserByIdAsync(Guid userId)
     {
         return await Task.FromResult(Ok(200));
     }
 
-    [HttpPut("delete/{userId:guid}")]
+    [HttpPut("delete-user/{userId:guid}")]
     public async Task DeleteUserByIdAsync(Guid userId)
     {
         await Task.FromResult(Ok(200));

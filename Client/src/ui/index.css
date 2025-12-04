@@ -6,6 +6,7 @@
 #dock{
     /* justify-content: space-between; */
     justify-content: center;
+    justify-items: center;
     align-items: center;
     width: 100%;
     margin: 0 5rem;
@@ -13,4 +14,19 @@
 
 #dock-root{
     padding-left: 2rem;
+}
+
+@keyframes slide-in-right {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+.animate-slide-in-right {
+    animation: slide-in-right 0.3s ease-out;
 }

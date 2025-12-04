@@ -2,7 +2,7 @@ namespace DataAccess.Enums;
 
 public enum TransactionStatus
 {
-    Pending,
+    Requested,
     Rejected,
     Canceled,
     Approved

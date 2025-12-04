@@ -1,35 +1,9 @@
-import {useEffect, useState} from "react";
+import {useEffect} from "react";
 import { NavLink } from "react-router-dom";
+import { useAtom } from "jotai";
+import { approveTransactionAtom, fetchPendingTransactionsAtom, pendingTransactionsAtom } from "@core/atoms/transaction";
+import { mapTransactionStatus, mapTransactionType } from "@core/types/transaction";
 
-// ---------- TYPES ----------
-type Transaction = {
-    id: number;
-    name: string;
-    amount: number;
-    type: string;
-    date: string;
-    confirmed: boolean;
-    removing?: boolean;
-};
-
-type Player = {
-    id: number;
-    name: string;
-    email: string;
-    balance: number;
-    status: string;
-    confirmed: boolean;
-    removing?: boolean;
-};
-
-// type Game = {
-//     id: string;
-//     name: string;
-//     status: string;
-//     drawDate: string;
-//     participants: number;
-//     ticketsSold: number;
-// };
 
 // ---------- UTILS ----------
 function getNextSaturdayAt17() {
@@ -51,109 +25,87 @@ function getNextSaturdayAt17() {
 }
 
 // Main countdown hook
-function useCountdown() {
-    const [remaining, setRemaining] = useState(() => {
-        return getNextSaturdayAt17().getTime() - Date.now();
-    });
+// function useCountdown() {
+//     const [remaining, setRemaining] = useState(() => {
+//         return getNextSaturdayAt17().getTime() - Date.now();
+//     });
 
-    useEffect(() => {
-        const interval = setInterval(() => {
-            setRemaining(getNextSaturdayAt17().getTime() - Date.now());
-        }, 1000);
+//     useEffect(() => {
+//         const interval = setInterval(() => {
+//             setRemaining(getNextSaturdayAt17().getTime() - Date.now());
+//         }, 1000);
 
-        return () => clearInterval(interval);
-    }, []);
+//         return () => clearInterval(interval);
+//     }, []);
 
-    const totalSeconds = Math.max(0, Math.floor(remaining / 1000));
+//     const totalSeconds = Math.max(0, Math.floor(remaining / 1000));
 
-    const days = Math.floor(totalSeconds / (3600 * 24));
-    const hours = Math.floor((totalSeconds % (3600 * 24)) / 3600);
-    const minutes = Math.floor((totalSeconds % 3600) / 60);
-    const seconds = totalSeconds % 60;
+//     const days = Math.floor(totalSeconds / (3600 * 24));
+//     const hours = Math.floor((totalSeconds % (3600 * 24)) / 3600);
+//     const minutes = Math.floor((totalSeconds % 3600) / 60);
+//     const seconds = totalSeconds % 60;
 
-    return {days, hours, minutes, seconds};
-}
+//     return {days, hours, minutes, seconds};
+// }
 
 // ---------- COMPONENT ----------
 export default function Dashboard() {
-    const countdown = useCountdown();
+    // const countdown = useCountdown();
+    const [pendingTransactions] = useAtom(pendingTransactionsAtom);
+    const [,fetchPendingTransactions] = useAtom(fetchPendingTransactionsAtom);
+    const [,approveTransaction] = useAtom(approveTransactionAtom);
 
     const stats = {
         activeGames: 3,
         totalPlayers: 127,
         totalRevenue: 4580.50,
-        pendingTransactions: 4,
+        pendingTransactions: pendingTransactions.length,
         pendingPlayers: 2,
         recentActivity: 23
     };
 
-    const [transactions, setTransactions] = useState<Transaction[]>([
-        {id: 482193, name: "Alice Jensen", amount: 740, date: "2025-11-25 14:23", confirmed: false,type:"deposit"},
-        {id: 905127, name: "Mark Sørensen", amount: 120, date: "2025-11-26 02:41", confirmed: false,type:"deposit"},
-        {id: 771520, name: "Laura Schmidt", amount: 960, date: "2025-11-24 22:09", confirmed: false,type:"Deposit"},
-        {id: 333874, name: "Jonas Holm", amount: 380, date: "2025-11-25 19:56", confirmed: false, type:"Deposit" },
-    ]);
+    useEffect(() => {
+        if(pendingTransactions.length === 0){
+            fetchPendingTransactions().catch((err) => {
+                console.error("Error fetching pending transactions:", err);
+            }); 
+        }
+    }, []);
 
-    const [players, setPlayers] = useState<Player[]>([
-        {id: 1, name: "Bjørn Ludvigsen", email: "bjorn@example.com", balance: 250, status: "Pending", confirmed: false},
-        {id: 2, name: "Anette Lassen", email: "anette@example.com", balance: 0, status: "Pending", confirmed: false}
-    ]);
-
-
-    const recentPlayers = [
-        {id: 101, name: "Emma Nielsen", email: "emma@example.com", joinDate: "2025-11-26", balance: 150},
-        {id: 102, name: "Oliver Hansen", email: "oliver@example.com", joinDate: "2025-11-25", balance: 300},
-        {id: 103, name: "Sofia Andersen", email: "sofia@example.com", joinDate: "2025-11-24", balance: 75},
-        {id: 104, name: "Lucas Petersen", email: "lucas@example.com", joinDate: "2025-11-23", balance: 200}
-    ];
-
-    const confirmTransaction = (id: number) => {
-        setTransactions(prev =>
-            prev.map(tran => (tran.id === id ? {...tran, confirmed: true} : tran))
-        );
-        setTimeout(() => {
-            setTransactions(prev =>
-                prev.map(tran => (tran.id === id ? {...tran, removing: true} : tran))
-            );
-        }, 2000);
-        setTimeout(() => {
-            setTransactions(prev => prev.filter(t => t.id !== id));
-        }, 2600);
+    const confirmTransaction = async (id: number) => {
+        // TODO: Implement actual transaction confirmation API call
+        await approveTransaction(id).then(() => {
+            console.log("Transaction confirmed:", id);
+        }).catch((err) => {
+            console.error("Error confirming transaction:", err);
+        }).finally(() => {
+            fetchPendingTransactions().catch((err) => {
+                console.error("Error fetching pending transactions:", err);
+            }); 
+        });
     };
 
-    const confirmPlayer = (id: number) => {
-        setPlayers(prev =>
-            prev.map(p => (p.id === id ? {...p, confirmed: true} : p))
-        );
-        setTimeout(() => {
-            setPlayers(prev =>
-                prev.map(p => (p.id === id ? {...p, removing: true} : p))
-            );
-        }, 2000);
-        setTimeout(() => {
-            setPlayers(prev => prev.filter(p => p.id !== id));
-        }, 2600);
+    const formatDate = (dateStr: string) => {
+        const date = new Date(dateStr);
+        return date.toLocaleDateString("da-DK", { 
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+            hour: "2-digit", 
+            minute: "2-digit",
+            hour12: false
+        });
     };
 
-    // const formatDate = (dateStr: string) => {
-    //     const date = new Date(dateStr);
-    //     return date.toLocaleDateString("en-US", { 
-    //         month: "short", 
-    //         day: "numeric", 
-    //         hour: "2-digit", 
-    //         minute: "2-digit" 
-    //     });
-    // };
-
-    // const getStatusColor = (status: string) => {
-    //     switch (status) {
-    //         case "Active": return "badge-success";
-    //         case "Pending Draw": return "badge-warning";
-    //         case "Pending": return "badge-warning";
-    //         case "Completed": return "badge-info";
-    //         default: return "badge-ghost";
-    //     }
-    // };
+    const getStatusColor = (status: string) => {
+        switch (status) {
+            case "Active": return "badge-success";
+            case "Pending Draw": return "badge-warning";
+            case "Pending": return "badge-warning";
+            case "Completed": return "badge-info";
+            default: return "badge-ghost";
+        }
+    };
 
     return (
         <div className="container mx-auto px-4 py-6 my-7">
@@ -201,7 +153,7 @@ export default function Dashboard() {
                         </div>
                         <div className="stat-title text-primary-content opacity-80">Next Draw</div>
                         <div className="stat-value text-primary-content">
-                            {countdown.days}d {countdown.hours}h {countdown.minutes}m
+                            {/* {countdown.days}d {countdown.hours}h {countdown.minutes}m */}
                         </div>
                     </div>
                 </div>
@@ -223,7 +175,7 @@ export default function Dashboard() {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {players.map(p => (
+                                    {/* {players.map(p => (
                                         <tr
                                             key={p.id}
                                             className={`transition-opacity duration-500 ${
@@ -245,7 +197,7 @@ export default function Dashboard() {
                                                 )}
                                             </td>
                                         </tr>
-                                    ))}
+                                    ))} */}
                                 </tbody>
                             </table>
                         </div>
@@ -270,31 +222,50 @@ export default function Dashboard() {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {transactions.map(t => (
-                                        <tr
-                                            key={t.id}
-                                            className={`transition-opacity duration-500 ${
-                                                t.removing ? "opacity-0" : "opacity-100"
-                                            }`}
-                                        >
-                                            <td className="font-semibold">{t.name}</td>
-                                            <td className="font-mono">{t.type}</td>
-                                            <td className="font-mono">${t.amount}</td>
-                                            <td className="text-sm">{t.date}</td>
-                                            <td>
-                                                {t.confirmed ? (
-                                                    <span className="text-success text-xl font-bold">✔</span>
-                                                ) : (
-                                                    <button
-                                                        onClick={() => confirmTransaction(t.id)}
-                                                        className="btn btn-xs btn-primary"
-                                                    >
-                                                        Confirm
-                                                    </button>
-                                                )}
+                                    {pendingTransactions.length === 0 ? (
+                                        <tr>
+                                            <td colSpan={5} className="text-center py-8 text-base-content/60">
+                                                No pending transactions
                                             </td>
                                         </tr>
-                                    ))}
+                                    ) : (
+                                        pendingTransactions.map(t => {
+                                            const statusText = mapTransactionStatus(t.status);
+                                            const typeText = mapTransactionType(t.type);
+                                            const getStatusBadge = () => {
+                                                switch (statusText) {
+                                                    case "Approved": return "badge-success";
+                                                    case "Pending": return "badge-warning";
+                                                    case "Rejected": return "badge-error";
+                                                    case "Canceled": return "badge-ghost";
+                                                    default: return "badge-ghost";
+                                                }
+                                            };
+                                            
+                                            return (
+                                                <tr key={t.id}>
+                                                    <td className="font-semibold">{t.name}</td>
+                                                    <td>
+                                                        <span className="badge badge-sm">{typeText}</span>
+                                                    </td>
+                                                    <td className="font-mono">{t.amount.toFixed(2)} DKK</td>
+                                                    <td className="text-sm">{formatDate(t.createdAt)}</td>
+                                                    <td>
+                                                        {statusText === "Approved" ? (
+                                                            <span className="badge badge-success badge-sm">Approved</span>
+                                                        ) : (
+                                                            <button
+                                                                onClick={() => confirmTransaction(t.id)}
+                                                                className="btn btn-xs btn-primary"
+                                                            >
+                                                                Confirm
+                                                            </button>
+                                                        )}
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })
+                                    )}
                                 </tbody>
                             </table>
                         </div>
@@ -327,7 +298,7 @@ export default function Dashboard() {
                                 </tr>
                             </thead>
                             <tbody>
-                                {recentPlayers.map((player) => (
+                                {/* {recentPlayers.map((player) => (
                                     <tr key={player.id}>
                                         <td className="font-semibold">{player.name}</td>
                                         <td>{player.email}</td>
@@ -340,7 +311,7 @@ export default function Dashboard() {
                                             </div>
                                         </td>
                                     </tr>
-                                ))}
+                                ))} */}
                             </tbody>
                         </table>
                     </div>

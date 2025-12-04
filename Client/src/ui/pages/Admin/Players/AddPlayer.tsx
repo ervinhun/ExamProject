@@ -1,11 +1,15 @@
-import { useAtom } from "jotai";
+import { useAtom, useSetAtom } from "jotai";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import ErrorPopUp from "../../Errors/ErrorPopUp";
 import { createPlayerAtom } from "@core/atoms/players";
-
+import { addNotificationAtom } from "@core/atoms/error";
 export default function AddPlayer() {    
     const [,createPlayer] = useAtom(createPlayerAtom)
+    const addNotification = useSetAtom(addNotificationAtom);
+    const navigate = useNavigate();
     
+    // Form state
     // Form state
     const [firstName, setFirstName] = useState("");
     const [lastName, setLastName] = useState("");
@@ -24,8 +28,38 @@ export default function AddPlayer() {
             firstName,
             lastName,
             email,
-            phoneNumber
+            phoneNumber, 
+        }).then((res)=>{
+        // Clear form
+            setFirstName("");
+            setLastName("");
+            setAddress("");
+            setZipCode("");
+            setCity("");
+            setPhoneNumber("");
+            setBirthDate("");
+            setGender("");
+            setEmail("");
+            setConfirmEmail("");
+            
+            navigate('/admin/players');
+        
+            addNotification({
+                message: `Player ${firstName} ${lastName} created successfully!`,
+                type: 'success'
+            });
+        })
+        .catch((err)=>{
+            addNotification({
+                message: `Failed to create player. ${err.message}`,
+                type: 'error'
+            });
+            return;
+        }).finally(()=>{
+
         });
+
+
     }
 
     return (

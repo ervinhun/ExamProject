@@ -64,12 +64,7 @@ public class AuthenticationController(IMyAuthenticationService authenticationSer
         [HttpPost("register")]
         public async Task<ActionResult<JwtResponseDto>> Register(RegisterRequestDto registerRequestDto)
         {
-            var result = await authenticationService.Register(registerRequestDto);
-            if (result == null)
-            {
-                return BadRequest("Registration failed");
-            }
-            return Ok(result);
+            return NoContent();
         }
     
         [HttpPost("refresh-token")]

@@ -6,7 +6,7 @@ const endpoint = "/api/games";
 
 export const gameApi = {
     createGameTemplate: async (template: GameTemplateDto): Promise<GameTemplateDto> => {
-        const gameTemplate = await api<GameTemplate>(`${endpoint}/templates/create`, {
+        const gameTemplate = await api<GameTemplate>(`${endpoint}/templates/create-template`, {
             schema: GameTemplateSchema,
             init: {
                 method: "POST",
@@ -17,7 +17,7 @@ export const gameApi = {
     },
     
     startGameInstance: async (gameInstance: Partial<GameInstanceDto>): Promise<GameInstanceDto> => {
-        return await api<GameInstanceDto>(`${endpoint}/start`, {
+        return await api<GameInstanceDto>(`${endpoint}/start-game`, {
             init: {
                 method: "POST",
                 body: JSON.stringify(gameInstance)
@@ -26,7 +26,7 @@ export const gameApi = {
     },
 
     getAllGameTemplates: async (): Promise<GameTemplateDto[]> => {
-        return await api<GameTemplateDto[]>(`${endpoint}/templates/all`, {
+        return await api<GameTemplateDto[]>(`${endpoint}/templates/all-templates`, {
             init: {
                 method: "GET"
             }
@@ -34,7 +34,7 @@ export const gameApi = {
     },
 
     getAllGameInstances: async (): Promise<GameInstanceDto[]> => {
-        return await api<GameInstanceDto[]>(`${endpoint}/all`, {
+        return await api<GameInstanceDto[]>(`${endpoint}/all-instances`, {
             init: {
                 method: "GET"
             }
@@ -42,7 +42,7 @@ export const gameApi = {
     },
 
     getAllActiveGames: async (): Promise<GameInstanceDto[]> => {
-        return await api<GameInstanceDto[]>(`${endpoint}/active`, {
+        return await api<GameInstanceDto[]>(`${endpoint}/active-games`, {
             init: {
                 method: "GET"
             }

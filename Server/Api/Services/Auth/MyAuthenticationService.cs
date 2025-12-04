@@ -34,7 +34,7 @@ public class MyAuthenticationService(MyDbContext ctx, IJwt jwt) : IMyAuthenticat
             throw new AuthenticationException("User already exists");
         }
 
-        HashUtils.CreatePasswordHash(dto.Password, out byte[] hash, out var salt); 
+        HashUtils.CreatePasswordHash(dto.Password, out var hash, out var salt); 
         
         var newUser = new User
         {
@@ -48,25 +48,5 @@ public class MyAuthenticationService(MyDbContext ctx, IJwt jwt) : IMyAuthenticat
         await ctx.SaveChangesAsync();
         
         return newUser;
-    }
-
-    public Task<UserDto> GetAuthenticatedUserById(Guid id)
-    {
-        var user =  ctx.Users.Include(user => user.Roles).FirstOrDefault(u => u.Id == id);
-        if (user == null) throw new ServiceException("User not found");
-        return Task.FromResult(new UserDto
-        {
-            Id = user.Id,
-            Email = user.Email,
-            FirstName = user.FirstName,
-            LastName = user.LastName,
-            CreatedAt = DateTimeHelper.ToCopenhagen(user.CreatedAt),
-            UpdatedAt = DateTimeHelper.ToCopenhagen(user.UpdatedAt),
-        });
-    }
-
-    public Task<UserDto> GetAuthenticatedUserByEmail(string email)
-    {
-        throw new NotImplementedException();
     }
 }

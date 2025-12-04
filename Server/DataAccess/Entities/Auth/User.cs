@@ -31,6 +31,9 @@ public class User
     public string RefreshTokenHash { get; set; } = string.Empty;
     public DateTime RefreshTokenExpires { get; set; }
     
+    public bool Activated { get; set; } = false;
+    public DateTime? ExpireDate { get; set; }
+    
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; }
     public bool IsDeleted { get; set; }

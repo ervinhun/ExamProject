@@ -12,6 +12,7 @@ using NSwag;
 using NSwag.Generation.Processors.Security;
 using Utils;
 using Api.Configuration;
+using Api.Services.Game;
 using Api.Services.Management;
 using DotNetEnv;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -108,6 +109,7 @@ public static class Program
         services.AddScoped<IMyAuthenticationService, MyAuthenticationService>();
         services.AddScoped<IUserManagementService, UserManagementService>();
         services.AddScoped<IGameManagementService, GameManagementService>();
+        services.AddScoped<IWalletTransactionsService, WalletTransactionsService>();
         services.AddScoped<IEmailService, EmailService>();
         
         // Configure JWT Authentication
@@ -232,7 +234,8 @@ public static class Program
             {
                 Email = superSettings.Email,
                 PasswordHash = passwordHash,
-                PasswordSalt = passwordSalt
+                PasswordSalt = passwordSalt,
+                Activated = true
             };
             
             superAdmin.Roles.Add(superAdminRole);

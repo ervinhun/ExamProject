@@ -4,7 +4,7 @@ import {createBrowserRouter, RouterProvider} from "react-router-dom";
 import Home from "./pages/Home.tsx";
 import Login from "./pages/Login.tsx";
 import Register from "./pages/Register.tsx";
-import Balance from "./pages/Player/Balance.tsx";
+import Wallet from "./pages/Player/Wallet.tsx";
 import MyBoards from "./pages/Player/Boards/MyBoards.tsx";
 import CreateBoard from "./pages/Player/Boards/CreateBoard.tsx";
 import RepeatingBoards from "./pages/Player/Boards/RepeatingBoards.tsx";
@@ -24,6 +24,7 @@ import Forbidden403 from "./pages/Errors/Forbidden403.tsx";
 import { CreateGameTemplate } from './pages/Admin/Games/CreateGameTemplate.tsx';
 import { GamesOverview } from './pages/Admin/Games/GamesOverview.tsx';
 import { StartGame } from './pages/Admin/Games/StartGame.tsx';
+import ErrorPopUp from './pages/Errors/ErrorPopUp.tsx';
 
 const router = createBrowserRouter([
     {
@@ -41,7 +42,7 @@ const router = createBrowserRouter([
             {
                 element: <RequirePlayer/>,
                 children: [
-                    {path: "/balance", element: <Balance/>},
+                    {path: "/wallet", element: <Wallet/>},
 
                     {path: "/boards", element: <MyBoards/>},
                     {path: "/boards/new", element: <CreateBoard/>},
@@ -81,7 +82,12 @@ const router = createBrowserRouter([
 ]);
 
 function App() {
-    return <RouterProvider router={router}/>
+    return (
+        <>
+            <RouterProvider router={router}/>
+            <ErrorPopUp />
+        </>
+    )
 }
 
 export default App

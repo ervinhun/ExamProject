@@ -13,13 +13,13 @@ namespace Api.Controllers;
 public class GameController(IGameManagementService gameManagementService) : ControllerBase
 {
 
-    [HttpGet("all")]
+    [HttpGet("all-games")]
     public async Task<ActionResult<List<GameInstanceDto>>> GetAllGamesAsync()
     {
         return null;
     }
 
-    [HttpGet("active")]
+    [HttpGet("active-games")]
     public async Task<IActionResult> GetAllActiveGamesAsync()
     {
         try
@@ -33,7 +33,7 @@ public class GameController(IGameManagementService gameManagementService) : Cont
         }
     }
 
-    [HttpPost("start")]
+    [HttpPost("start-game")]
     public async Task StartGameInstanceAsync([FromBody] GameInstanceDto gameInstanceDto)
     {
         try
@@ -46,7 +46,7 @@ public class GameController(IGameManagementService gameManagementService) : Cont
     }
     
     [Authorize(Roles = "admin,superadmin")]
-    [HttpGet("templates/all")]
+    [HttpGet("templates/all-templates")]
     public async Task<IActionResult> GetAllTemplatesAsync()
     {
         try
@@ -61,14 +61,14 @@ public class GameController(IGameManagementService gameManagementService) : Cont
     }
 
     [Authorize(Roles = "admin,superadmin")]
-    [HttpGet("templates/{templateId:guid}")]
-    public async Task<ActionResult<GameTemplateResponseDto>> GetTemplateByIdAsync(Guid templateId)
+    [HttpGet("templates/get-template/{templateId:guid}")]
+    public async Task<IActionResult> GetTemplateByIdAsync(Guid templateId)
     {
         return null;
     }
     
     [Authorize(Roles = "admin,superadmin")]
-    [HttpPost("templates/create")]
+    [HttpPost("templates/create-template")]
     public async Task<IActionResult> CreateGameTemplate([FromBody] CreateGameTemplateRequestDto dto)
     {
         try
@@ -83,15 +83,15 @@ public class GameController(IGameManagementService gameManagementService) : Cont
     }
 
     [Authorize(Roles = "admin,superadmin")]
-    [HttpPut("templates/update/{templateId:guid}")]
-    public async Task<ActionResult<GameTemplateResponseDto>> UpdateGameTemplateByIdAsync(Guid templateId,
+    [HttpPut("templates/update-template/{templateId:guid}")]
+    public async Task<IActionResult> UpdateGameTemplateByIdAsync(Guid templateId,
         [FromBody] CreateGameTemplateRequestDto gameTemplateRequestDto)
     {
         return null;
     }
 
     [Authorize(Roles = "admin,superadmin")]
-    [HttpDelete("templates/delete/{templateId:guid}")]
+    [HttpDelete("templates/delete-template/{templateId:guid}")]
     public async Task<ActionResult> DeleteGameTemplateByIdAsync(Guid templateId)
     {
         return null;

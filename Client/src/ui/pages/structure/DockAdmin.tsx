@@ -1,10 +1,21 @@
 import { NavLink } from "react-router-dom";
 import { useState } from "react";
+import { useAtom } from "jotai";
+import { authAtom } from "@core/atoms/auth";
+import { envConfig } from "@core/config/EnvConfig";
+import dashboardIcon from "@ui/assets/layout-dashboard.svg";
+import userIcon from "@ui/assets/user.svg";
+import dicesIcon from "@ui/assets/dices.svg";
+import transactionIcon from "@ui/assets/arrow-left-right.svg";
+import settingsIcon from "@ui/assets/cog.svg";
 
 export default function DockAdmin() {
-    const [openPlayers, setOpenPlayers] = useState(false);
+    const [openUsers, setOpenUsers] = useState(false);
     const [openGames, setOpenGames] = useState(false);
     const [openTransactions, setOpenTransactions] = useState(false);
+    const [authUser] = useAtom(authAtom);
+    
+    const isSuperAdmin = authUser?.roles.includes(Number(envConfig.SUPERADMIN_ROLE));
 
     return (
         <div id="dock" className="flex gap-10 items-center">
@@ -16,9 +27,9 @@ export default function DockAdmin() {
                 }
             >
                 <img
-                    src="https://img.icons8.com/?size=100&id=sUJRwjfnGwbJ&format=png&color=FE9900"
+                    src={dashboardIcon}
                     alt="Dashboard"
-                    className="dock-icon h-7 w-7"
+                    className="dock-icon h-7 w-7 object-contain"
                 />
                 <span className="dock-label text-accent text-base">Dashboard</span>
             </NavLink>
@@ -28,18 +39,18 @@ export default function DockAdmin() {
                 <div
                     tabIndex={0}
                     role="button"
-                    onClick={() => setOpenPlayers(!openPlayers)}
-                    className={`dock-button flex items-center gap-2 ${openPlayers ? "dock-active" : ""}`}
+                    onClick={() => setOpenUsers(!openUsers)}
+                    className={`dock-button flex items-center gap-2 ${openUsers ? "dock-active" : ""}`}
                 >
                     <img
-                        src="https://img.icons8.com/?size=100&id=23264&format=png&color=FE9900"
-                        alt="Players"
-                        className="dock-icon h-7 w-7"
+                        src={userIcon}
+                        alt="Users"
+                        className="dock-icon h-7 w-7 object-contain"
                     />
-                    <span className="dock-label text-accent text-base cursor-default">Players</span>
+                    <span className="dock-label text-accent text-base cursor-default">Users</span>
                     <svg
                         xmlns="http://www.w3.org/2000/svg"
-                        className={`h-4 w-4 transition-transform ${openPlayers ? 'rotate-180' : ''}`}
+                        className={`h-4 w-4 transition-transform ${openUsers ? 'rotate-180' : ''}`}
                         fill="none"
                         viewBox="0 0 24 24"
                         stroke="currentColor"
@@ -56,8 +67,13 @@ export default function DockAdmin() {
                         <NavLink to="/admin/players/register">Register Player</NavLink>
                     </li>
                     <li>
-                        <NavLink to="/admin/players/applications">Applications (3)</NavLink>
+                        <NavLink to="/admin/players/applications">Player Applications </NavLink>
                     </li>
+                    {isSuperAdmin && (
+                        <li>
+                            <NavLink to="/admin/create-admin">Create Admin</NavLink>
+                        </li>
+                    )}
                 </ul>
             </div>
 
@@ -70,9 +86,9 @@ export default function DockAdmin() {
                     className={`dock-button flex items-center gap-2 ${openGames ? "dock-active" : ""}`}
                 >
                     <img
-                        src="https://img.icons8.com/?size=100&id=8Bv7Az7nb1dV&format=png&color=FE9900"
+                        src={dicesIcon}
                         alt="Games"
-                        className="dock-icon h-7 w-7"
+                        className="dock-icon h-7 w-7 object-contain"
                     />
                     <span className="dock-label text-accent text-base cursor-default">Games</span>
                     <svg
@@ -111,9 +127,9 @@ export default function DockAdmin() {
                     className={`dock-button flex items-center gap-2 ${openTransactions ? "dock-active" : ""}`}
                 >
                     <img
-                        src="https://img.icons8.com/?size=100&id=qXJsrsUbVH3B&format=png&color=FE9900"
+                        src={transactionIcon}
                         alt="Transactions"
-                        className="dock-icon h-7 w-7"
+                        className="dock-icon h-7 w-7 object-contain"
                     />
                     <span className="dock-label text-accent text-base cursor-default">Transactions</span>
                     <svg
@@ -145,9 +161,9 @@ export default function DockAdmin() {
                 }
             >
                 <img
-                    src="https://img.icons8.com/?size=100&id=364&format=png&color=FE9900"
+                    src={settingsIcon}
                     alt="Settings"
-                    className="dock-icon h-7 w-7"
+                    className="dock-icon h-7 w-7 object-contain"
                 />
                 <span className="dock-label text-accent text-base">Settings</span>
             </NavLink>

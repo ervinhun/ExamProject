@@ -24,6 +24,7 @@ export const PlayerSchema = z.object({
     firstName: z.string(),
     lastName: z.string(),
     email: z.email(),
+    isActive: z.boolean().default(true).optional(),
     phoneNumber: z.string(),
     createdAt: z.string().optional(),
     updatedAt: z.string().nullable().optional(),

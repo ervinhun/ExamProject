@@ -13,7 +13,7 @@ using Utils;
 using Utils.Exceptions;
 using static Api.Services.Management.UserConverter;
 
-namespace Api.Services.Management;
+namespace Api.Services.Admin;
 
 public class UserManagementService(MyDbContext ctx, IEmailService emailService) : IUserManagementService
 {
@@ -56,7 +56,7 @@ public class UserManagementService(MyDbContext ctx, IEmailService emailService) 
         }
     }
 
-    public async Task RegisterPlayer(CreatePlayerDto createPlayerDto)
+    public async Task<PlayerDto> RegisterPlayer(CreatePlayerDto createPlayerDto)
     {
         if (await ctx.Users.AnyAsync(u => u.Email == createPlayerDto.Email))
         {
@@ -80,7 +80,7 @@ public class UserManagementService(MyDbContext ctx, IEmailService emailService) 
             PhoneNumber = createPlayerDto.PhoneNumber,
             PasswordHash = hash,
             PasswordSalt = salt,
-            Activated = true
+            Activated = false
         };
 
         // Assign player role, and a wallet
@@ -91,6 +91,19 @@ public class UserManagementService(MyDbContext ctx, IEmailService emailService) 
         {
             await ctx.Players.AddAsync(player);
             await ctx.SaveChangesAsync();
+            return new PlayerDto
+            {
+                Id = player.Id,
+                FirstName = player.FirstName,
+                LastName = player.LastName,
+                Email = player.Email,
+                PhoneNumber = player.PhoneNumber,
+                CreatedAt = player.CreatedAt,
+                ExpireDate = player.ExpireDate,
+                UpdatedAt = player.UpdatedAt,
+                IsDeleted = player.IsDeleted,
+                IsActive = player.Activated
+            };
         }
         catch (DbUpdateException e)
         {
@@ -121,7 +134,7 @@ public class UserManagementService(MyDbContext ctx, IEmailService emailService) 
     public async Task<ICollection<PlayerDto>> GetAllPlayersAsync()
     {
         var players = await ctx.Players.ToListAsync();
-        if (players == null) throw new ServiceException("No players found");
+        if(players == null) throw new ServiceException("No players found");
         var playerDtos = new List<PlayerDto>();
         foreach (var player in players)
         {
@@ -131,6 +144,7 @@ public class UserManagementService(MyDbContext ctx, IEmailService emailService) 
                 FirstName = player.FirstName,
                 LastName = player.LastName,
                 Email = player.Email,
+                IsActive = player.Activated,
                 PhoneNumber = player.PhoneNumber,
                 CreatedAt = DateTimeHelper.ToCopenhagen(player.CreatedAt)
             });
@@ -138,6 +152,50 @@ public class UserManagementService(MyDbContext ctx, IEmailService emailService) 
 
         return playerDtos;
     }
+
+    public async Task ToggleStatus(Guid userId)
+    {
+        try
+        {
+            var user = await ctx.Users.SingleOrDefaultAsync(u => u.Id == userId);
+            if(user == null) throw new ServiceException("User not found", new InvalidOperationException());
+            
+            user.Activated = !user.Activated;
+            await ctx.SaveChangesAsync();
+        }
+        catch (Exception e)
+        {
+            throw new ServiceException(e.Message, e);
+        }
+    }
+
+    public async Task<PlayerDto> GetPlayerByIdAsync(Guid id)
+    {
+        try
+        {
+            var player = await ctx.Players.SingleOrDefaultAsync(u => u.Id == id);
+            if(player == null)throw new ServiceException("Player not found", new InvalidOperationException());
+            
+            return new PlayerDto
+            {
+                Id = player.Id,
+                FirstName = player.FirstName,
+                LastName = player.LastName,
+                Email = player.Email,
+                PhoneNumber = player.PhoneNumber,
+                CreatedAt = player.CreatedAt,
+                UpdatedAt = player.UpdatedAt,
+                IsDeleted = player.IsDeleted,
+                ExpireDate = player.ExpireDate,
+                IsActive = player.Activated
+            };
+        }
+        catch (Exception e)
+        {
+            throw new ServiceException(e.Message, e);
+        }
+    }
+
 
     public Task<ActionResult<User>> GetUserById(Guid userId)
     {
@@ -276,12 +334,12 @@ public class UserManagementService(MyDbContext ctx, IEmailService emailService) 
         throw new NotImplementedException();
     }
 
-    public Task<ActionResult<User>> UpdateUser(UpdateUserDetailsDto updateUserDto)
+    public Task<UserDto> UpdateUser(UpdateUserDetailsDto updateUserDto)
     {
         throw new NotImplementedException();
     }
 
-    public Task<ActionResult> DeleteUser(Guid userId)
+    public Task DeleteUser(Guid userId)
     {
         throw new NotImplementedException();
     }
