@@ -34,4 +34,8 @@ public class User
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; }
     public bool IsDeleted { get; set; }
+    
+    [MaxLength(512)]
+    public string? ResetPasswordToken { get; set; }
+    public DateTime? ResetPasswordTokenExpiry { get; set; }
 }

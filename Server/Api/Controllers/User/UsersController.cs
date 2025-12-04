@@ -1,11 +1,9 @@
-using System.Security.Claims;
-using Api.Dto.test;
 using Api.Dto.User;
-using Utils.Exceptions;
-using Api.Services.Admin;
 using Api.Services.Management;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc;
+using Utils.Exceptions;
 
 namespace Api.Controllers.User;
 
@@ -24,11 +22,11 @@ public class UsersController(IUserManagementService userManagementService) : Con
         }
         catch (ServiceException e)
         {
-            return Conflict(new {message = e.Message});
-        } 
+            return Conflict(new { message = e.Message });
+        }
     }
-    
-    
+
+
     [HttpGet("all")]
     public async Task<ActionResult<List<UserDto>>> GetAllUsersAsync()
     {
@@ -37,7 +35,8 @@ public class UsersController(IUserManagementService userManagementService) : Con
     }
 
     [HttpPut("update/{userId:guid}")]
-    public async Task<ActionResult<UserDto>> UpdateUserDetailsByIdAsync(Guid userId, [FromBody] UpdateUserDetailsDto updateUserDetailsDto)
+    public async Task<ActionResult<UserDto>> UpdateUserDetailsByIdAsync(Guid userId,
+        [FromBody] UpdateUserDetailsDto updateUserDetailsDto)
     {
         return Ok(200);
     }
@@ -46,7 +45,6 @@ public class UsersController(IUserManagementService userManagementService) : Con
     public async Task<ActionResult<UserDto>> GetUserByIdAsync(Guid userId)
     {
         return await Task.FromResult(Ok(200));
-
     }
 
     [HttpPut("delete/{userId:guid}")]
@@ -55,7 +53,7 @@ public class UsersController(IUserManagementService userManagementService) : Con
         await Task.FromResult(Ok(200));
     }
 
-    
+
     [Authorize(Roles = "superadmin,admin,player")]
     [HttpPost("update-password/{id:guid}")]
     public async Task<IActionResult> UpdatePasswordByIdAsync(Guid id,
@@ -64,10 +62,37 @@ public class UsersController(IUserManagementService userManagementService) : Con
         return await Task.FromResult(Ok(id));
     }
 
-    
-    
-    
-    
-    
-    
+
+    [HttpPost("reset-password")]
+    public async Task<IActionResult> RequestPasswordReset([FromBody] string email)
+    {
+        var newPassToken = await userManagementService.RequestPasswordReset(email);
+
+        var baseUrl = $"{Request.Scheme}://{Request.Host}";
+        var message = $"To reset the password click on the link: {baseUrl}/reset-password/{newPassToken}";
+
+        emailToUser(email, message);
+
+        return Ok("Password reset email sent.");
+    }
+
+    [HttpPost("reset-password/{resetToken}")]
+    public async Task<IActionResult> ResetPassword(
+        [FromRoute] string resetToken,
+        [FromBody] ResetPasswordRequest request)
+    {
+        var success = await userManagementService.ResetPassword(resetToken, request);
+
+        if (!success)
+            return BadRequest("Invalid or expired reset token.");
+
+        return Ok("Password has been reset.");
+    }
+
+
+    private static void emailToUser(string email, string message)
+    {
+        // TODO: Implement the feature - https://easv365-team-bokczyi7.atlassian.net/browse/SEM-60
+        throw new NotImplementedException();
+    }
 }
