@@ -1,18 +1,16 @@
-using System.Reflection.Metadata;
 using System.Security.Claims;
 using Api.Configuration;
 using Api.Dto.Auth.Request;
 using Api.Dto.Auth.Response;
 using Api.Dto.User;
+using Api.Helpers;
 using api.Services;
 using Api.Services.Auth;
-using Api.Helpers;
 using DataAccess.Enums;
 using Microsoft.AspNetCore.Mvc;
-using Utils;
 using Utils.Exceptions;
 
-namespace Api.Controllers.Auth;
+namespace Api.Controllers;
 
 [ApiController]
 [Route("api/auth")]
