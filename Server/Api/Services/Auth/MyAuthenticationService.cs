@@ -21,8 +21,7 @@ public class MyAuthenticationService(MyDbContext ctx, IJwt jwt) : IMyAuthenticat
 
         if (user == null || !HashUtils.VerifyPasswordHash(dto.Password, user.PasswordHash, user.PasswordSalt))
         {
-            Console.Out.WriteLine("Invalid credentials");
-            throw new AuthenticationException("Email or password is incorrect");
+            throw new AuthenticationException("Email or password is incorrect.");
         }
 
         return await jwt.CreateTokenResponse(user); 

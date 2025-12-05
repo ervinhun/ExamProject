@@ -58,7 +58,7 @@ public class AuthenticationController(IMyAuthenticationService authenticationSer
         }
         catch (AuthenticationException e)
         {
-            return Unauthorized(new { message = e.Message });
+            return Conflict(new { message = e.Message });
         }
     }
 

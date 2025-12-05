@@ -117,6 +117,7 @@ export const loginAtom = atom(null,
             localStorage.setItem('auth', JSON.stringify(authUser));
         }).catch((err) => {
             set(errorAtom, err.message)
+            throw err;
         })
     }
 )
