@@ -1,0 +1,156 @@
+﻿*******UserManagementService********
+    Register user:
+        - DB entry has been created
+        - returned DTO fields are correct
+        - password hash and salt has been generated
+        
+    Register player:
+        - isActive == false
+        - Role == Player
+        - Check for duplicate email
+        - Wallet has been created with 0 DKK
+        - Check for exceptions if they work when wrong data is given
+    
+    GetAllUsers:
+        - returns all users (COUNT)
+        - returns only active users
+        - does not return only players
+    
+    GetAllPlayers:
+        - returns all players (COUNT)
+        - returns only active players
+        - return only players, not admins, etc.
+        
+    ToggleStatus:
+        - user status has been changed (before false, after true)
+        - Should throw exception if user is not found
+        - Should throw exception if user is admin
+    
+    GetPlayerById:
+        - returns player with given id
+        - Check the data of the returned DTO
+        - Should throw exception if player is not found
+    
+    RequestMembership:
+        - user has been added to the user's list
+        - Activated == false
+        - password hash and salt has been generated
+        - exception if the email is already in use
+        - entry should be in the database (2 tables)
+        - Check each table that the data is correct
+        - Exception if user is not found in either of the tables
+        
+    ConfirmMembership:
+        - userToken is not admin - UnathorizedException
+        - Throws exception if the assigned role is not Player
+        - Throws exception if the user is not found in the User table
+        - Throws exception if the user is not found in the WhoApplied table
+        - User's role has been changed to Player
+        - User's activated has been changed to true
+        - User's token has been changed from the WhoApplied table (verify status, timestamp, reviewer ID)
+        
+    AssignRoleToUserByIdAsync:
+        - Throws exception on unathorized access
+        - Throws exception if the user is not found
+        - User should recieve the role and updated timestamp
+        - Throws exception if the role is not in DB
+        - Throws exception if the user already has the role
+        
+    CheckWhoIsLoggedInFromToken:
+        - Returns the user's ID if the token is valid
+        - Throws exception if the token is invalid
+        - Throws exception if the user is not found
+        - Throws exception if the user is not active
+        - Get's the role of the user
+        
+    GeneratePassword:
+        - Assert string length
+        - Assert if the password contains special characters
+        - Assert if the password contains numbers
+        - Assert if the password contains uppercase letters
+        - Assert if the password contains lowercase letters
+        - Assert that multiple runs gives different results
+        
+    AssignUserAsPlayer:
+        - Throws exception if the user is not found
+        - Throws exception if the user is already a player
+        - Wallet table has an entry with the user's ID
+        - User's role has been changed to Player
+        
+        
+        
+***********Game Management Service************
+    CreateGameTemplate:
+        - GameTemplate has been created in the database
+        - verify that the data is correct (all fields as it supposed to be)
+        - throws exception if invalid game type is given or expect serviceException (enum.parse fails)
+        
+    GetGameTemplates:
+        - returns all game templates (COUNT)
+        - verify mapping from entity to DTO
+        - verify createdAt and updatedAt fields
+        - returns only game templates of the given type
+        - returns empty list if no game templates are found (result is an empty list not null)
+        
+    GetAllActiveGamesAsync:
+        - returns only active game templates
+        - template info mapped correctly
+        - Check createdAt and updatedAt fields
+        - Should calculate participant count with paid tickets for each game
+        - Verify returned participants values
+        
+    StartGameInstance:
+        - GameInstance has been created in the database
+        - verify that the data is correct (all fields as it supposed to be)
+        - isDrawn == false, isExpired == false, Status == Active, Week == ISO week of the year
+        - (When autorepeatable is true): expirationDayOfTheWeek is set to the correct day of the week, expirationTimeOfDay is set to the correct time of the day, expirationDate == null
+        - (When autorepeatable is false): expirationDayOfTheWeek == null, expirationTimeOfDay == null, expirationDate == set
+        
+        
+        
+    GetGameTemplateById:
+        - Should return GameTemplateResponseDto when template exists
+        - Should throw ServiceException when template not found
+        
+    UpdateGameTemplateById:
+        - Should throw ServiceException when template not found
+        - Should update GameTemplate when template exists
+        
+    DeleteGameTemplateById:
+        - Should throw ServiceException when template not found
+        - Should update isDeleted GameTemplate when template exists
+        
+    StopGameInstance:
+        - Should throw ServiceException when game not found
+        - Should update isExpired GameInstance when game exists
+
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        

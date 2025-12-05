@@ -4,7 +4,7 @@
   "compilerOptions": {
     "composite": true
   },
-  "include": ["**/*.ts", "**/*.tsx", "../../vite-env.d.ts", "./**/*.ts", "./**/*.tsx"],
+  "include": ["**/*.ts", "**/*.tsx", "../../vite-env.d.ts", "./**/*.ts", "./**/*.tsx", "./**/**/*.ts", "./**/**/*.tsx"],
   "references": [
     { "path": "../core" },
     { "path": "../utils" }
