@@ -124,9 +124,14 @@ export default function Dashboard() {
         }
     };
 
-    const confirmPlayer = (id: string) => {
-        if(id == null)
-            throw new Error("ID cannot be null when trying to activate the user");
+    const confirmPlayer = async (userId: string, isApproved: boolean, isActive: boolean) => {
+        const result = await userApi.confirmAppliedUsers(userId, isApproved, isActive);
+        if (result)
+            setAppliedPlayers(prev =>
+                prev.map(player =>
+                    player.id === userId
+                        ? {...player, status: "Confirmed"}
+                        : player));
     }
 
     return (
@@ -204,16 +209,16 @@ export default function Dashboard() {
                                     </thead>
                                     <tbody>
                                     { // Showing only the first 3 applications
-                                        appliedPlayers.slice(0,3).map(a =>(
+                                        appliedPlayers.slice(0,3).map(a => (
                                         <tr key={a.id}>
                                             <td className="font-semibold">{a.player.firstName}{" "}{a.player.lastName}</td>
                                             <td>{a.player.email}</td>
                                             <td>
-                                                {a.status ? (
-                                                    <span className="text-success text-xl font-bold">✔</span>
+                                                {a.status.trim() === "Confirmed" ? (
+                                                    <span className="text-success text-xl font-bold cursor-default">✔</span>
                                                 ) : (
                                                     <button
-                                                        onClick={() => confirmPlayer(a.id)}
+                                                        onClick={() => confirmPlayer(a.id, true, false)}
                                                         className="btn btn-xs btn-success"
                                                     >
                                                         Approve

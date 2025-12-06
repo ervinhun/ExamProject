@@ -40,6 +40,16 @@ export const userApi ={
                 method: "GET"
             }
         });
+    },
+
+    confirmAppliedUsers: async (userId:string, isApproved:boolean, isActive:boolean): Promise<boolean> => {
+        console.log(`URL which is sent: ${endpoint}/approve-user/${userId}?isApproved=${isApproved}&isActive=${isActive}`)
+        return await api<boolean>(
+            `${endpoint}/approve-user/${userId}?isApproved=${isApproved}&isActive=${isActive}`, {
+                init: {
+                    method: "PUT"
+                }
+            });
     }
 
 }
