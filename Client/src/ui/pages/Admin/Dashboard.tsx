@@ -1,8 +1,10 @@
-import {useEffect} from "react";
-import { NavLink } from "react-router-dom";
-import { useAtom } from "jotai";
-import { approveTransactionAtom, fetchPendingTransactionsAtom, pendingTransactionsAtom } from "@core/atoms/transaction";
-import { mapTransactionStatus, mapTransactionType } from "@core/types/transaction";
+import {useEffect, useState} from "react";
+import {NavLink} from "react-router-dom";
+import {useAtom} from "jotai";
+import {approveTransactionAtom, fetchPendingTransactionsAtom, pendingTransactionsAtom} from "@core/atoms/transaction";
+import {mapTransactionStatus, mapTransactionType} from "@core/types/transaction";
+import {AppliedUser} from "@core/types/users.ts";
+import {userApi} from "@core/api/controllers/user.ts";
 
 
 // ---------- UTILS ----------
@@ -52,8 +54,10 @@ function getNextSaturdayAt17() {
 export default function Dashboard() {
     // const countdown = useCountdown();
     const [pendingTransactions] = useAtom(pendingTransactionsAtom);
-    const [,fetchPendingTransactions] = useAtom(fetchPendingTransactionsAtom);
-    const [,approveTransaction] = useAtom(approveTransactionAtom);
+    const [, fetchPendingTransactions] = useAtom(fetchPendingTransactionsAtom);
+    const [, approveTransaction] = useAtom(approveTransactionAtom);
+    const [appliedPlayers, setAppliedPlayers] = useState<AppliedUser[]>([]);
+
 
     const stats = {
         activeGames: 3,
@@ -65,10 +69,18 @@ export default function Dashboard() {
     };
 
     useEffect(() => {
-        if(pendingTransactions.length === 0){
+        if (pendingTransactions.length === 0) {
             fetchPendingTransactions().catch((err) => {
                 console.error("Error fetching pending transactions:", err);
-            }); 
+            });
+        }
+    }, []);
+
+    useEffect(() => {
+        if (appliedPlayers.length === 0) {
+            userApi.getAllAppliedUsers().then((data) => {
+                setAppliedPlayers(data);
+            });
         }
     }, []);
 
@@ -81,17 +93,17 @@ export default function Dashboard() {
         }).finally(() => {
             fetchPendingTransactions().catch((err) => {
                 console.error("Error fetching pending transactions:", err);
-            }); 
+            });
         });
     };
 
     const formatDate = (dateStr: string) => {
         const date = new Date(dateStr);
-        return date.toLocaleDateString("da-DK", { 
+        return date.toLocaleDateString("da-DK", {
             day: "2-digit",
             month: "2-digit",
             year: "numeric",
-            hour: "2-digit", 
+            hour: "2-digit",
             minute: "2-digit",
             hour12: false
         });
@@ -99,82 +111,118 @@ export default function Dashboard() {
 
     const getStatusColor = (status: string) => {
         switch (status) {
-            case "Active": return "badge-success";
-            case "Pending Draw": return "badge-warning";
-            case "Pending": return "badge-warning";
-            case "Completed": return "badge-info";
-            default: return "badge-ghost";
+            case "Active":
+                return "badge-success";
+            case "Pending Draw":
+                return "badge-warning";
+            case "Pending":
+                return "badge-warning";
+            case "Completed":
+                return "badge-info";
+            default:
+                return "badge-ghost";
         }
     };
+
+    const confirmPlayer = (id: string) => {
+        if(id == null)
+            throw new Error("ID cannot be null when trying to activate the user");
+    }
 
     return (
         <div className="container mx-auto px-4 py-6 my-7">
             <div className="space-y-8">
-            {/* Header */}
-            <div className="flex items-center gap-4 pb-4 border-b-2 border-primary">
+                {/* Header */}
+                <div className="flex items-center gap-4 pb-4 border-b-2 border-primary">
 
-                <div>
-                    <h1 className="text-4xl font-bold text-primary">Dashboard</h1>
-                    <p className="text-base text-base-content/70 mt-1">Overview of your lottery system</p>
-                </div>
-            </div>
-
-            {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 ">
-                <div className="stats shadow bg-base-200">
-                    <div className="stat">
-                        <div className="stat-figure text-info">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="inline-block w-8 h-8 stroke-current">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
-                            </svg>
-                        </div>
-                        <div className="stat-title">Pending Players</div>
-                        <div className="stat-value text-base-content">{stats.pendingPlayers}</div>
-                    </div>
-                </div>
-                <div className="stats shadow bg-base-200">
-                    <div className="stat">
-                        <div className="stat-figure text-warning">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="inline-block w-8 h-8 stroke-current">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                        </div>
-                        <div className="stat-title">Pending Transactions</div>
-                        <div className="stat-value text-base-content">{stats.pendingTransactions}</div>
+                    <div>
+                        <h1 className="text-4xl font-bold text-primary">Dashboard</h1>
+                        <p className="text-base text-base-content/70 mt-1">Overview of your lottery system</p>
                     </div>
                 </div>
 
-                <div className="stats shadow bg-primary text-primary-content">
-                    <div className="stat">
-                        <div className="stat-figure text-primary-content">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="inline-block w-8 h-8 stroke-current">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
+                {/* Stats Cards */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 ">
+                    <div className="stats shadow bg-base-200">
+                        <div className="stat">
+                            <div className="stat-figure text-info">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                     className="inline-block w-8 h-8 stroke-current">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
+                                          d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/>
+                                </svg>
+                            </div>
+                            <div className="stat-title">Pending Players</div>
+                            <div className="stat-value text-base-content">{appliedPlayers.length}</div>
                         </div>
-                        <div className="stat-title text-primary-content opacity-80">Next Draw</div>
-                        <div className="stat-value text-primary-content">
-                            {/* {countdown.days}d {countdown.hours}h {countdown.minutes}m */}
+                    </div>
+                    <div className="stats shadow bg-base-200">
+                        <div className="stat">
+                            <div className="stat-figure text-warning">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                     className="inline-block w-8 h-8 stroke-current">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
+                                          d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                            </div>
+                            <div className="stat-title">Pending Transactions</div>
+                            <div className="stat-value text-base-content">{stats.pendingTransactions}</div>
+                        </div>
+                    </div>
+
+                    <div className="stats shadow bg-primary text-primary-content">
+                        <div className="stat">
+                            <div className="stat-figure text-primary-content">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                     className="inline-block w-8 h-8 stroke-current">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
+                                          d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                            </div>
+                            <div className="stat-title text-primary-content opacity-80">Next Draw</div>
+                            <div className="stat-value text-primary-content">
+                                {/* {countdown.days}d {countdown.hours}h {countdown.minutes}m */}
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            {/* Pending Confirmations */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Players to Confirm */}
-                <div className="card bg-base-200 shadow-lg">
-                    <div className="card-body">
-                        <h2 className="card-title mb-4">Pending Player Applications</h2>
-                        <div className="overflow-x-auto">
-                            <table className="table table-zebra">
-                                <thead>
+                {/* Pending Confirmations */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {/* Players to Confirm */}
+                    <div className="card bg-base-200 shadow-lg">
+                        <div className="card-body">
+                            <h2 className="card-title mb-4">Pending Player Applications</h2>
+                            <div className="overflow-x-auto">
+                                <table className="table table-zebra">
+                                    <thead>
                                     <tr className="text-base">
                                         <th>Name</th>
                                         <th>Email</th>
                                         <th>Action</th>
                                     </tr>
-                                </thead>
-                                <tbody>
+                                    </thead>
+                                    <tbody>
+                                    { // Showing only the first 3 applications
+                                        appliedPlayers.slice(0,3).map(a =>(
+                                        <tr key={a.id}>
+                                            <td className="font-semibold">{a.player.firstName}{" "}{a.player.lastName}</td>
+                                            <td>{a.player.email}</td>
+                                            <td>
+                                                {a.status ? (
+                                                    <span className="text-success text-xl font-bold">✔</span>
+                                                ) : (
+                                                    <button
+                                                        onClick={() => confirmPlayer(a.id)}
+                                                        className="btn btn-xs btn-success"
+                                                    >
+                                                        Approve
+                                                    </button>
+                                                )}
+                                            </td>
+
+                                        </tr>
+                                    ))}
                                     {/* {players.map(p => (
                                         <tr
                                             key={p.id}
@@ -198,21 +246,21 @@ export default function Dashboard() {
                                             </td>
                                         </tr>
                                     ))} */}
-                                </tbody>
-                            </table>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <NavLink to="/admin/players/applications" className="btn btn-sm btn-ghost mt-2">
+                                View All Applications →
+                            </NavLink>
                         </div>
-                        <NavLink to="/admin/players/applications" className="btn btn-sm btn-ghost mt-2">
-                            View All Applications →
-                        </NavLink>
                     </div>
-                </div>
-                {/* Transactions to Confirm */}
-                <div className="card bg-base-200 shadow-lg">
-                    <div className="card-body">
-                        <h2 className="card-title mb-4">Pending Transactions</h2>
-                        <div className="overflow-x-auto">
-                            <table className="table table-zebra">
-                                <thead>
+                    {/* Transactions to Confirm */}
+                    <div className="card bg-base-200 shadow-lg">
+                        <div className="card-body">
+                            <h2 className="card-title mb-4">Pending Transactions</h2>
+                            <div className="overflow-x-auto">
+                                <table className="table table-zebra">
+                                    <thead>
                                     <tr className="text-base">
                                         <th>Name</th>
                                         <th>Type</th>
@@ -220,8 +268,8 @@ export default function Dashboard() {
                                         <th>Date</th>
                                         <th>Action</th>
                                     </tr>
-                                </thead>
-                                <tbody>
+                                    </thead>
+                                    <tbody>
                                     {pendingTransactions.length === 0 ? (
                                         <tr>
                                             <td colSpan={5} className="text-center py-8 text-base-content/60">
@@ -234,14 +282,19 @@ export default function Dashboard() {
                                             const typeText = mapTransactionType(t.type);
                                             const getStatusBadge = () => {
                                                 switch (statusText) {
-                                                    case "Approved": return "badge-success";
-                                                    case "Pending": return "badge-warning";
-                                                    case "Rejected": return "badge-error";
-                                                    case "Canceled": return "badge-ghost";
-                                                    default: return "badge-ghost";
+                                                    case "Approved":
+                                                        return "badge-success";
+                                                    case "Pending":
+                                                        return "badge-warning";
+                                                    case "Rejected":
+                                                        return "badge-error";
+                                                    case "Canceled":
+                                                        return "badge-ghost";
+                                                    default:
+                                                        return "badge-ghost";
                                                 }
                                             };
-                                            
+
                                             return (
                                                 <tr key={t.id}>
                                                     <td className="font-semibold">{t.name}</td>
@@ -252,7 +305,8 @@ export default function Dashboard() {
                                                     <td className="text-sm">{formatDate(t.createdAt)}</td>
                                                     <td>
                                                         {statusText === "Approved" ? (
-                                                            <span className="badge badge-success badge-sm">Approved</span>
+                                                            <span
+                                                                className="badge badge-success badge-sm">Approved</span>
                                                         ) : (
                                                             <button
                                                                 onClick={() => confirmTransaction(t.id)}
@@ -266,29 +320,29 @@ export default function Dashboard() {
                                             );
                                         })
                                     )}
-                                </tbody>
-                            </table>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <NavLink to="/admin/transactions/pending" className="btn btn-sm btn-ghost mt-2">
+                                View All Transactions →
+                            </NavLink>
                         </div>
-                        <NavLink to="/admin/transactions/pending" className="btn btn-sm btn-ghost mt-2">
-                            View All Transactions →
-                        </NavLink>
                     </div>
                 </div>
-            </div>
 
-            {/* Recent Players Info */}
-            <div className="card bg-base-200 shadow-lg">
-                <div className="card-body">
-                    <div className="flex justify-between items-center mb-4">
-                        <h2 className="card-title">Recent Players</h2>
-                        <NavLink to="/admin/players" className="btn btn-sm btn-ghost">
-                            View All Players →
-                        </NavLink>
-                    </div>
-                    
-                    <div className="overflow-x-auto">
-                        <table className="table table-zebra">
-                            <thead>
+                {/* Recent Players Info */}
+                <div className="card bg-base-200 shadow-lg">
+                    <div className="card-body">
+                        <div className="flex justify-between items-center mb-4">
+                            <h2 className="card-title">Recent Players</h2>
+                            <NavLink to="/admin/players" className="btn btn-sm btn-ghost">
+                                View All Players →
+                            </NavLink>
+                        </div>
+
+                        <div className="overflow-x-auto">
+                            <table className="table table-zebra">
+                                <thead>
                                 <tr>
                                     <th>Name</th>
                                     <th>Email</th>
@@ -296,8 +350,8 @@ export default function Dashboard() {
                                     <th>Balance</th>
                                     <th>Actions</th>
                                 </tr>
-                            </thead>
-                            <tbody>
+                                </thead>
+                                <tbody>
                                 {/* {recentPlayers.map((player) => (
                                     <tr key={player.id}>
                                         <td className="font-semibold">{player.name}</td>
@@ -312,11 +366,11 @@ export default function Dashboard() {
                                         </td>
                                     </tr>
                                 ))} */}
-                            </tbody>
-                        </table>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
-            </div>
             </div>
         </div>
     );

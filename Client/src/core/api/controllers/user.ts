@@ -1,5 +1,5 @@
 import { api } from "../Api";
-import { type CreateUserDto, type User } from "../../types/users";
+import {AppliedUser, type CreateUserDto, type User} from "../../types/users";
 
 const endpoint = "/api/users";
 
@@ -33,7 +33,15 @@ export const userApi ={
                 method: "PATCH"
             }
         });
+    },
+    getAllAppliedUsers: async (): Promise<AppliedUser[]> => {
+        return await api<AppliedUser[]>(`${endpoint}/get-applied-users`, {
+            init: {
+                method: "GET"
+            }
+        });
     }
+
 }
 
 

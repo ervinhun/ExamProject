@@ -25,6 +25,7 @@ import { CreateGameTemplate } from './pages/Admin/Games/CreateGameTemplate.tsx';
 import { GamesOverview } from './pages/Admin/Games/GamesOverview.tsx';
 import { StartGame } from './pages/Admin/Games/StartGame.tsx';
 import ErrorPopUp from './pages/Errors/ErrorPopUp.tsx';
+import Applications from "@ui/pages/Admin/Players/Applications.tsx";
 
 const router = createBrowserRouter([
     {
@@ -63,6 +64,7 @@ const router = createBrowserRouter([
 
                     {path: "/admin/players", element: <AllPlayers/>},
                     {path: "/admin/players/register", element: <AddPlayer/>},
+                    {path: "/admin/players/applications", element: <Applications/>},
                     {path: "/admin/games/overview", element: <GamesOverview/>},
                     {path: "/admin/games/start", element: <StartGame/>},
                     {path: "/admin/games/history", element: <GameHistory/>},
