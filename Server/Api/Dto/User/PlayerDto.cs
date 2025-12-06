@@ -4,6 +4,7 @@ namespace Api.Dto.test;
 
 public class PlayerDto : UserDto
 {
+    public DateTime? ExpireDate { get; set; }
     public bool IsActive { get; set; }
 }
 

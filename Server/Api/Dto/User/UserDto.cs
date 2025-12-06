@@ -10,7 +10,6 @@ public class UserDto
     public string Email { get; set; } = null!;
     public string? PhoneNumber { get; set; }
     public List<UserRole> Roles {get; set;}
-    public DateOnly? ActiveStatusExpiryDate { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
     public bool? IsDeleted { get; set; }

@@ -78,7 +78,7 @@ export default function Login() {
                 <p className="text-center text-sm mt-2">
                     Don’t have an account?{" "}
                     <a href="/register" className="link link-hover text-primary">
-                        Register
+                        Apply to become a member
                     </a>
                 </p>
             </form>

@@ -1,5 +1,6 @@
 using Api.Dto.Auth.Request;
 using Api.Dto.Auth.Response;
+using Api.Dto.User;
 using Api.Services.Auth;
 using DataAccess;
 using DataAccess.Entities.Auth;
@@ -33,7 +34,7 @@ public class MyAuthenticationService(MyDbContext ctx, IJwt jwt) : IMyAuthenticat
             throw new AuthenticationException("User already exists");
         }
 
-        HashUtils.CreatePasswordHash(dto.Password, out byte[] hash, out var salt); 
+        HashUtils.CreatePasswordHash(dto.Password, out var hash, out var salt); 
         
         var newUser = new User
         {
@@ -48,5 +49,4 @@ public class MyAuthenticationService(MyDbContext ctx, IJwt jwt) : IMyAuthenticat
         
         return newUser;
     }
-    
 }

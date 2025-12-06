@@ -16,6 +16,8 @@ public class User
     [MaxLength(255)]
     public string PhoneNumber { get; set; } = string.Empty;
     
+    public DateTime DateOfBirth { get; set; }
+    
     [EmailAddress]
     [MaxLength(255)]
     [Required]
@@ -28,6 +30,9 @@ public class User
     [MaxLength(512)]
     public string RefreshTokenHash { get; set; } = string.Empty;
     public DateTime RefreshTokenExpires { get; set; }
+    
+    public bool Activated { get; set; } = false;
+    public DateTime? ExpireDate { get; set; }
     
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; }

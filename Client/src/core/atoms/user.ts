@@ -17,6 +17,7 @@ export const fetchUsersAtom = atom(null,
         await userApi.getAll()
                     .then((res)=>set(userListAtom, res))
                     .catch((err) => {
+                        set(userListAtom, []);
                         set(errorAtom, err.message);
                         throw err})
                     .finally(() =>{});
@@ -62,8 +63,3 @@ export const createUserAtom = atom(null,
     }
 
 )
-
-// createUserAtom
- // deleteUserByIdAtom
- 
- // updateUserByIdAtom

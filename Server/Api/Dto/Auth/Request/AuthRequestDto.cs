@@ -9,8 +9,8 @@ public record LoginRequestDto
 
 public record RefreshTokenRequestDto
 {
-    public Guid UserId { get; set; }
-    public required string RefreshToken { get; set; }
+    public required string UserId { get; set; }
+    public string RefreshToken { get; set; } = string.Empty;
 }
 
 public record RegisterRequestDto

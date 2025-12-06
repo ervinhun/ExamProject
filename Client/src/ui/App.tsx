@@ -4,7 +4,7 @@ import {createBrowserRouter, RouterProvider} from "react-router-dom";
 import Home from "./pages/Home.tsx";
 import Login from "./pages/Login.tsx";
 import Register from "./pages/Register.tsx";
-import Balance from "./pages/Player/Balance.tsx";
+import Wallet from "./pages/Player/Wallet.tsx";
 import MyBoards from "./pages/Player/Boards/MyBoards.tsx";
 import CreateBoard from "./pages/Player/Boards/CreateBoard.tsx";
 import RepeatingBoards from "./pages/Player/Boards/RepeatingBoards.tsx";
@@ -21,6 +21,11 @@ import Settings from "./pages/Admin/Settings.tsx";
 import RequirePlayer from "./pages/structure/Auth/RequiredPlayer.tsx";
 import RequireAdmin from "./pages/structure/Auth/RequiredAdmin.tsx";
 import Forbidden403 from "./pages/Errors/Forbidden403.tsx";
+import { CreateGameTemplate } from './pages/Admin/Games/CreateGameTemplate.tsx';
+import { GamesOverview } from './pages/Admin/Games/GamesOverview.tsx';
+import { StartGame } from './pages/Admin/Games/StartGame.tsx';
+import ErrorPopUp from './pages/Errors/ErrorPopUp.tsx';
+import Applications from "@ui/pages/Admin/Players/Applications.tsx";
 
 const router = createBrowserRouter([
     {
@@ -38,7 +43,7 @@ const router = createBrowserRouter([
             {
                 element: <RequirePlayer/>,
                 children: [
-                    {path: "/balance", element: <Balance/>},
+                    {path: "/wallet", element: <Wallet/>},
 
                     {path: "/boards", element: <MyBoards/>},
                     {path: "/boards/new", element: <CreateBoard/>},
@@ -58,13 +63,18 @@ const router = createBrowserRouter([
                     {path: "/admin/dashboard", element: <Dashboard/>},
 
                     {path: "/admin/players", element: <AllPlayers/>},
-                    {path: "/admin/players/new", element: <AddPlayer/>},
-
-                    {path: "/admin/games", element: <GameHistory/>},
+                    {path: "/admin/players/register", element: <AddPlayer/>},
+                    {path: "/admin/players/applications", element: <Applications/>},
+                    {path: "/admin/games/overview", element: <GamesOverview/>},
+                    {path: "/admin/games/start", element: <StartGame/>},
+                    {path: "/admin/games/history", element: <GameHistory/>},
                     {path: "/admin/games/boards", element: <WinningBoardsAdmin/>},
+                    // {path: "/admin/templates", element: <GameTemplatesList/>},
+                    {path: "/admin/games/templates/create", element: <CreateGameTemplate/>},
 
                     {path: "/admin/transactions/pending", element: <Pending/>},
-                    {path: "/admin/transactions/all", element: <AllTransactions/>},
+                    {path: "/admin/transactions/history", element: <AllTransactions/>},
+                    // {path: "/admin/transactions/history", element: <AllTransactions/>},
 
                     {path: "/admin/settings", element: <Settings/>}
                 ],
@@ -74,7 +84,12 @@ const router = createBrowserRouter([
 ]);
 
 function App() {
-    return <RouterProvider router={router}/>
+    return (
+        <>
+            <RouterProvider router={router}/>
+            <ErrorPopUp />
+        </>
+    )
 }
 
 export default App
