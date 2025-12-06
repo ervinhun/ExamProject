@@ -1,146 +1,189 @@
-using System.Reflection.Metadata;
+using System.Security.Claims;
+using Api.Configuration;
 using Api.Dto.Auth.Request;
 using Api.Dto.Auth.Response;
+using Api.Dto.User;
+using Api.Helpers;
 using api.Services;
 using Api.Services.Auth;
+using DataAccess.Enums;
+using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc;
-using Utils;
 using Utils.Exceptions;
 
-namespace Api.Controllers.Auth;
+namespace Api.Controllers;
 
 [ApiController]
 [Route("api/auth")]
-public class AuthenticationController(IMyAuthenticationService authenticationService, IJwt jwt) : ControllerBase
+public class AuthenticationController(IMyAuthenticationService authenticationService, IJwt jwt, AppSettings appSettings)
+    : ControllerBase
 {
-        [HttpPost("logout")]
-        public IActionResult Logout()
+    [HttpPost("logout")]
+    public IActionResult Logout()
+    {
+        if (User.Identity is { IsAuthenticated: true })
         {
-            var u = User.FindFirst("sub");
-            var isDev = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development";
-                
-         
-            var cookieOptions = new CookieOptions
-            {
-                HttpOnly = true,
-                MaxAge = TimeSpan.Zero,
-                Path = "/"
-            };
-            
-            if (isDev)
-            {
-                // Localhost (HTTP) configuration
-                cookieOptions.Secure = false;
-                cookieOptions.SameSite = SameSiteMode.Lax; 
-            }
-            else
-            {
-                // Production (HTTPS) configuration
-                cookieOptions.Secure = true;
-                cookieOptions.SameSite = SameSiteMode.None; 
-            }
-
-            Console.Out.WriteLine(u);
-            Response.Cookies.Append("refreshToken", "", cookieOptions);
+            var cookieOptions = CookieHelper.CreateExpiredCookieOptions();
             Response.Cookies.Append("accessToken", "", cookieOptions);
+            Response.Cookies.Append("refreshToken", "", cookieOptions);
             return Ok(200);
         }
 
-        [HttpPost("login")]
-        public async Task<IActionResult> Login(LoginRequestDto loginRequestDto)
+        return BadRequest("User is not authenticated");
+    }
+
+    [HttpPost("login")]
+    public async Task<IActionResult> Login(LoginRequestDto loginRequestDto)
+    {
+        try
         {
-            try
+            /*if (User.Identity is { IsAuthenticated: true })
             {
-                if (User.Identity is { IsAuthenticated: true })
-                {
-                    throw new Exception("Already logged in");
-                }
-                
-                var result = await authenticationService.Login(loginRequestDto);
-                var isDev = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development";
-                
-         
-                var cookieOptionsRefresh = new CookieOptions
-                {
-                    HttpOnly = true,
-                    MaxAge = TimeSpan.FromDays(7),
-                    Path = "/"
-                };
+                throw new Exception("Already logged in");
+            }*/
 
-                var cookieOptionsAccess = new CookieOptions
-                {
-                    HttpOnly = true,
-                    MaxAge = TimeSpan.FromMinutes(60),
-                    Path = "/"
-                };
-                
-                if (isDev)
-                {
-                    // Localhost (HTTP) configuration
-                    cookieOptionsAccess.Secure = false;
-                    cookieOptionsRefresh.Secure = false;
-                    cookieOptionsAccess.SameSite = SameSiteMode.Lax; 
-                    cookieOptionsRefresh.SameSite = SameSiteMode.Lax; 
-                }
-                else
-                {
-                    // Production (HTTPS) configuration
-                    cookieOptionsAccess.Secure = true;
-                    cookieOptionsRefresh.Secure = true;
-                    cookieOptionsAccess.SameSite = SameSiteMode.None;
-                    cookieOptionsRefresh.SameSite = SameSiteMode.None;
-                }
-                
+            var result = await authenticationService.Login(loginRequestDto);
 
-                Response.Cookies.Append("refreshToken", result.RefreshToken, cookieOptionsRefresh);
-                Response.Cookies.Append("accessToken", result.AccessToken, cookieOptionsAccess);
-                
-                return Ok(new
-                {
-                    // Never return the refresh token in the response body!
-                    accessToken = result.AccessToken,
-                    result.User
-                });
-            }
-            catch (AuthenticationException e)
+            var cookieOptionsAccess = CookieHelper.CreateAccessTokenCookieOptions(appSettings.Jwt.ExpirationMinutes);
+            var cookieOptionsRefresh = CookieHelper.CreateRefreshTokenCookieOptions(appSettings.Jwt.RefreshTokenDays);
+
+            Response.Cookies.Append("accessToken", result.AccessToken, cookieOptionsAccess);
+            Response.Cookies.Append("refreshToken", result.RefreshToken, cookieOptionsRefresh);
+
+            return Ok(new
             {
-                return Unauthorized(new {message = e.Message});
-            }
-            
+                // Tokens are securely stored in HttpOnly cookies - no need to expose in body
+                user = result.User
+            });
         }
-        
-
-        [HttpPost("register")]
-        public async Task<ActionResult<JwtResponseDto>> Register(RegisterRequestDto registerRequestDto)
+        catch (AuthenticationException e)
         {
-            var result = await authenticationService.Register(registerRequestDto);
-            if (result == null)
-            {
-                return BadRequest("Registration failed");
-            }
-            return Ok(result);
+            return Unauthorized(new { message = e.Message });
         }
-    
-        [HttpPost("refresh-token")]
-        public async Task<ActionResult<JwtResponseDto>> RefreshToken(RefreshTokenRequestDto request)
-        {
-            var result = await jwt.RefreshTokenAsync(request);
-        
-            if (result is null || result.AccessToken is null || result.RefreshToken is null)
-                return Unauthorized("Invalid refresh token.");
+    }
 
-            return Ok(result);
+
+    [HttpPost("register")]
+    public async Task<ActionResult<JwtResponseDto>> Register(RegisterRequestDto registerRequestDto)
+    {
+        return NoContent();
+    }
+
+    [HttpPost("refresh-token")]
+    public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenRequestDto request)
+    {
+        var refreshToken = Request.Cookies["refreshToken"];
+        if (refreshToken == null) return Unauthorized(new { message = "Refresh token not found" });
+        try
+        {
+            var result = await jwt.RefreshTokenAsync(new RefreshTokenRequestDto
+            {
+                RefreshToken = refreshToken,
+                UserId = request.UserId
+            });
+
+            var cookieOptionsAccess = CookieHelper.CreateAccessTokenCookieOptions(appSettings.Jwt.ExpirationMinutes);
+            var cookieOptionsRefresh = CookieHelper.CreateRefreshTokenCookieOptions(appSettings.Jwt.RefreshTokenDays);
+
+            Response.Cookies.Append("accessToken", result.AccessToken, cookieOptionsAccess);
+            Response.Cookies.Append("refreshToken", result.RefreshToken, cookieOptionsRefresh);
+
+            return Ok(new { user = result.User });
+        }
+        catch
+        {
+            return BadRequest(new { message = "Refresh token is invalid" });
+        }
+    }
+
+    [HttpGet("profile")]
+    public IActionResult Profile()
+    {
+        if (User.Identity is not { IsAuthenticated: true })
+        {
+            return Unauthorized(new { message = "User is not authenticated" });
         }
 
-        [HttpGet("me")]
-        public async Task<ActionResult<JwtResponseDto>> Me()
+        try
         {
-            Console.Out.WriteLine(User.Identity?.Name);
-            if (User.Identity is { IsAuthenticated: true })
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                         ?? User.FindFirst("sub")?.Value;
+            var email = User.FindFirst(ClaimTypes.Email)?.Value;
+            var firstName = User.FindFirst(ClaimTypes.Name)?.Value;
+            var lastName = User.FindFirst(ClaimTypes.Surname)?.Value;
+
+            if (string.IsNullOrEmpty(userId))
             {
-                var user = User;
-                Console.Out.WriteLine(user);
+                return BadRequest(new { message = "User ID claim not found in token" });
             }
-            return null;
+
+            if (string.IsNullOrEmpty(email))
+            {
+                return BadRequest(new { message = "Email claim not found in token" });
+            }
+
+            var roles = User.FindAll(ClaimTypes.Role)
+                .Select(c => Enum.Parse<UserRole>(c.Value, ignoreCase: true))
+                .ToList();
+
+            return Ok(new UserDto
+            {
+                Id = Guid.Parse(userId),
+                FirstName = firstName ?? "",
+                LastName = lastName ?? "",
+                Email = email,
+                Roles = roles
+            });
         }
+        catch (Exception e)
+        {
+            return BadRequest(new { message = $"Profile error: {e.Message}" });
+        }
+    }
+
+    [HttpPost("reset-password")]
+    public async Task<IActionResult> RequestPasswordReset([FromBody] string email)
+    {
+        var newPassToken = await authenticationService.RequestPasswordReset(email);
+
+        var baseUrl = $"{Request.Scheme}://{Request.Host}";
+        var message = $"To reset the password click on the link: {baseUrl}/reset-password/{newPassToken}";
+
+        emailToUser(email, message);
+
+        return Ok("Password reset email sent.");
+    }
+
+    [HttpPost("reset-password/{resetToken}")]
+    public async Task<IActionResult> ResetPassword(
+        [FromRoute] string resetToken,
+        [FromBody] ResetPasswordRequest request)
+    {
+        var success = await authenticationService.ResetPassword(resetToken, request);
+
+        if (!success)
+            return BadRequest("Invalid or expired reset token.");
+
+        return Ok("Password has been reset.");
+    }
+
+
+    [HttpPost("player-application-request")]
+    public async Task<IActionResult> PlayerApplicationRequest(
+        [FromBody] RequestRegistrationDto request)
+    {
+        var success = await authenticationService.RequestMembership(request);
+
+        if (!success)
+            return BadRequest("Error during sending the request");
+
+        return Ok("Request sent");
+    }
+
+
+    private static void emailToUser(string email, string message)
+    {
+        // TODO: Implement the feature - https://easv365-team-bokczyi7.atlassian.net/browse/SEM-60
+        throw new NotImplementedException();
+    }
 }
