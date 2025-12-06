@@ -158,7 +158,7 @@ public class MyDbContext(DbContextOptions<MyDbContext> options) : DbContext(opti
 
 
         // =============================
-        // USER CONFIRMATION ENTITY (NEW)
+        // USER CONFIRMATION ENTITY
         // =============================
         modelBuilder.Entity<UserConfirmationEntity>(entity =>
         {

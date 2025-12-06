@@ -37,10 +37,10 @@ public class AuthenticationController(IMyAuthenticationService authenticationSer
     {
         try
         {
-            if (User.Identity is { IsAuthenticated: true })
+            /*if (User.Identity is { IsAuthenticated: true })
             {
                 throw new Exception("Already logged in");
-            }
+            }*/
 
             var result = await authenticationService.Login(loginRequestDto);
 
@@ -165,6 +165,19 @@ public class AuthenticationController(IMyAuthenticationService authenticationSer
             return BadRequest("Invalid or expired reset token.");
 
         return Ok("Password has been reset.");
+    }
+
+
+    [HttpPost("player-application-request")]
+    public async Task<IActionResult> PlayerApplicationRequest(
+        [FromBody] RequestRegistrationDto request)
+    {
+        var success = await authenticationService.RequestMembership(request);
+
+        if (!success)
+            return BadRequest("Error during sending the request");
+
+        return Ok("Request sent");
     }
 
 
