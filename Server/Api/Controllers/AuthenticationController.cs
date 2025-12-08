@@ -149,7 +149,7 @@ public class AuthenticationController(IMyAuthenticationService authenticationSer
         var baseUrl = $"{Request.Scheme}://{Request.Host}";
         var message = $"To reset the password click on the link: {baseUrl}/reset-password/{newPassToken}";
 
-        emailToUser(email, message);
+        EmailToUser(email, message);
 
         return Ok("Password reset email sent.");
     }
@@ -177,11 +177,11 @@ public class AuthenticationController(IMyAuthenticationService authenticationSer
         if (!success)
             return BadRequest("Error during sending the request");
 
-        return Ok("Request sent");
+        return Ok(new { success = true});
     }
 
 
-    private static void emailToUser(string email, string message)
+    private static void EmailToUser(string email, string message)
     {
         // TODO: Implement the feature - https://easv365-team-bokczyi7.atlassian.net/browse/SEM-60
         throw new NotImplementedException();

@@ -95,7 +95,7 @@ public class UsersController(IUserManagementService userManagementService) : Con
         if (!success)
             return BadRequest("Failed to approve user");
 
-        return Ok("User updated");
+        return Ok(new { success = true});
     }
 
 

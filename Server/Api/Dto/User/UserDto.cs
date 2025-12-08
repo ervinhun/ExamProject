@@ -1,3 +1,4 @@
+using System.Runtime.InteropServices.JavaScript;
 using DataAccess.Enums;
 
 namespace Api.Dto.User;
@@ -40,6 +41,8 @@ public class RequestRegistrationDto
     public String FirstName { get; set; } = null;
     public String LastName { get; set; } = null;
     public String Email { get; set; } = null;
+    public DateTime Dob { get; set; } = new DateTime(1990, 01, 01);
+    public string Gender { get; set; } = string.Empty;
     public String PhoneNo { get; set; } = null;
     public String Password { get; set; } = null;
 }

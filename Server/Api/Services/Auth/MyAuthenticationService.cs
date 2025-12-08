@@ -7,7 +7,6 @@ using DataAccess;
 using DataAccess.Entities.Auth;
 using DataAccess.Enums;
 using Microsoft.AspNetCore.Identity.Data;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Utils;
 using Utils.Exceptions;
@@ -42,6 +41,7 @@ public class MyAuthenticationService(MyDbContext ctx, IJwt jwt) : IMyAuthenticat
         var newUser = new User
         {
             Email = dto.Email,
+            DateOfBirth = dto.Dob.ToUniversalTime(),
             PasswordHash = hash,
             PasswordSalt = salt,
         };
@@ -132,6 +132,7 @@ public class MyAuthenticationService(MyDbContext ctx, IJwt jwt) : IMyAuthenticat
             LastName = requestRegistrationDto.LastName,
             Email = requestRegistrationDto.Email,
             PhoneNumber = requestRegistrationDto.PhoneNo,
+            DateOfBirth = requestRegistrationDto.Dob.ToUniversalTime(),
             PasswordHash = hash,
             PasswordSalt = salt,
             Activated = false
@@ -151,7 +152,6 @@ public class MyAuthenticationService(MyDbContext ctx, IJwt jwt) : IMyAuthenticat
             throw new ServiceException(e.Message, e);
         }
 
-        var userId = ctx.Users.FirstOrDefaultAsync(u => u.Email == requestRegistrationDto.Email).Result.Id;
         if (user == null)
             throw new ServiceException("Player not found", new InvalidOperationException());
         var utcNow = DateTime.UtcNow;
