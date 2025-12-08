@@ -6,7 +6,7 @@ import {userApi} from "@core/api/controllers/user.ts";
 import {AppliedUser} from "@core/types/users.ts";
 
 export default function Applications() {
-    const [setPlayers, players] = useAtom(playersAtom);
+    const [players, setPlayers] = useAtom(playersAtom);
     const [, fetchPlayers] = useAtom(fetchPlayersAtom);
     const togglePlayerStatus = useSetAtom(togglePlayerStatusAtom);
     const addNotification = useSetAtom(addNotificationAtom);
@@ -28,7 +28,6 @@ export default function Applications() {
 
     const confirmPlayer = async (userId: string, isApproved: boolean, isActive: boolean) => {
         const result = await userApi.confirmAppliedUsers(userId, isApproved, isActive);
-        console.log(result);
         if (result) {
             console.log("Player confirmed:", userId);
             setAppliedPlayers(prev =>
@@ -53,7 +52,11 @@ export default function Applications() {
             if (isActive) {
                 await togglePlayerStatus(userId);
             }
-            //setPlayers(prev => prev.filter(player => player.id !== userId));
+            setPlayers(prev => prev.map(player =>
+                player.id === userId
+                    ? { ...player, activated: isActive }
+                    : player
+            ));
         }
     }
 

@@ -126,12 +126,26 @@ export default function Dashboard() {
 
     const confirmPlayer = async (userId: string, isApproved: boolean, isActive: boolean) => {
         const result = await userApi.confirmAppliedUsers(userId, isApproved, isActive);
-        if (result)
+        if (result) {
+            console.log("Player confirmed:", userId);
             setAppliedPlayers(prev =>
-                prev.map(player =>
-                    player.id === userId
-                        ? {...player, status: "Confirmed"}
-                        : player));
+                prev.map(item =>
+                    item.player.id === userId
+                        ? {
+                            ...item,
+                            status: isApproved ? "Confirmed" : "Rejected",
+                            player: {
+                                ...item.player,
+                                activated: isActive
+                            }
+                        }
+                        : item
+                )
+            );
+            setTimeout(() => {
+                setAppliedPlayers(prev => prev.filter(p => p.player.id !== userId));
+            }, 2600);
+        }
     }
 
     return (
@@ -218,7 +232,7 @@ export default function Dashboard() {
                                                     <span className="text-success text-xl font-bold cursor-default">✔</span>
                                                 ) : (
                                                     <button
-                                                        onClick={() => confirmPlayer(a.id, true, false)}
+                                                        onClick={() => confirmPlayer(a.player.id!, true, false)}
                                                         className="btn btn-xs btn-success"
                                                     >
                                                         Approve
