@@ -5,6 +5,7 @@ import {approveTransactionAtom, fetchPendingTransactionsAtom, pendingTransaction
 import {mapTransactionStatus, mapTransactionType} from "@core/types/transaction";
 import {AppliedUser} from "@core/types/users.ts";
 import {userApi} from "@core/api/controllers/user.ts";
+import getAge from "@utils/getAge.ts";
 
 
 // ---------- UTILS ----------
@@ -84,6 +85,10 @@ export default function Dashboard() {
         }
     }, []);
 
+    for (const p of appliedPlayers) {
+        p.age = getAge(p.player.dob);
+    }
+
     const confirmTransaction = async (id: number) => {
         // TODO: Implement actual transaction confirmation API call
         await approveTransaction(id).then(() => {
@@ -127,7 +132,6 @@ export default function Dashboard() {
     const confirmPlayer = async (userId: string, isApproved: boolean, isActive: boolean) => {
         const result = await userApi.confirmAppliedUsers(userId, isApproved, isActive);
         if (result) {
-            console.log("Player confirmed:", userId);
             setAppliedPlayers(prev =>
                 prev.map(item =>
                     item.player.id === userId
@@ -141,10 +145,10 @@ export default function Dashboard() {
                         }
                         : item
                 )
-            );
+            )
             setTimeout(() => {
                 setAppliedPlayers(prev => prev.filter(p => p.player.id !== userId));
-            }, 2600);
+            }, 2600)
         }
     }
 
@@ -223,49 +227,36 @@ export default function Dashboard() {
                                     </thead>
                                     <tbody>
                                     { // Showing only the first 3 applications
-                                        appliedPlayers.slice(0,3).map(a => (
-                                        <tr key={a.id}>
-                                            <td className="font-semibold">{a.player.firstName}{" "}{a.player.lastName}</td>
-                                            <td>{a.player.email}</td>
-                                            <td>
-                                                {a.status.trim() === "Confirmed" ? (
-                                                    <span className="text-success text-xl font-bold cursor-default">✔</span>
-                                                ) : (
-                                                    <button
-                                                        onClick={() => confirmPlayer(a.player.id!, true, false)}
-                                                        className="btn btn-xs btn-success"
-                                                    >
-                                                        Approve
-                                                    </button>
-                                                )}
-                                            </td>
+                                        appliedPlayers.slice(0, 3).map(a => (
+                                                <tr key={a.id}>
+                                                    <td className="font-semibold">
+                                                        {a.player.firstName} {a.player.lastName}
+                                                    </td>
 
-                                        </tr>
-                                    ))}
-                                    {/* {players.map(p => (
-                                        <tr
-                                            key={p.id}
-                                            className={`transition-opacity duration-500 ${
-                                                p.removing ? "opacity-0" : "opacity-100"
-                                            }`}
-                                        >
-                                            <td className="font-semibold">{p.name}</td>
-                                            <td>{p.email}</td>
-                                            <td>
-                                                {p.confirmed ? (
-                                                    <span className="text-success text-xl font-bold">✔</span>
-                                                ) : (
-                                                    <button
-                                                        onClick={() => confirmPlayer(p.id)}
-                                                        className="btn btn-xs btn-success"
-                                                    >
-                                                        Approve
-                                                    </button>
-                                                )}
-                                            </td>
-                                        </tr>
-                                    ))} */}
-                                    </tbody>
+                                                    <td>{a.player.email}</td>
+
+                                                    <td>
+                                                        {a.status.trim() === "Confirmed" ? (
+                                                            <span className="text-success text-xl font-bold cursor-default">✔</span>
+                                                        ) : a.age < 18 ? (
+                                                            <button
+                                                                onClick={() => confirmPlayer(a.player.id!, false, false)}
+                                                                className="btn btn-xs btn-error"
+                                                            >
+                                                                Decline
+                                                            </button>
+                                                        ) : (
+                                                            <button
+                                                                onClick={() => confirmPlayer(a.player.id!, true, false)}
+                                                                className="btn btn-xs btn-success"
+                                                            >
+                                                                Approve
+                                                            </button>
+                                                        )}
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
                                 </table>
                             </div>
                             <NavLink to="/admin/players/applications" className="btn btn-sm btn-ghost mt-2">

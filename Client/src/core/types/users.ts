@@ -24,9 +24,8 @@ export interface CreateUserDto {
 export interface AppliedUser {
     player: Player;
     id: string;
-    status: string;
-    DOB: Date;
     age: number;
+    status: string;
     createdAt: string;
     updatedAt: string;
     verifiedBy: string;
@@ -37,6 +36,7 @@ export const PlayerSchema = z.object({
     firstName: z.string(),
     lastName: z.string(),
     email: z.email(),
+    dob: z.string().transform(val => new Date(val)).optional(),
     isActive: z.boolean().default(true).optional(),
     phoneNumber: z.string(),
     createdAt: z.string().optional(),
