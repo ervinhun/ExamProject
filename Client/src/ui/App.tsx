@@ -26,6 +26,7 @@ import { GamesOverview } from './pages/Admin/Games/GamesOverview.tsx';
 import { StartGame } from './pages/Admin/Games/StartGame.tsx';
 import ErrorPopUp from './pages/Errors/ErrorPopUp.tsx';
 import Applications from "@ui/pages/Admin/Players/Applications.tsx";
+import MyTickets from "@ui/pages/Player/MyTickets.tsx";
 
 const router = createBrowserRouter([
     {
@@ -44,6 +45,7 @@ const router = createBrowserRouter([
                 element: <RequirePlayer/>,
                 children: [
                     {path: "/wallet", element: <Wallet/>},
+                    {path: "/tickets", element: <MyTickets />},
 
                     {path: "/boards", element: <MyBoards/>},
                     {path: "/boards/new", element: <CreateBoard/>},
