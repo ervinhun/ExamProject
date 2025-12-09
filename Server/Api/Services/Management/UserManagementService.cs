@@ -216,12 +216,36 @@ public class UserManagementService(MyDbContext ctx, IEmailService emailService) 
         if (player == null)
             throw new ServiceException("Player not found");
 
+        //If the player is under 18, the system declines the membership
+        if (player.DateOfBirth < DateTime.UtcNow.AddYears(-18))
+        {
+            player.Activated = false;
+            player.UpdatedAt = DateTime.UtcNow;
+            await ctx.SaveChangesAsync();
+            isConfirmed = false;
+            isActive = false;
+        }
+
         // Assign role
         var role = ctx.Roles.SingleOrDefaultAsync(r => r.Name == UserRole.Player).Result ?? throw new Exception("Player role not found");
             player.Roles.Add(role);
 
         player.UpdatedAt = DateTime.UtcNow;
         player.Activated = isActive;
+        
+        if (isConfirmed)
+        {
+            var wallet = new Wallet
+            {
+                PlayerId = player.Id,
+                Balance = 0,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow,
+                Player = player
+            };
+
+            ctx.Wallets.Add(wallet);
+        }
 
         // WhoApplied entry
         var entry = await ctx.WhoApplied
@@ -266,6 +290,7 @@ public class UserManagementService(MyDbContext ctx, IEmailService emailService) 
                     FirstName = a.Player.FirstName,
                     LastName = a.Player.LastName,
                     Email = a.Player.Email,
+                    Dob = a.Player.DateOfBirth,
                     IsActive = a.Player.Activated,
                     PhoneNumber = a.Player.PhoneNumber,
                     CreatedAt = DateTimeHelper.ToCopenhagen(a.Player.CreatedAt)
