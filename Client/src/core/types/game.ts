@@ -10,13 +10,14 @@ export const GameTemplateSchema = z.object({
     minNumbersPerTicket: z.number().min(1),
     maxNumbersPerTicket: z.number().min(1),
     basePrice: z.number().min(0),
+    priceGrowthRule: z.string().optional(),
     createdAt: z.string().optional(),
     updatedAt: z.string().nullable().optional(),
 });
 
-export type GameTemplate = z.infer<typeof GameTemplateSchema>;  
+export type GameTemplate = z.infer<typeof GameTemplateSchema>;
 
-export interface  GameTemplateDto {
+export interface GameTemplateDto {
     id?: string;
     name: string;
     description: string;
@@ -26,6 +27,7 @@ export interface  GameTemplateDto {
     minNumbersPerTicket: number;
     maxNumbersPerTicket: number;
     basePrice: number;
+    priceGrowthRule?: string;
     createdAt?: string;
     updatedAt?: string;
 }
@@ -52,10 +54,14 @@ export interface GameInstanceDto {
 export const mapGameStatus = (status: number | string): "Active" | "Completed" | "Pending Draw" => {
     if (typeof status === "number") {
         switch (status) {
-            case 0: return "Active";
-            case 1: return "Completed";
-            case 2: return "Pending Draw";
-            default: return "Active";
+            case 0:
+                return "Active";
+            case 1:
+                return "Completed";
+            case 2:
+                return "Pending Draw";
+            default:
+                return "Active";
         }
     }
     return status as "Active" | "Completed" | "Pending Draw";

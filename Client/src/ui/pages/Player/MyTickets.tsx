@@ -1,50 +1,148 @@
-import {useEffect, useState} from "react";
-import {useAtom} from "jotai";
+import {useEffect, useMemo, useState} from "react";
+import {useAtom, useSetAtom} from "jotai";
 import {activeGamesAtom} from "@core/atoms/game.ts";
 import {gameApi} from "@core/api/controllers/game.ts";
 import {GameInstanceDto} from "@core/types/game.ts";
+import {walletAtom} from "@core/atoms/players.ts";
+import {playerApi} from "@core/api/controllers/player.ts";
+import {addNotificationAtom} from "@core/atoms/error.ts";
+import {CreateTicketToGameDto, MyTicketDto} from "@core/types/ticket.ts";
+import {ticketApi} from "@core/api/controllers/ticket.ts";
+import {myTicketsAtom} from "@core/atoms/tickets.ts";
 
 export default function MyTickets() {
+    const [chosenGameTemplate, setChosenGameTemplate] = useState<GameInstanceDto | null>(null)
 
-    const [selectedGame, setSelectedGame] = useState("lottery16");
-    const [picked, setPicked] = useState<number[]>([]);
-    const [repeat, setRepeat] = useState(1);
-    const [gameTemplate, setGameTemplate] = useAtom(activeGamesAtom);
-    const [choosenGameTemplate, setChoosenGameTemplate] = useState<GameInstanceDto | null>(null);
-    const canSubmit =
-        choosenGameTemplate !== null &&
-        picked.length >= choosenGameTemplate.template!.minNumbersPerTicket;
+    const [selectedGame, setSelectedGame] = useState("lottery16")
+    const [picked, setPicked] = useState<number[]>([])
+    const [repeat, setRepeat] = useState(1)
+    const [gameTemplate, setGameTemplate] = useAtom(activeGamesAtom)
+    const [wallet, setWallet] = useAtom(walletAtom)
+    const [myTickets, setMyTickets] = useAtom(myTicketsAtom)
+    const [isSubmitting, setIsSubmitting] = useState(false)
+    const addNotification = useSetAtom(addNotificationAtom);
+
+
+    useEffect(() => {
+        if (wallet?.balance === null)
+            playerApi.getWalletForPlayerId(wallet?.id ?? "").then(setWallet);
+    }, []);
 
 
     useEffect(() => {
         if (gameTemplate.length === 0) {
             gameApi.getAllActiveGames().then((data) => {
                 setGameTemplate(data);
-                if (choosenGameTemplate === null) {
-                    setChoosenGameTemplate(data[0]);
+                if (chosenGameTemplate === null) {
+                    setChosenGameTemplate(data[0]);
                 }
             });
         }
     }, []);
 
-    // Price map
-    const priceTable: Record<number, number> = {
-        5: 20,
-        6: 40,
-        7: 80,
-        8: 160,
+    useEffect(() => {
+        if (myTickets.length === 0) {
+            ticketApi.getAllActiveTickets().then(setMyTickets);
+        }
+    }, [myTickets]);
+
+
+    // This gets the JSON of the prices per number from the entity.
+    // If it does not exist, it creates one that each number can be picked is twice as much as the previous one
+    const priceTableJson = useMemo(() => {
+        const rule = chosenGameTemplate?.template?.priceGrowthRule;
+
+        if (rule) {
+            return JSON.parse(rule);
+        }
+
+        // auto-generate fallback
+        const generatedPriceJson: string[] = [];
+        let j = 0;
+
+        const min = chosenGameTemplate?.template?.minNumbersPerTicket ?? 1;
+        const max = chosenGameTemplate?.template?.maxNumbersPerTicket ?? 1;
+        const base = chosenGameTemplate?.template?.basePrice ?? 1;
+
+        for (let i = min; i <= max; i++) {
+            generatedPriceJson.push(`"${i}": ${2 ** j * base}`);
+            j++;
+        }
+        console.log("Price table json: ", generatedPriceJson.join(","))
+        return JSON.parse(`{${generatedPriceJson.join(",")}}`);
+    }, [chosenGameTemplate?.template]);
+
+
+    const canSubmit =
+        chosenGameTemplate?.template !== undefined &&
+        picked.length >= chosenGameTemplate.template.minNumbersPerTicket
+
+
+    const wouldExceedBalance = (newPickedLength: number, newRepeat: number) => {
+        const newBasePrice = priceTableJson[newPickedLength] ?? 0;
+        const newTotal = newBasePrice * (newRepeat + 1);
+        return wallet?.balance !== undefined && newTotal > wallet.balance;
     };
 
-    const basePrice = priceTable[picked.length] ?? 0;
-    const totalPrice = basePrice * repeat;
+    const overBalance = wouldExceedBalance(picked.length, repeat);
+
+    const basePrice = priceTableJson[picked.length] ?? 0;
+    const totalPrice = basePrice * (repeat + 1);
 
     const toggleNumber = (num: number) => {
-        if (picked.includes(num)) {
+        const isSelected = picked.includes(num);
+
+        if (isSelected) {
             setPicked(picked.filter(n => n !== num));
-        } else {
-            if (picked.length < 8) setPicked([...picked, num]);
+            return;
+        }
+
+        const newLength = picked.length + 1;
+
+        if (newLength > (chosenGameTemplate?.template?.maxNumbersPerTicket ?? 1)) return;
+        if (wouldExceedBalance(newLength, repeat)) return; // stop selection
+
+        setPicked([...picked, num]);
+    };
+
+    const onSubmit = async (values: CreateTicketToGameDto) => {
+        try {
+            setIsSubmitting(true);
+
+            const payload = {
+                gameInstanceId: values.gameInstanceId,
+                selectedNumbers: values.selectedNumbers,
+                repeat: values.repeat
+            };
+
+            const response = await ticketApi.playTicket(payload);
+
+            if (response?.id == null) {
+                addNotification({type: "error", message: "Failed to create ticket. Please try again later."});
+                return;
+            }
+            addNewTicketToMyTickets(response);
+            addNotification({type: "success", message: "Ticket has been created"});
+            reset();
+        } catch (ex) {
+            addNotification({type: "error", message: `Unexpected error. ${ex}`});
+        } finally {
+            setIsSubmitting(false);
         }
     };
+
+    const addNewTicketToMyTickets = (ticket: MyTicketDto) => {
+        if (ticket.gameInstanceId === "") return;
+        setMyTickets(prevTickets => [...prevTickets, ticket]);
+    }
+
+    const reset = () => {
+        setChosenGameTemplate(null);
+        setSelectedGame("");
+        setPicked([]);
+        setRepeat(0);
+    }
+
 
     return (
         <div className="container mx-auto px-4 py-6 my-7">
@@ -69,10 +167,10 @@ export default function MyTickets() {
                             setSelectedGame(id)
 
                             const game = gameTemplate.find(t => t.id === id)
-                            setChoosenGameTemplate(game ?? null)
+                            setChosenGameTemplate(game ?? null)
 
                             setPicked([])
-                            setRepeat(1)
+                            setRepeat(0)
                         }}
                     >
                         <option value="">Choose game template</option>
@@ -89,38 +187,39 @@ export default function MyTickets() {
 
                     <h2 className="text-xl font-semibold mb-4">Pick Your Numbers</h2>
 
-                    {choosenGameTemplate !== null && (
+                    {chosenGameTemplate !== null && (
                         <div>
                             <p className="text-sm mb-2 text-gray-600">
-                                Select {choosenGameTemplate.template?.minNumbersPerTicket}–
-                                {choosenGameTemplate.template?.maxNumbersPerTicket} numbers.
+                                Select {chosenGameTemplate.template?.minNumbersPerTicket}–
+                                {chosenGameTemplate.template?.maxNumbersPerTicket} numbers.
                             </p>
 
                             <div
                                 className="grid gap-3 max-w-sm"
                                 style={{
                                     gridTemplateColumns: `repeat(${Math.ceil(
-                                        Math.sqrt(choosenGameTemplate.template?.poolOfNumbers ?? 0)
+                                        Math.sqrt(chosenGameTemplate.template?.poolOfNumbers ?? 0)
                                     )}, 1fr)`
                                 }}
                             >
-                                {[...Array(choosenGameTemplate.template?.poolOfNumbers)].map((_, i) => {
+                                {[...Array(chosenGameTemplate.template?.poolOfNumbers)].map((_, i) => {
                                     const num = i + 1;
                                     const selected = picked.includes(num);
-
+                                    const isDisabled =
+                                        (!selected &&
+                                            picked.length >= (chosenGameTemplate.template?.maxNumbersPerTicket ?? 1))
+                                        ||
+                                        (!selected && wouldExceedBalance(picked.length + 1, repeat + 1))
                                     return (
                                         <button
                                             key={num}
                                             onClick={() => toggleNumber(num)}
-                                            disabled={
-                                                !selected &&
-                                                picked.length >= (choosenGameTemplate.template?.maxNumbersPerTicket ?? 1)
-                                            }
+                                            disabled={isDisabled}
                                             className={`p-3 rounded-lg text-center border font-semibold transition-all
                                             ${selected
                                                 ? "bg-green-600 text-white border-green-700"
                                                 : "bg-white border-gray-300 hover:bg-gray-100"}
-                                            ${!selected && picked.length >= (choosenGameTemplate.template?.maxNumbersPerTicket ?? 0)
+                                            ${!selected && picked.length >= (chosenGameTemplate.template?.maxNumbersPerTicket ?? 0)
                                                 ? "opacity-40 cursor-not-allowed"
                                                 : ""}
                                         `}
@@ -146,9 +245,15 @@ export default function MyTickets() {
                         <input
                             type="number"
                             className="input input-bordered w-24"
-                            min={1}
+                            min={0}
                             value={repeat}
-                            onChange={e => setRepeat(Number(e.target.value))}
+                            onChange={e => {
+                                const newRepeat = Number(e.target.value);
+                                if (!wouldExceedBalance(picked.length, newRepeat)) {
+                                    setRepeat(newRepeat);
+                                }
+                            }}
+                            max={52}
                         />
                     </div>
 
@@ -158,11 +263,18 @@ export default function MyTickets() {
                     </div>
                     {/* Submit Button */}
                     <button
-                        disabled={!canSubmit}
+                        disabled={!canSubmit || overBalance}
                         className={`btn btn-primary ml-6 ${
-                            !canSubmit ? "btn-disabled opacity-50 cursor-not-allowed" : ""
+                            !canSubmit || overBalance ? "btn-disabled opacity-50 cursor-not-allowed" : ""
                         }`}
-                        onClick={() => console.log("Submit ticket", picked, repeat)}
+                        onClick={() => {
+                            console.log("Submit ticket", picked, repeat)
+                            void onSubmit({
+                                gameInstanceId: chosenGameTemplate?.id ?? "",
+                                selectedNumbers: picked,
+                                repeat
+                            })
+                        }}
                     >
                         Submit Ticket
                     </button>
@@ -171,10 +283,24 @@ export default function MyTickets() {
                 {/* Active Tickets */}
                 <div className="bg-amber-100 p-6 rounded-xl shadow-md">
                     <h2 className="text-xl font-semibold mb-4">Active Tickets</h2>
+                    <p className="text-gray-500">
+                        {myTickets.length === 0 ? (
+                            "You don't have any active tickets yet."
+                        ) : (
+                            <ul>
+                                {myTickets.map(t => (
+                                    <li key={t.id}>
+                                        {t.gameInstanceId} - {t.selectedNumbers.join(", ")} - {t.repeat}
+                                    </li>
+                                ))}
+                            </ul>
+                        )}
+                    </p>
+
 
                     <p className="text-gray-500">
-                        No active tickets yet. This section will show the user's ongoing repeating tickets.
                     </p>
+
                 </div>
             </div>
         </div>
