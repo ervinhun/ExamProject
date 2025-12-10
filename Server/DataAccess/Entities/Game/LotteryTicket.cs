@@ -7,6 +7,8 @@ public class LotteryTicket
     public Guid Id { get; set; }
     public Guid GameInstanceId { get; set; }
     public GameInstance? GameInstance { get; set; }
+    public Guid GameTemplateId { get; set; }
+    public int? Repeatings { get; set; }
     public Guid PlayerId { get; set; }
     public Player? Player { get; set; }
     public double FullPrice { get; set; }
