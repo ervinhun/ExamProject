@@ -145,7 +145,13 @@ export default function MyTickets() {
 
 
     return (
-        <div className="container mx-auto px-4 py-6 my-7">
+        <>
+        {isSubmitting && (
+            <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+                <span className="loading loading-dots loading-lg text-white"></span>
+            </div>
+        )}
+    <div className="container mx-auto px-4 py-6 my-7">
             <div className="space-y-8">
                 {/* Title */}
                 <div className="flex items-center gap-4 pb-4 border-b-2 border-primary">
@@ -304,5 +310,5 @@ export default function MyTickets() {
                 </div>
             </div>
         </div>
-    );
+        </>)
 }
