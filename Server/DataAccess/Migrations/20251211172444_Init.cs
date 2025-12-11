@@ -24,6 +24,7 @@ namespace DataAccess.Migrations
                     MaxNumbersPerTicket = table.Column<int>(type: "integer", nullable: false),
                     MinNumbersPerTicket = table.Column<int>(type: "integer", nullable: false),
                     BasePrice = table.Column<double>(type: "double precision", nullable: false),
+                    PriceGrowthRule = table.Column<string>(type: "character varying(512)", maxLength: 512, nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
@@ -184,6 +185,8 @@ namespace DataAccess.Migrations
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     GameInstanceId = table.Column<Guid>(type: "uuid", nullable: false),
                     PlayerId = table.Column<Guid>(type: "uuid", nullable: false),
+                    GameTemplateId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Repeatings = table.Column<int>(type: "integer", nullable: true),
                     FullPrice = table.Column<double>(type: "double precision", nullable: false),
                     IsWinning = table.Column<bool>(type: "boolean", nullable: false),
                     IsPaid = table.Column<bool>(type: "boolean", nullable: false),
@@ -276,7 +279,8 @@ namespace DataAccess.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    TicketId = table.Column<Guid>(type: "uuid", nullable: false)
+                    TicketId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Number = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {

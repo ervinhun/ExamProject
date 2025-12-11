@@ -2,6 +2,7 @@ export interface TransactionDto{
     id: string;
     name: string;
     amount: number;
+    mobilePayTransactionNumber: string;
     type: number | string;
     status: number | string;
     createdAt: string;

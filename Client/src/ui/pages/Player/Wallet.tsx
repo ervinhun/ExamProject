@@ -226,6 +226,7 @@ export default function Wallet() {
                                     <tr>
                                         <th>Date</th>
                                         <th>Type</th>
+                                        <th>MobilePay #</th>
                                         <th>Amount</th>
                                         <th>Status</th>
                                     </tr>
@@ -233,7 +234,7 @@ export default function Wallet() {
                                 <tbody>
                                     {wallet?.transactions.length === 0 ? (
                                         <tr>
-                                            <td colSpan={4} className="text-center py-8 text-base-content/60">
+                                            <td colSpan={5} className="text-center py-8 text-base-content/60">
                                                 No transactions yet
                                             </td>
                                         </tr>
@@ -249,6 +250,15 @@ export default function Wallet() {
                                                             {getTypeIcon(transaction.type)}
                                                             {typeText}
                                                         </span>
+                                                    </td>
+                                                    <td>
+                                                        {transaction.mobilePayTransactionNumber ? (
+                                                            <span className="font-mono text-sm">
+                                                                #{transaction.mobilePayTransactionNumber}
+                                                            </span>
+                                                        ) : (
+                                                            <span className="text-base-content/40 text-sm">N/A</span>
+                                                        )}
                                                     </td>
                                                     <td className={`font-mono font-semibold ${
                                                         typeText === "Deposit" || typeText === "RewardPayout" || typeText === "Refund" 

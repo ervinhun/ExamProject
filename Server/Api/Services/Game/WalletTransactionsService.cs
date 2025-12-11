@@ -30,6 +30,7 @@ public class WalletTransactionsService(MyDbContext ctx) : IWalletTransactionsSer
                     UserId = walletTransaction.UserId,
                     Amount = walletTransaction.Amount,
                     Status = walletTransaction.Status,
+                    MobilePayTransactionNumber = walletTransaction.MobilePayTransactionNumber,
                     Type = walletTransaction.Type,
                     CreatedAt = walletTransaction.CreatedAt,
                     UpdatedAt = walletTransaction.UpdatedAt

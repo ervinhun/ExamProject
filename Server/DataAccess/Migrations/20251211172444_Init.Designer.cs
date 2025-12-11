@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace DataAccess.Migrations
 {
     [DbContext(typeof(MyDbContext))]
-    [Migration("20251210111647_priceGrowthRule")]
-    partial class priceGrowthRule
+    [Migration("20251211172444_Init")]
+    partial class Init
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -182,6 +182,9 @@ namespace DataAccess.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("MobilePayTransactionNumber")
+                        .HasColumnType("text");
+
                     b.Property<string>("Name")
                         .HasColumnType("text");
 
@@ -275,16 +278,13 @@ namespace DataAccess.Migrations
                     b.Property<Guid>("CreatedById")
                         .HasColumnType("uuid");
 
-                    b.Property<DateTime>("DrawDate")
+                    b.Property<DateTime?>("DrawDate")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<DateTime?>("ExpirationDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int?>("ExpirationDayOfWeek")
+                    b.Property<int?>("DrawDayOfWeek")
                         .HasColumnType("integer");
 
-                    b.Property<TimeOnly?>("ExpirationTimeOfDay")
+                    b.Property<TimeOnly?>("DrawTimeOfDay")
                         .HasColumnType("time without time zone");
 
                     b.Property<Guid>("GameTemplateId")
@@ -377,6 +377,9 @@ namespace DataAccess.Migrations
                     b.Property<Guid>("GameInstanceId")
                         .HasColumnType("uuid");
 
+                    b.Property<Guid>("GameTemplateId")
+                        .HasColumnType("uuid");
+
                     b.Property<bool>("IsPaid")
                         .HasColumnType("boolean");
 
@@ -385,6 +388,9 @@ namespace DataAccess.Migrations
 
                     b.Property<Guid>("PlayerId")
                         .HasColumnType("uuid");
+
+                    b.Property<int?>("Repeatings")
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -400,6 +406,9 @@ namespace DataAccess.Migrations
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
+
+                    b.Property<int>("Number")
+                        .HasColumnType("integer");
 
                     b.Property<Guid>("TicketId")
                         .HasColumnType("uuid");
