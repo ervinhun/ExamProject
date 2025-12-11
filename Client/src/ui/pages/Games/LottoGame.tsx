@@ -58,10 +58,21 @@ export default function LottoGame() {
         setSelectedNumbers([]);
     };
 
+    const calculateTicketPrice = (numbersCount: number): number => {
+        if (numbersCount < minNumbers) return 0;
+        
+        // Calculate price based on exponential growth
+        // Formula: basePrice * 2^(numbersCount - minNumbers)
+        const multiplier = Math.pow(2, numbersCount - minNumbers);
+        return basePrice * multiplier;
+    };
+
     const handleSubmit = () => {
         // TODO: Implement ticket purchase logic
+        const finalPrice = calculateTicketPrice(selectedNumbers.length);
         console.log("Selected numbers:", selectedNumbers);
-        alert("Ticket purchase functionality to be implemented");
+        console.log("Ticket price:", finalPrice);
+        alert(`Ticket purchase functionality to be implemented\nPrice: ${finalPrice} DKK`);
     };
 
     if (loading) {
@@ -93,6 +104,7 @@ export default function LottoGame() {
     const maxNumbers = game.template?.maxNumbersPerTicket || 0;
     const basePrice = game.template?.basePrice || 0;
     const canSubmit = selectedNumbers.length >= minNumbers && selectedNumbers.length <= maxNumbers;
+    const currentTicketPrice = calculateTicketPrice(selectedNumbers.length);
 
     return (
         <div className="container mx-auto space-y-6 pb-8">
@@ -131,7 +143,12 @@ export default function LottoGame() {
                         <div className="stats shadow bg-base-200">
                             <div className="stat py-3 px-4">
                                 <div className="stat-title text-xs">Ticket Price</div>
-                                <div className="stat-value text-primary text-xl">{basePrice} DKK</div>
+                                <div className="stat-value text-primary text-xl">
+                                    {selectedNumbers.length >= minNumbers 
+                                        ? `${currentTicketPrice} DKK` 
+                                        : `${basePrice} DKK`
+                                    }
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -234,7 +251,7 @@ export default function LottoGame() {
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
                             </svg>
-                            Purchase Ticket ({basePrice} DKK)
+                            Purchase Ticket ({currentTicketPrice} DKK)
                         </button>
                     </div>
                 </div>
