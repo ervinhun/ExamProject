@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace DataAccess.Migrations
 {
     /// <inheritdoc />
-    public partial class init : Migration
+    public partial class Init : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -77,11 +77,10 @@ namespace DataAccess.Migrations
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     GameTemplateId = table.Column<Guid>(type: "uuid", nullable: false),
-                    ExpirationDayOfWeek = table.Column<int>(type: "integer", nullable: true),
-                    ExpirationTimeOfDay = table.Column<TimeOnly>(type: "time without time zone", nullable: true),
-                    ExpirationDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    DrawDayOfWeek = table.Column<int>(type: "integer", nullable: true),
+                    DrawTimeOfDay = table.Column<TimeOnly>(type: "time without time zone", nullable: true),
+                    DrawDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     IsAutoRepeatable = table.Column<bool>(type: "boolean", nullable: false),
-                    DrawDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     Status = table.Column<int>(type: "integer", nullable: false),
                     CreatedById = table.Column<Guid>(type: "uuid", nullable: false),
                     Week = table.Column<int>(type: "integer", nullable: false),
@@ -298,6 +297,7 @@ namespace DataAccess.Migrations
                     UserId = table.Column<Guid>(type: "uuid", nullable: false),
                     WalletId = table.Column<Guid>(type: "uuid", nullable: false),
                     Name = table.Column<string>(type: "text", nullable: true),
+                    MobilePayTransactionNumber = table.Column<string>(type: "text", nullable: true),
                     Status = table.Column<int>(type: "integer", nullable: false),
                     Type = table.Column<int>(type: "integer", nullable: false),
                     Amount = table.Column<double>(type: "double precision", nullable: false),

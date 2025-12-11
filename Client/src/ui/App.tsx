@@ -25,6 +25,10 @@ import { CreateGameTemplate } from './pages/Admin/Games/CreateGameTemplate.tsx';
 import { GamesOverview } from './pages/Admin/Games/GamesOverview.tsx';
 import { StartGame } from './pages/Admin/Games/StartGame.tsx';
 import ErrorPopUp from './pages/Errors/ErrorPopUp.tsx';
+import Applications from "@ui/pages/Admin/Players/Applications.tsx";
+import MyTickets from "@ui/pages/Player/MyTickets.tsx";
+import GamesDashboard from './pages/Games/GamesDashboard.tsx';
+import LottoGame from './pages/Games/LottoGame.tsx';
 
 const router = createBrowserRouter([
     {
@@ -43,12 +47,14 @@ const router = createBrowserRouter([
                 element: <RequirePlayer/>,
                 children: [
                     {path: "/wallet", element: <Wallet/>},
+                    {path: "/tickets", element: <MyTickets />},
 
                     {path: "/boards", element: <MyBoards/>},
                     {path: "/boards/new", element: <CreateBoard/>},
                     {path: "/boards/repeating", element: <RepeatingBoards/>},
 
-                    {path: "/games", element: <GameHistory/>},
+                    {path: "/games", element: <GamesDashboard/>},
+                    {path: "/games/play/lotto/:gameId", element: <LottoGame/>},
                     {path: "/games/wins", element: <WinningBoards/>},
 
                     {path: "/profile", element: <Profile/>}
@@ -63,6 +69,7 @@ const router = createBrowserRouter([
 
                     {path: "/admin/players", element: <AllPlayers/>},
                     {path: "/admin/players/register", element: <AddPlayer/>},
+                    {path: "/admin/players/applications", element: <Applications/>},
                     {path: "/admin/games/overview", element: <GamesOverview/>},
                     {path: "/admin/games/start", element: <StartGame/>},
                     {path: "/admin/games/history", element: <GameHistory/>},

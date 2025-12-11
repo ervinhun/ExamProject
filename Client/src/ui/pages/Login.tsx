@@ -1,11 +1,13 @@
 import {useEffect, useState} from "react";
-import {useAtom} from "jotai";
+import {useAtom, useSetAtom} from "jotai";
 import {useNavigate} from "react-router-dom";
 import { isLoggedInAtom, loginAtom } from "@core/atoms/auth";
 import ErrorPopUp from "./Errors/ErrorPopUp";
+import { addNotificationAtom } from "@core/atoms/error";
 
 export default function Login() {
     const [isLoggedIn, ] = useAtom(isLoggedInAtom);
+    const addNotification = useSetAtom(addNotificationAtom);
 
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
@@ -23,7 +25,12 @@ export default function Login() {
 
     async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
         e.preventDefault();
-        await login({email, password}); 
+        await login({email, password}).catch((err) => {
+            addNotification({
+                message: err!.message,
+                type: 'error'
+            });
+        });
     }
 
 
@@ -78,7 +85,7 @@ export default function Login() {
                 <p className="text-center text-sm mt-2">
                     Don’t have an account?{" "}
                     <a href="/register" className="link link-hover text-primary">
-                        Register
+                        Apply to become a member
                     </a>
                 </p>
             </form>

@@ -1,10 +1,11 @@
-import { z } from "zod"
+import {z} from "zod"
 
 export const UserSchema = z.object({
     id: z.uuid().optional(),
     firstName: z.string(),
     lastName: z.string(),
     email: z.email(),
+    DOB: z.date().optional(),
     roles: z.array(z.number()).optional(),
     createdAt: z.string().optional(),
     updatedAt: z.string().nullable().optional(),
@@ -16,18 +17,32 @@ export interface CreateUserDto {
     firstName: string,
     lastName: string,
     email: string,
+    DOB: Date,
     phoneNumber: string,
+}
+
+export interface AppliedUser {
+    player: Player;
+    id: string;
+    age: number;
+    status: string;
+    createdAt: string;
+    updatedAt: string;
+    verifiedBy: string;
 }
 
 export const PlayerSchema = z.object({
     id: z.uuid().optional(),
     firstName: z.string(),
     lastName: z.string(),
+    birthDate: z.date(),
     email: z.email(),
+    dob: z.string().transform(val => new Date(val)).optional(),
     isActive: z.boolean().default(true).optional(),
     phoneNumber: z.string(),
     createdAt: z.string().optional(),
     updatedAt: z.string().nullable().optional(),
 });
+
 
 export type Player = z.infer<typeof PlayerSchema>;

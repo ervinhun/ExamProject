@@ -30,12 +30,11 @@ public class GameInstanceDto
     public GameTemplateResponseDto? Template { get; set; }
     public Guid CreatedById { get; set; }
     public bool IsAutoRepeatable {get; set;}
-    public DateTime DrawDate { get; set; }
     public int Participants { get; set; }
-    public DateTime? ExpirationDate { get; set; }
     public GameStatus Status { get; set; }
-    public int? ExpirationDayOfWeek { get; set; }
-    public TimeOnly? ExpirationTimeOfDay { get; set; }
+    public int? DrawDayOfWeek { get; set; }
+    public TimeOnly? DrawTimeOfDay { get; set; }
+    public DateTime? DrawDate { get; set; }
     public ICollection<int> WinningNumbers { get; set; } = new HashSet<int>();
     public int Week { get; set; }
     public bool IsExpired { get; set; }

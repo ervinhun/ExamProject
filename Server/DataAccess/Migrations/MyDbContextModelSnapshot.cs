@@ -179,6 +179,9 @@ namespace DataAccess.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("MobilePayTransactionNumber")
+                        .HasColumnType("text");
+
                     b.Property<string>("Name")
                         .HasColumnType("text");
 
@@ -272,16 +275,13 @@ namespace DataAccess.Migrations
                     b.Property<Guid>("CreatedById")
                         .HasColumnType("uuid");
 
-                    b.Property<DateTime>("DrawDate")
+                    b.Property<DateTime?>("DrawDate")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<DateTime?>("ExpirationDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int?>("ExpirationDayOfWeek")
+                    b.Property<int?>("DrawDayOfWeek")
                         .HasColumnType("integer");
 
-                    b.Property<TimeOnly?>("ExpirationTimeOfDay")
+                    b.Property<TimeOnly?>("DrawTimeOfDay")
                         .HasColumnType("time without time zone");
 
                     b.Property<Guid>("GameTemplateId")

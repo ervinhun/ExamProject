@@ -2,13 +2,11 @@ import { atom, useSetAtom } from 'jotai';
 import type { Player } from '../types/users';
 import { playerApi } from '@core/api/controllers/player';
 import { errorAtom } from './error';
-import { WalletDto } from '@core/types/wallet';
 import { addNotificationAtom } from './error';
 import { userApi } from '@core/api/controllers/user';
 
 
 export const playersAtom = atom<Player[]>([]);
-export const walletAtom = atom<WalletDto | null>(null);
 
 export const fetchPlayersAtom = atom(null, 
     async (_, set) => {
@@ -35,26 +33,11 @@ export const createPlayerAtom = atom(null,
                     set(errorAtom, err.message);
                     throw err})
                 .finally(() =>{});
-       
-
     }
 
 );
 
-export const getWalletForPlayerIdAtom = atom(null,
-    async (_,set,playerId: string)=>{
-        await playerApi.getWalletForPlayerId(playerId)
-                .then((res)=>{
-                        console.log('Fetched wallet for player:', res);
-                        set(walletAtom,res);
-                        return res;
-                })
-                .catch((err) => {
-                    set(errorAtom, err.message);
-                    throw err})
-                .finally(() =>{});
-    }
-);
+
 
 export const togglePlayerStatusAtom = atom(null,
     async (get,set,playerId: string)=>{
@@ -74,5 +57,17 @@ export const togglePlayerStatusAtom = atom(null,
 
         set(playersAtom, players.map(p => p.id === playerId ? updatedPlayer : p));
         return updatedPlayer;
-    }
+    });
+
+    export const getAllAppliedUsers = atom(null,
+        async (get,set)=> {
+            await playerApi.getAllAppliedPlayer()
+                .then((res) => set(playersAtom, res))
+                .catch((err) => {
+                    set(errorAtom, err.message);
+                    throw err
+                })
+                .finally(() => {
+                });
+        }
 );

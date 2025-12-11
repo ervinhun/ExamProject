@@ -81,6 +81,7 @@ public class MyDbContext(DbContextOptions<MyDbContext> options) : DbContext(opti
             playerEntity
                 .HasOne(p => p.Wallet);
 
+            // Player -> LotteryTicket : One-to-Many
             playerEntity
                 .HasMany(p => p.LotteryTickets)
                 .WithOne(t => t.Player)

@@ -40,7 +40,6 @@ public class TransactionsController(IWalletTransactionsService walletTransaction
         {
             return Unauthorized(new {message="User is  not authenticated"});
         }
-
         try
         {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value
