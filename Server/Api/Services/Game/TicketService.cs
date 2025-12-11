@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Api.Dto.Game;
+using Api.Dto.Transaction;
 using DataAccess;
 using DataAccess.Entities.Finance;
 using DataAccess.Entities.Game;
@@ -8,39 +9,42 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Api.Services.Game;
 
-public class TicketService : ITicketService
+public class TicketService(MyDbContext ctx) : ITicketService
 {
-    private readonly MyDbContext _ctx;
-    private readonly ILogger<TicketService> _logger;
-
-    public TicketService(MyDbContext ctx, ILogger<TicketService> logger)
-    {
-        _ctx = ctx;
-        _logger = logger;
-    }
-
     public async Task<TicketDto.TicketResponseDto> CreateTicket(Guid playerId,
         TicketDto.CreateTicketRequestDto ticketDto)
     {
-        var gameInstance =
-            await _ctx.GameInstances.FirstOrDefaultAsync(instance => instance.Id == ticketDto.GameInstanceId);
-        if (gameInstance == null)
-            throw new InvalidOperationException("Game instance not found");
-        var gameTemplate =
-            await _ctx.GameTemplates.FirstOrDefaultAsync(template => template.Id == gameInstance.GameTemplateId);
-        if (gameTemplate == null)
-            throw new InvalidOperationException("Game template not found");
-        var wallet = await _ctx.Wallets.FirstOrDefaultAsync(w => w.PlayerId == playerId);
-        if (wallet == null)
-            throw new InvalidOperationException("Wallet not found");
+        var data = await ctx.GameInstances
+            .Where(g => g.Id == ticketDto.GameInstanceId && g.Status == GameStatus.Active)
+            .Select(g => new
+            {
+                GameInstance = g,
+                GameTemplate = ctx.GameTemplates.FirstOrDefault(t => t.Id == g.GameTemplate.Id),
+                Wallet = ctx.Wallets.FirstOrDefault(w => w.PlayerId == playerId)
+            })
+            .FirstOrDefaultAsync();
+
+        if (data?.GameInstance == null)
+            throw new InvalidOperationException("Active game instance not found or the game is not active.");
+
+        if (data.GameTemplate == null)
+            throw new InvalidOperationException("Game template not found.");
+
+        if (data.Wallet == null)
+            throw new InvalidOperationException("Wallet not found.");
+
+        if (ticketDto.SelectedNumbers.Length < data.GameTemplate.MinNumbersPerTicket ||
+            ticketDto.SelectedNumbers.Length > data.GameTemplate.MaxNumbersPerTicket)
+            throw new InvalidOperationException("Invalid number of tickets");
+
         var numbers = ticketDto.SelectedNumbers.OrderBy(n => n).ToList();
         Dictionary<int, double> priceGrowthRule;
 
-        if (!string.IsNullOrWhiteSpace(gameTemplate.PriceGrowthRule))
+        if (!string.IsNullOrWhiteSpace(data.GameTemplate.PriceGrowthRule))
         {
             // JSON exists → deserialize it
             priceGrowthRule = JsonSerializer.Deserialize<Dictionary<int, double>>(
-                gameTemplate.PriceGrowthRule
+                data.GameTemplate.PriceGrowthRule
             )!;
         }
         else
@@ -49,12 +53,12 @@ public class TicketService : ITicketService
             priceGrowthRule = new Dictionary<int, double>();
 
             var j = 0;
-            for (var i = gameTemplate.MinNumbersPerTicket;
-                 i <= gameTemplate.MaxNumbersPerTicket;
+            for (var i = data.GameTemplate.MinNumbersPerTicket;
+                 i <= data.GameTemplate.MaxNumbersPerTicket;
                  i++)
             {
                 // basePrice * (2^j)
-                var price = (gameTemplate.BasePrice * Math.Pow(2, j));
+                var price = (data.GameTemplate.BasePrice * Math.Pow(2, j));
 
                 priceGrowthRule.Add(i, price);
                 j++;
@@ -62,13 +66,13 @@ public class TicketService : ITicketService
         }
 
         var priceOfTheTicket = priceGrowthRule[numbers.Count];
-        if (wallet.Balance < priceOfTheTicket)
+        if (data.Wallet.Balance < priceOfTheTicket)
             throw new InvalidOperationException("Insufficient funds");
-        wallet.Balance -= priceOfTheTicket;
+        data.Wallet.Balance -= priceOfTheTicket;
         var ticket = new LotteryTicket
         {
             GameInstanceId = ticketDto.GameInstanceId,
-            GameTemplateId = gameTemplate.Id,
+            GameTemplateId = data.GameTemplate.Id,
             PlayerId = playerId,
             FullPrice = priceOfTheTicket,
             IsWinning = false,
@@ -76,8 +80,8 @@ public class TicketService : ITicketService
             Repeatings = ticketDto.Repeat,
             BoughtAt = DateTime.UtcNow,
         };
-        _ctx.LotteryTickets.Add(ticket);
-        await _ctx.SaveChangesAsync();
+        ctx.LotteryTickets.Add(ticket);
+        await ctx.SaveChangesAsync();
 
         Console.WriteLine("New ticket Id: " + ticket.Id);
         foreach (var number in numbers)
@@ -90,18 +94,18 @@ public class TicketService : ITicketService
             );
         }
 
-        wallet.Balance -= priceOfTheTicket;
-        await _ctx.SaveChangesAsync();
-        await SaveTicketPurchaseHistory(ticket, wallet.Balance, wallet.Id);
+        data.Wallet.Balance -= priceOfTheTicket;
+        await ctx.SaveChangesAsync();
+        await SaveTicketPurchaseHistory(ticket, data.Wallet.Id);
         return ConvertTicketToTicketResponseDto(ticket);
     }
 
     public async Task<List<TicketDto.TicketResponseDto>> GetAllTicketsForPlayerId(
         Guid playerId, bool activeOnly = true)
     {
-        var tickets = _ctx.LotteryTickets.Where(t => t.PlayerId == playerId).Include(t => t.PickedNumbers);
+        var tickets = ctx.LotteryTickets.Where(t => t.PlayerId == playerId).Include(t => t.PickedNumbers);
 
-        var gameInstance = _ctx.GameInstances
+        var gameInstance = ctx.GameInstances
             .Include(i => i.GameTemplate)
             .Where(i => i.Status == GameStatus.Active);
 
@@ -122,13 +126,23 @@ public class TicketService : ITicketService
     }
 
 
-    public Task<List<TicketDto.TicketResponseDto>> GetAllTicketsForGameTemplateId(Guid gameTemplateId,
-        bool activeOnly = true)
+    public Task<List<TicketDto.TicketResponseDto>> GetAllTicketsForGameInstance(Guid gameInstanceId,
+        bool winningOnly = false)
+    {
+        var gameInstance = ctx.GameInstances
+            .Include(i => i.GameTemplate);
+        if (gameInstance == null) throw new InvalidOperationException("Game instance not found");
+        return Task.FromResult(ctx.LotteryTickets.Where(t => t.GameInstanceId == gameInstanceId
+                                                             && t.IsWinning == winningOnly)
+            .Select(ConvertTicketToTicketResponseDto).ToList());
+    }
+
+    public Task PurchaseTicket(PurchaseTicketDto ticketDto)
     {
         throw new NotImplementedException();
     }
 
-    private async Task SaveTicketPurchaseHistory(LotteryTicket ticket, double walletBalance, Guid walletId)
+    private async Task SaveTicketPurchaseHistory(LotteryTicket ticket, Guid walletId)
     {
         try
         {
@@ -143,8 +157,8 @@ public class TicketService : ITicketService
                 Amount = ticket.FullPrice,
                 CreatedAt = now
             };
-            _ctx.Transactions.Add(transaction);
-            await _ctx.SaveChangesAsync();
+            ctx.Transactions.Add(transaction);
+            await ctx.SaveChangesAsync();
             var history = new TransactionHistory
             {
                 TransactionId = transaction.Id,
@@ -152,8 +166,8 @@ public class TicketService : ITicketService
                 Status = TransactionStatus.Approved,
                 Type = TransactionType.TicketPurchase
             };
-            _ctx.TransactionHistories.Add(history);
-            await _ctx.SaveChangesAsync();
+            ctx.TransactionHistories.Add(history);
+            await ctx.SaveChangesAsync();
         }
         catch (Exception e)
         {
@@ -174,7 +188,7 @@ public class TicketService : ITicketService
             UpdatedAt = ticket.BoughtAt,
             IsPaid = ticket.IsPaid,
             IsWinning = ticket.IsWinning,
-            FullPrice = ticket.FullPrice
+            TicketPrice = ticket.FullPrice
         };
     }
 }

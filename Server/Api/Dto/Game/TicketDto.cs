@@ -21,7 +21,7 @@ public class TicketDto
         public DateTime CreatedAt { get; set;}
         public DateTime UpdatedAt { get; set;}
         public bool IsWinning { get; set;}
-        public double FullPrice { get; set;}
+        public double TicketPrice { get; set;}
         public bool IsPaid { get; set;}
     }
 }
