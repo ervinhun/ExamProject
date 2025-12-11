@@ -66,5 +66,12 @@ export const playerApi = {
                 }
             }
         });
-    }   
-};
+    },
+    getAllAppliedPlayer: async (): Promise<Player[]> => {
+        return await api<Player[]>(`${endpoint}/get-applied-player`, {
+            init: {
+                method: 'GET'
+            }
+        });
+    }
+}

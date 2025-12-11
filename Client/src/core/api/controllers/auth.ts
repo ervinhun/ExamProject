@@ -35,5 +35,14 @@ export const authApi = {
                     method: "GET"
                 }
             }).catch((err) => { throw new Error(err.message); });
+    },
+
+    register: async (user: User): Promise<boolean> => {
+        return await api<boolean>(`${endpoint}/player-application-request`, {
+                init: {
+                    method: "POST",
+                    body: JSON.stringify(user)
+                }
+        })
     }
 };
