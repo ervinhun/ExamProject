@@ -17,6 +17,7 @@ export default function MyTickets() {
     const [picked, setPicked] = useState<number[]>([])
     const [repeat, setRepeat] = useState(1)
     const [gameTemplate, setGameTemplate] = useAtom(activeGamesAtom)
+    const [gameInstance,] = useAtom(activeGamesAtom)
     const [wallet, setWallet] = useAtom(walletAtom)
     const [myTickets, setMyTickets] = useAtom(myTicketsAtom)
     const [isSubmitting, setIsSubmitting] = useState(false)
@@ -26,7 +27,7 @@ export default function MyTickets() {
     useEffect(() => {
         if (wallet?.balance === null)
             playerApi.getWalletForPlayerId(wallet?.id ?? "").then(setWallet);
-    }, []);
+    }, [wallet, setWallet, wallet?.balance]);
 
 
     useEffect(() => {
@@ -44,7 +45,7 @@ export default function MyTickets() {
         if (myTickets.length === 0) {
             ticketApi.getAllActiveTickets().then(setMyTickets);
         }
-    }, [myTickets]);
+    }, [myTickets, setMyTickets]);
 
 
     // This gets the JSON of the prices per number from the entity.
@@ -68,7 +69,6 @@ export default function MyTickets() {
             generatedPriceJson.push(`"${i}": ${2 ** j * base}`);
             j++;
         }
-        console.log("Price table json: ", generatedPriceJson.join(","))
         return JSON.parse(`{${generatedPriceJson.join(",")}}`);
     }, [chosenGameTemplate?.template]);
 
@@ -104,13 +104,12 @@ export default function MyTickets() {
 
         setPicked([...picked, num]);
     };
-
     const onSubmit = async (values: CreateTicketToGameDto) => {
         try {
             setIsSubmitting(true);
-
             const payload = {
                 gameInstanceId: values.gameInstanceId,
+                gameTemplateId: values.gameTemplateId,
                 selectedNumbers: values.selectedNumbers,
                 repeat: values.repeat
             };
@@ -123,6 +122,10 @@ export default function MyTickets() {
             }
             addNewTicketToMyTickets(response);
             addNotification({type: "success", message: "Ticket has been created"});
+            if (wallet != null && wallet?.balance !== null) {
+                const newBalance = wallet.balance - (response.ticketPrice ?? totalPrice);
+                setWallet({...wallet, balance: newBalance});
+            }
             reset();
         } catch (ex) {
             addNotification({type: "error", message: `Unexpected error. ${ex}`});
@@ -146,169 +149,212 @@ export default function MyTickets() {
 
     return (
         <>
-        {isSubmitting && (
-            <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-                <span className="loading loading-dots loading-lg text-white"></span>
-            </div>
-        )}
-    <div className="container mx-auto px-4 py-6 my-7">
-            <div className="space-y-8">
-                {/* Title */}
-                <div className="flex items-center gap-4 pb-4 border-b-2 border-primary">
-                    <div className="flex-1">
-                        <h1 className="text-3xl font-bold">Lottery Tickets</h1>
-                        <p className="text-gray-600">Create your lottery ticket</p>
+            {isSubmitting && (
+                <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+                    <span className="loading loading-dots loading-lg text-white"></span>
+                </div>
+            )}
+            <div className="container mx-auto px-4 py-6 my-7">
+                <div className="space-y-8">
+                    {/* Title */}
+                    <div className="flex items-center gap-4 pb-4 border-b-2 border-primary">
+                        <div className="flex-1">
+                            <h1 className="text-3xl font-bold">Lottery Tickets</h1>
+                            <p className="text-gray-600">Create your lottery ticket</p>
+                        </div>
                     </div>
-                </div>
 
-                {/* Game Template Dropdown */}
-                <div className="bg-amber-100 p-5 rounded-xl shadow-md">
-                    <h2 className="text-xl font-semibold mb-3">Active Game Templates</h2>
+                    {/* Game Template Dropdown */}
+                    <div className="bg-amber-100 p-5 rounded-xl shadow-md">
+                        <h2 className="text-xl font-semibold mb-3">Active Game Templates</h2>
 
-                    <select
-                        className="select select-bordered w-full max-w-xs"
-                        value={selectedGame}
-                        onChange={e => {
-                            const id = e.target.value
-                            setSelectedGame(id)
+                        <select
+                            className="select select-bordered w-full max-w-xs"
+                            value={selectedGame}
+                            onChange={e => {
+                                const id = e.target.value
+                                setSelectedGame(id)
 
-                            const game = gameTemplate.find(t => t.id === id)
-                            setChosenGameTemplate(game ?? null)
+                                const game = gameTemplate.find(t => t.id === id)
+                                setChosenGameTemplate(game ?? null)
 
-                            setPicked([])
-                            setRepeat(0)
-                        }}
-                    >
-                        <option value="">Choose game template</option>
-                        {gameTemplate.map(t => (
-                            <option key={t.id} value={t.id}>
-                                {t.template?.name}
-                            </option>
-                        ))}
-                    </select>
-                </div>
+                                setPicked([])
+                                setRepeat(0)
+                            }}
+                        >
+                            <option value="">Choose game template</option>
+                            {gameTemplate.map(t => (
+                                <option key={t.id} value={t.id}>
+                                    {t.template?.name}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
 
-                {/* Number Board */}
-                <div className="bg-amber-50 p-5 rounded-xl shadow-md">
+                    {/* Number Board */}
+                    <div className="bg-amber-50 p-5 rounded-xl shadow-md">
 
-                    <h2 className="text-xl font-semibold mb-4">Pick Your Numbers</h2>
+                        <h2 className="text-xl font-semibold mb-4">Pick Your Numbers</h2>
 
-                    {chosenGameTemplate !== null && (
-                        <div>
-                            <p className="text-sm mb-2 text-gray-600">
-                                Select {chosenGameTemplate.template?.minNumbersPerTicket}–
-                                {chosenGameTemplate.template?.maxNumbersPerTicket} numbers.
-                            </p>
+                        {chosenGameTemplate !== null && (
+                            <div>
+                                <p className="text-sm mb-2 text-gray-600">
+                                    Select {chosenGameTemplate.template?.minNumbersPerTicket}–
+                                    {chosenGameTemplate.template?.maxNumbersPerTicket} numbers.
+                                </p>
 
-                            <div
-                                className="grid gap-3 max-w-sm"
-                                style={{
-                                    gridTemplateColumns: `repeat(${Math.ceil(
-                                        Math.sqrt(chosenGameTemplate.template?.poolOfNumbers ?? 0)
-                                    )}, 1fr)`
-                                }}
-                            >
-                                {[...Array(chosenGameTemplate.template?.poolOfNumbers)].map((_, i) => {
-                                    const num = i + 1;
-                                    const selected = picked.includes(num);
-                                    const isDisabled =
-                                        (!selected &&
-                                            picked.length >= (chosenGameTemplate.template?.maxNumbersPerTicket ?? 1))
-                                        ||
-                                        (!selected && wouldExceedBalance(picked.length + 1, repeat + 1))
-                                    return (
-                                        <button
-                                            key={num}
-                                            onClick={() => toggleNumber(num)}
-                                            disabled={isDisabled}
-                                            className={`p-3 rounded-lg text-center border font-semibold transition-all
+                                <div
+                                    className="grid gap-3 max-w-sm"
+                                    style={{
+                                        gridTemplateColumns: `repeat(${Math.ceil(
+                                            Math.sqrt(chosenGameTemplate.template?.poolOfNumbers ?? 0)
+                                        )}, 1fr)`
+                                    }}
+                                >
+                                    {[...Array(chosenGameTemplate.template?.poolOfNumbers)].map((_, i) => {
+                                        const num = i + 1;
+                                        const selected = picked.includes(num);
+                                        const isDisabled =
+                                            (!selected &&
+                                                picked.length >= (chosenGameTemplate.template?.maxNumbersPerTicket ?? 1))
+                                            ||
+                                            (!selected && wouldExceedBalance(picked.length + 1, repeat + 1))
+                                        return (
+                                            <button
+                                                key={num}
+                                                onClick={() => toggleNumber(num)}
+                                                disabled={isDisabled}
+                                                className={`p-3 rounded-lg text-center border font-semibold transition-all
                                             ${selected
-                                                ? "bg-green-600 text-white border-green-700"
-                                                : "bg-white border-gray-300 hover:bg-gray-100"}
+                                                    ? "bg-green-600 text-white border-green-700"
+                                                    : "bg-white border-gray-300 hover:bg-gray-100"}
                                             ${!selected && picked.length >= (chosenGameTemplate.template?.maxNumbersPerTicket ?? 0)
-                                                ? "opacity-40 cursor-not-allowed"
-                                                : ""}
+                                                    ? "opacity-40 cursor-not-allowed"
+                                                    : ""}
                                         `}
-                                        >
-                                            {num}
-                                        </button>
+                                            >
+                                                {num}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Price + Repeat */}
+                    <div className="mt-6 flex items-center gap-6">
+                        <div>
+                            <p className="text-gray-700 font-semibold">Base Price:</p>
+                            <p className="text-lg font-bold">{basePrice} kr.</p>
+                        </div>
+
+                        <div>
+                            <p className="text-gray-700 font-semibold">Repeat:</p>
+                            <input
+                                type="number"
+                                className="input input-bordered w-24"
+                                min={0}
+                                value={repeat}
+                                onChange={e => {
+                                    const newRepeat = Number(e.target.value);
+                                    if (!wouldExceedBalance(picked.length, newRepeat)) {
+                                        setRepeat(newRepeat);
+                                    }
+                                }}
+                                max={52}
+                            />
+                        </div>
+
+                        <div>
+                            <p className="text-gray-700 font-semibold">Total:</p>
+                            <p className="text-xl font-bold">{totalPrice} kr.</p>
+                        </div>
+                        {/* Submit Button */}
+                        <button
+                            disabled={!canSubmit || overBalance}
+                            className={`btn btn-primary ml-6 ${
+                                !canSubmit || overBalance ? "btn-disabled opacity-50 cursor-not-allowed" : ""
+                            }`}
+                            onClick={() => {
+                                console.log("Game template: ", chosenGameTemplate)
+                                void onSubmit({
+                                    gameInstanceId: chosenGameTemplate?.id ?? "",
+                                    gameTemplateId: chosenGameTemplate?.template?.id ?? "",
+                                    selectedNumbers: picked,
+                                    repeat
+                                })
+                            }}
+                        >
+                            Submit Ticket
+                        </button>
+                    </div>
+
+                    {/* Active Tickets */}
+                    <div className="bg-amber-100 p-6 rounded-xl shadow-md">
+                        <h2 className="text-xl font-semibold mb-4">Active Tickets</h2>
+
+                        {myTickets.length === 0 ? (
+                            <p className="text-gray-500">You don't have any active tickets yet.</p>
+                        ) : (
+                            <table className="w-full border-collapse">
+                                <thead>
+                                <tr className="bg-gray-200 text-left">
+                                    <th className="p-2">Game</th>
+                                    <th className="p-2">Numbers</th>
+                                    <th className="p-2">Repeat</th>
+                                </tr>
+                                </thead>
+
+                                <tbody>
+                                {myTickets.map((t) => {
+                                    const gameInstanceColor = gameInstance.find(
+                                        gi => gi.id === t.gameInstanceId
+                                    );
+
+                                    // Default values if something missing
+                                    const status = gameInstanceColor?.status ?? 0;
+                                    const result = t.results?.[0]?.isWinning ?? false;
+
+                                    // Color selection
+                                    let rowClass = "";
+                                    if (result) {
+                                        rowClass = "bg-green-100";
+                                    } else if (!result && status !== 0) {
+                                        rowClass = "bg-red-100";
+                                    } else if (status === 0) {
+                                        rowClass = "bg-yellow-100";
+                                    }
+
+                                    return (
+                                        <tr key={t.id} className={rowClass}>
+                                            <td className="p-2 font-medium">
+                                                {gameInstanceColor?.template?.name ?? "Unknown Game Template"}{" (W"}{gameInstanceColor?.week}{")"}
+                                            </td>
+                                            <td className="p-2">
+                                                <div className="flex flex-wrap gap-2">
+                                                    {t.selectedNumbers.map(n => (
+                                                        <div
+                                                            key={n}
+                                                            className="w-8 h-8 flex items-center justify-center rounded-full bg-orange-500 text-white font-semibold shadow"
+                                                        >
+                                                            {n}
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </td>
+                                            <td className="p-2">
+                                                {t.repeat}
+                                            </td>
+                                        </tr>
                                     );
                                 })}
-                            </div>
-                        </div>
-                    )}
-                </div>
-
-                {/* Price + Repeat */}
-                <div className="mt-6 flex items-center gap-6">
-                    <div>
-                        <p className="text-gray-700 font-semibold">Base Price:</p>
-                        <p className="text-lg font-bold">{basePrice} kr.</p>
-                    </div>
-
-                    <div>
-                        <p className="text-gray-700 font-semibold">Repeat:</p>
-                        <input
-                            type="number"
-                            className="input input-bordered w-24"
-                            min={0}
-                            value={repeat}
-                            onChange={e => {
-                                const newRepeat = Number(e.target.value);
-                                if (!wouldExceedBalance(picked.length, newRepeat)) {
-                                    setRepeat(newRepeat);
-                                }
-                            }}
-                            max={52}
-                        />
-                    </div>
-
-                    <div>
-                        <p className="text-gray-700 font-semibold">Total:</p>
-                        <p className="text-xl font-bold">{totalPrice} kr.</p>
-                    </div>
-                    {/* Submit Button */}
-                    <button
-                        disabled={!canSubmit || overBalance}
-                        className={`btn btn-primary ml-6 ${
-                            !canSubmit || overBalance ? "btn-disabled opacity-50 cursor-not-allowed" : ""
-                        }`}
-                        onClick={() => {
-                            console.log("Submit ticket", picked, repeat)
-                            void onSubmit({
-                                gameInstanceId: chosenGameTemplate?.id ?? "",
-                                selectedNumbers: picked,
-                                repeat
-                            })
-                        }}
-                    >
-                        Submit Ticket
-                    </button>
-                </div>
-
-                {/* Active Tickets */}
-                <div className="bg-amber-100 p-6 rounded-xl shadow-md">
-                    <h2 className="text-xl font-semibold mb-4">Active Tickets</h2>
-                    <p className="text-gray-500">
-                        {myTickets.length === 0 ? (
-                            "You don't have any active tickets yet."
-                        ) : (
-                            <ul>
-                                {myTickets.map(t => (
-                                    <li key={t.id}>
-                                        {t.gameInstanceId} - {t.selectedNumbers.join(", ")} - {t.repeat}
-                                    </li>
-                                ))}
-                            </ul>
+                                </tbody>
+                            </table>
                         )}
-                    </p>
-
-
-                    <p className="text-gray-500">
-                    </p>
+                    </div>
 
                 </div>
             </div>
-        </div>
         </>)
 }

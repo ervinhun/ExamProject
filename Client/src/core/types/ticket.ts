@@ -2,6 +2,7 @@ import {z} from "zod";
 
 export const CreateTicketToGameDtoSchema = z.object({
     gameInstanceId: z.string(),
+    gameTemplateId: z.string(),
     selectedNumbers: z.array(z.number().positive()),
     repeat: z.number()
 });
@@ -21,11 +22,15 @@ export type TicketResultDto = z.infer<typeof TicketResultDtoSchema>;
 
 export const MyTicketDtoSchema = z.object({
     id: z.string().optional(),
-    playerId: z.string(),
+    playerId: z.string().optional(),
     gameInstanceId: z.string(),
+    gameTemplateId: z.string(),
     selectedNumbers: z.array(z.number()),
     repeat: z.number().optional(),
     results: z.array(TicketResultDtoSchema).optional(),
+    createdAt: z.string().or(z.date()),
+    updatedAt: z.string().or(z.date()).optional(),
+    ticketPrice: z.number().optional(),
 });
 
 export type MyTicketDto = z.infer<typeof MyTicketDtoSchema>;
