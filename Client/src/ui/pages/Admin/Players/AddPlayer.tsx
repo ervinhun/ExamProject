@@ -28,6 +28,7 @@ export default function AddPlayer() {
             firstName,
             lastName,
             email,
+            birthDate: new Date(birthDate),
             phoneNumber, 
         }).then((res)=>{
         // Clear form

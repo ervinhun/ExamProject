@@ -23,7 +23,6 @@ public class MyAuthenticationService(MyDbContext ctx, IJwt jwt) : IMyAuthenticat
         {
             throw new AuthenticationException("Email or password is incorrect.");
         }
-
         return await jwt.CreateTokenResponse(user); 
     }
     
