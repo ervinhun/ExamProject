@@ -1,6 +1,5 @@
-import type { GameInstanceDto, GameTemplate, GameTemplateDto } from "@core/types/game";
-import { GameTemplateSchema } from "@core/types/game";
-import { api } from "../Api";
+import {GameInstanceDto, GameTemplate, GameTemplateDto, GameTemplateSchema} from "@core/types/game";
+import {api} from "../Api";
 
 const endpoint = "/api/games";
 
@@ -15,7 +14,7 @@ export const gameApi = {
         });
         return gameTemplate as GameTemplateDto;
     },
-    
+
     startGameInstance: async (gameInstance: Partial<GameInstanceDto>): Promise<GameInstanceDto> => {
         return await api<GameInstanceDto>(`${endpoint}/start-game`, {
             init: {
@@ -47,5 +46,7 @@ export const gameApi = {
                 method: "GET"
             }
         });
-    }
+    },
+
+
 }
