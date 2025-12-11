@@ -93,8 +93,7 @@ public class TicketService(MyDbContext ctx) : ITicketService
                 }
             );
         }
-
-        data.Wallet.Balance -= priceOfTheTicket;
+        
         await ctx.SaveChangesAsync();
         await SaveTicketPurchaseHistory(ticket, data.Wallet.Id);
         return ConvertTicketToTicketResponseDto(ticket);
