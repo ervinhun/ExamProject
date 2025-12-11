@@ -1,5 +1,5 @@
 import { api } from "../Api";
-import { type CreateUserDto, type User } from "../../types/users";
+import {AppliedUser, type CreateUserDto, type User} from "../../types/users";
 
 const endpoint = "/api/users";
 
@@ -33,7 +33,25 @@ export const userApi ={
                 method: "PATCH"
             }
         });
+    },
+    getAllAppliedUsers: async (): Promise<AppliedUser[]> => {
+        return await api<AppliedUser[]>(`${endpoint}/get-applied-users`, {
+            init: {
+                method: "GET"
+            }
+        });
+    },
+
+    confirmAppliedUsers: async (userId:string, isApproved:boolean, isActive:boolean): Promise<boolean> => {
+        console.log(`URL which is sent: ${endpoint}/approve-user/${userId}?isApproved=${isApproved}&isActive=${isActive}`)
+        return await api<boolean>(
+            `${endpoint}/approve-user/${userId}?isApproved=${isApproved}&isActive=${isActive}`, {
+                init: {
+                    method: "PUT"
+                }
+            });
     }
+
 }
 
 

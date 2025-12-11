@@ -22,9 +22,10 @@ public interface IUserManagementService
     Task DeleteUser(Guid userId);
     Task<ICollection<PlayerDto>> GetAllPlayersAsync();
 
-    public Task<ActionResult<User>> GetUserById(Guid userId);
-    public Task<ActionResult<User>> RequestMembership(RequestRegistrationDto requestRegistrationDto);
-    public Task<PlayerDto> ConfirmMembership(Guid userId, UserConfirmationEntity userConfirmationEntity);
+    Task<ActionResult<User>> GetUserById(Guid userId);
+    Task<bool> ConfirmMembership(Guid userId, bool isConfirmed, bool isActive, Guid adminId);
+
+    Task<List<PlayerWhoAppliedDto>> GetAppliedUsers();
     
     Task ToggleStatus(Guid userId);
     

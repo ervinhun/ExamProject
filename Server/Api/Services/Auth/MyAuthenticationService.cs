@@ -5,51 +5,54 @@ using Api.Dto.User;
 using Api.Services.Auth;
 using DataAccess;
 using DataAccess.Entities.Auth;
+using DataAccess.Enums;
 using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.EntityFrameworkCore;
 using Utils;
 using Utils.Exceptions;
+
 namespace api.Services.Auth;
 
 public class MyAuthenticationService(MyDbContext ctx, IJwt jwt) : IMyAuthenticationService
 {
-    
-
     public async Task<JwtResponseDto> Login(LoginRequestDto dto)
     {
         var user = await ctx.Users.Include(user => user.Roles).FirstOrDefaultAsync(u => u.Email == dto.Email);
 
         if (user == null || !HashUtils.VerifyPasswordHash(dto.Password, user.PasswordHash, user.PasswordSalt))
         {
-            throw new AuthenticationException("Email or password is incorrect.");
+            Console.Out.WriteLine("Invalid credentials");
+            throw new AuthenticationException("Email or password is incorrect");
         }
-        return await jwt.CreateTokenResponse(user); 
+
+        return await jwt.CreateTokenResponse(user);
     }
-    
+
     public async Task<User> Register(RegisterRequestDto dto)
     {
-        var user = await ctx.Users.AnyAsync(u=> u.Email == dto.Email);
+        var user = await ctx.Users.AnyAsync(u => u.Email == dto.Email);
         if (user)
         {
             throw new AuthenticationException("User already exists");
         }
 
-        HashUtils.CreatePasswordHash(dto.Password, out var hash, out var salt); 
-        
+        HashUtils.CreatePasswordHash(dto.Password, out var hash, out var salt);
+
         var newUser = new User
         {
             Email = dto.Email,
+            DateOfBirth = dto.Dob.ToUniversalTime(),
             PasswordHash = hash,
             PasswordSalt = salt,
         };
 
         ctx.Users.Add(newUser);
-        
+
         await ctx.SaveChangesAsync();
-        
+
         return newUser;
     }
-    
+
     public async Task<string> RequestPasswordReset(string email)
     {
         var user = await ctx.Users.FirstOrDefaultAsync(u => u.Email == email);
@@ -65,7 +68,7 @@ public class MyAuthenticationService(MyDbContext ctx, IJwt jwt) : IMyAuthenticat
         // TODO: sending e-mail part in Controller
         return passwordResetToken;
     }
-    
+
     public async Task<bool> ResetPassword(string resetToken, ResetPasswordRequest request)
     {
         var user = await ctx.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
@@ -105,5 +108,75 @@ public class MyAuthenticationService(MyDbContext ctx, IJwt jwt) : IMyAuthenticat
         }
 
         return new string(result);
+    }
+
+    public async Task<bool> RequestMembership(RequestRegistrationDto requestRegistrationDto)
+    {
+        if (await ctx.Users.AnyAsync(u => u.Email == requestRegistrationDto.Email))
+        {
+            throw new ServiceException("Email already exists", new InvalidOperationException());
+        }
+
+        HashUtils.CreatePasswordHash(requestRegistrationDto.Password, out var hash, out var salt);
+
+        // Get the Player role from database
+        var playerRole = await ctx.Roles.FirstOrDefaultAsync(r => r.Name == UserRole.Player);
+        if (playerRole == null)
+        {
+            throw new ServiceException("Player role not found in database", new InvalidOperationException());
+        }
+
+        var user = new Player
+        {
+            FirstName = requestRegistrationDto.FirstName,
+            LastName = requestRegistrationDto.LastName,
+            Email = requestRegistrationDto.Email,
+            PhoneNumber = requestRegistrationDto.PhoneNo,
+            DateOfBirth = requestRegistrationDto.Dob.ToUniversalTime(),
+            PasswordHash = hash,
+            PasswordSalt = salt,
+            Activated = false
+        };
+
+        // Assign player role
+        var role = await AssignUserAsPlayer();
+        user.Roles.Add(role);
+
+        try
+        {
+            await ctx.Players.AddAsync(user);
+            await ctx.SaveChangesAsync();
+        }
+        catch (DbUpdateException e)
+        {
+            throw new ServiceException(e.Message, e);
+        }
+
+        if (user == null)
+            throw new ServiceException("Player not found", new InvalidOperationException());
+        var utcNow = DateTime.UtcNow;
+        var request = new PlayerWhoApplied()
+        {
+            Player = user,
+            playerId = user.Id,
+            createdAt = utcNow,
+            updatedAt = utcNow,
+            status = "Pending"
+        };
+
+        ctx.WhoApplied.Add(request);
+        await ctx.SaveChangesAsync();
+        return true;
+    }
+
+    private async Task<Role> AssignUserAsPlayer()
+    {
+        var playerRole = await ctx.Roles
+            .FirstOrDefaultAsync(r => r.Name == UserRole.Player);
+
+        if (playerRole == null)
+            throw new ServiceException("Player role not found in database");
+
+        return playerRole;
     }
 }

@@ -1,32 +1,21 @@
-import { fetchPlayersAtom, playersAtom, togglePlayerStatusAtom } from "@core/atoms/players";
-import { useAtom, useSetAtom } from "jotai";
-import { format } from "path";
-import { useEffect } from "react";
-import { NavLink } from "react-router-dom";
-import { pl } from "zod/locales";
-import { userApi } from "@core/api/controllers/user";
-import { addNotificationAtom } from "@core/atoms/error";
+import {fetchPlayersAtom, playersAtom, togglePlayerStatusAtom} from "@core/atoms/players";
+import {useAtom, useSetAtom} from "jotai";
+import {useEffect} from "react";
+import {NavLink} from "react-router-dom";
+import {addNotificationAtom} from "@core/atoms/error";
+import formatDate from "@ui/helpers/FormatDate.ts";
 
 export default function AllPlayers() {
     const [players,] = useAtom(playersAtom);
-    const [,fetchPlayers] = useAtom(fetchPlayersAtom);
+    const [, fetchPlayers] = useAtom(fetchPlayersAtom);
     const togglePlayerStatus = useSetAtom(togglePlayerStatusAtom);
     const addNotification = useSetAtom(addNotificationAtom);
-    
+
     useEffect(() => {
-        if(players.length === 0){
+        if (players.length === 0) {
             fetchPlayers();
         }
     }, []);
-
-    const formatDate = (dateString: string) => {
-        const date = new Date(dateString);
-        return date.toLocaleDateString(undefined, {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-        });
-    }
 
     const handleToggleStatus = async (userId: string, currentStatus: boolean, playerName: string) => {
         try {
@@ -65,59 +54,60 @@ export default function AllPlayers() {
                 <div className="card bg-base-200 shadow-lg">
                     <div className="card-body">
                         <h2 className="card-title text-2xl mb-4">Players List</h2>
-                        
+
                         <div className="overflow-x-auto">
                             <table className="table table-zebra">
                                 <thead>
-                                    <tr>
-                                        <th>Name</th>
-                                        <th>Email</th>
-                                        <th>Phone</th>
-                                        <th>Status</th>
-                                        <th>Joined Date</th>
-                                        <th>Actions</th>
-                                    </tr>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>Phone</th>
+                                    <th>Status</th>
+                                    <th>Joined Date</th>
+                                    <th>Actions</th>
+                                </tr>
                                 </thead>
                                 <tbody>
-                                    {players.length === 0 ? (
-                                        <tr>
-                                            <td colSpan={6} className="text-center py-8 text-base-content/60">
-                                                No players found
+                                {players.length === 0 ? (
+                                    <tr>
+                                        <td colSpan={6} className="text-center py-8 text-base-content/60">
+                                            No players found
+                                        </td>
+                                    </tr>
+                                ) : (
+                                    players.map((player) => (
+                                        <tr key={player.id}>
+                                            <td className="font-semibold">
+                                                {player.firstName} {player.lastName}
                                             </td>
-                                        </tr>
-                                    ) : (
-                                        players.map((player) => (
-                                            <tr key={player.id}>
-                                                <td className="font-semibold">
-                                                    {player.firstName} {player.lastName}
-                                                </td>
-                                                <td>{player.email}</td>
-                                                <td>{player.phoneNumber}</td>
-                                                <td>
-                                                    <span className={`badge ${player.isActive ? 'badge-success' : 'badge-error'}`}>
+                                            <td>{player.email}</td>
+                                            <td>{player.phoneNumber}</td>
+                                            <td>
+                                                    <span
+                                                        className={`badge ${player.isActive ? 'badge-success' : 'badge-error'}`}>
                                                         {player.isActive ? 'Active' : 'Inactive'}
                                                     </span>
-                                                </td>
-                                                <td>{player.createdAt ? formatDate(player.createdAt) : "N/A"}</td>
-                                                <td>
-                                                    <div className="flex gap-2">
-                                                        <button className="btn btn-xs btn-info">View</button>
-                                                        <button className="btn btn-xs btn-ghost">Edit</button>
-                                                        <button 
-                                                            className={`btn btn-xs ${player.isActive ? 'btn-warning' : 'btn-success'}`}
-                                                            onClick={() => handleToggleStatus(
-                                                                player.id!,
-                                                                player.isActive!,
-                                                                `${player.firstName} ${player.lastName}`
-                                                            )}
-                                                        >
-                                                            {player.isActive ? 'Deactivate' : 'Activate'}
-                                                        </button>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        ))
-                                    )}
+                                            </td>
+                                            <td>{player.createdAt ? formatDate(player.createdAt) : "N/A"}</td>
+                                            <td>
+                                                <div className="flex gap-2">
+                                                    <button className="btn btn-xs btn-info">View</button>
+                                                    <button className="btn btn-xs btn-ghost">Edit</button>
+                                                    <button
+                                                        className={`btn btn-xs ${player.isActive ? 'btn-warning' : 'btn-success'}`}
+                                                        onClick={() => handleToggleStatus(
+                                                            player.id!,
+                                                            player.isActive!,
+                                                            `${player.firstName} ${player.lastName}`
+                                                        )}
+                                                    >
+                                                        {player.isActive ? 'Deactivate' : 'Activate'}
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))
+                                )}
                                 </tbody>
                             </table>
                         </div>

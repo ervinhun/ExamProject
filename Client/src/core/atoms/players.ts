@@ -57,5 +57,17 @@ export const togglePlayerStatusAtom = atom(null,
 
         set(playersAtom, players.map(p => p.id === playerId ? updatedPlayer : p));
         return updatedPlayer;
-    }
+    });
+
+    export const getAllAppliedUsers = atom(null,
+        async (get,set)=> {
+            await playerApi.getAllAppliedPlayer()
+                .then((res) => set(playersAtom, res))
+                .catch((err) => {
+                    set(errorAtom, err.message);
+                    throw err
+                })
+                .finally(() => {
+                });
+        }
 );
