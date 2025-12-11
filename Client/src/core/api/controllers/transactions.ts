@@ -11,7 +11,7 @@ export const transactionApi = {
         });
     },
 
-    approveTransaction: async (transactionId: number): Promise<void> => {
+    approveTransaction: async (transactionId: string): Promise<void> => {
         return await api<void>(`${endpoint}/approve-transaction/${transactionId}`, {
             init: {
                 method: "POST"
@@ -19,7 +19,7 @@ export const transactionApi = {
         });
     },
 
-    rejectTransaction: async (transactionId: number): Promise<void> => {
+    rejectTransaction: async (transactionId: string): Promise<void> => {
         return await api<void>(`${endpoint}/${transactionId}/reject-transaction`, {
             init: {
                 method: "POST"

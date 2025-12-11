@@ -1,36 +1,43 @@
 import { playerApi } from "@core/api/controllers/player"
 import { authAtom } from "@core/atoms/auth";
-import { getWalletForPlayerIdAtom, walletAtom } from "@core/atoms/players";
-import { WalletDto } from "@core/types/wallet";
 import { mapTransactionStatus, mapTransactionType } from "@core/types/transaction";
-import { useAtom } from "jotai";
+import { useAtom, useSetAtom } from "jotai";
 import { useEffect, useState } from "react";
+import { getWalletForPlayerIdAtom, requestDepositAtom, walletAtom } from "@core/atoms/wallet";
+import { addNotificationAtom } from "@core/atoms/error";
 
 export default function Wallet() {
     const [wallet,] = useAtom(walletAtom);
     const [,getWalletForPlayerId] = useAtom(getWalletForPlayerIdAtom);
+    const [,requestDeposit] = useAtom(requestDepositAtom);
     const [authUser,] = useAtom(authAtom);
+    const addNotification = useSetAtom(addNotificationAtom);
+
     const [depositAmount, setDepositAmount] = useState("");
     const [withdrawAmount, setWithdrawAmount] = useState("");
+    const [mobilePayTransactionNumber, setMobilePayTransactionNumber] = useState("");
 
     useEffect(() => {
-        getWalletForPlayerId(authUser?.id!);
+        if(authUser?.id && !wallet){
+            getWalletForPlayerId(authUser?.id!);
+        }
     }, []);
 
     const handleDeposit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (authUser?.id && depositAmount) {
-            await playerApi.requestForDeposit({
-                amount: Number(depositAmount),
-                walletId: wallet?.id || "",
-                playerId: authUser.id
-            }).then(() => {
-                getWalletForPlayerId(authUser.id!);
-                setDepositAmount("");
-            }).catch((error) => {
-                console.error("Deposit failed:", error);
-            });
-        }
+        await requestDeposit({
+            playerId: authUser?.id!,
+            walletId: wallet?.id!,
+            amount: parseFloat(depositAmount),
+            mobilePayTransactionNumber: mobilePayTransactionNumber
+        }).then(() => {
+            setDepositAmount("");
+            setMobilePayTransactionNumber("");
+            addNotification({type: "success", message: "Deposit request submitted successfully"});
+        }).catch((err) => {
+            console.error("Deposit failed:", err);
+            addNotification({type: "error", message: `Deposit failed: ${err.message}`});
+        });
     };
 
     const handleWithdraw = (e: React.FormEvent) => {
@@ -89,18 +96,18 @@ export default function Wallet() {
     };
 
     return (
-        <div className="container mx-auto px-4 py-6 my-7">
+        <div className="container mx-auto">
             <div className="space-y-8">
                 {/* Header */}
                 <div className="flex items-center gap-4 pb-4 border-b-2 border-primary">
                     <div className="flex-1">
-                        <h1 className="text-4xl font-bold text-primary">My Wallet</h1>
-                        <p className="text-base text-base-content/70 mt-1">Manage your balance and transactions</p>
+                        <h1 className="text-4xl font-bold text-primary ml-3">My Wallet</h1>
+                        <p className="text-base text-base-content/70 mt-1 ml-3">Manage your balance and transactions</p>
                     </div>
                 </div>
 
                 {/* Balance Card */}
-                <div className="card bg-gradient-to-br from-primary to-secondary shadow-xl">
+                <div className="card bg-gradient-to-br from-primary to-secondary shadow-xl mt-7 mb-11">
                     <div className="card-body">
                         <div className="flex items-center justify-between">
                             <div>
@@ -119,7 +126,7 @@ export default function Wallet() {
                 </div>
 
                 {/* Quick Actions */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-11">
                     {/* Deposit Card */}
                     <div className="card bg-base-200 shadow-lg">
                         <div className="card-body">
@@ -132,6 +139,24 @@ export default function Wallet() {
                             <form onSubmit={handleDeposit} className="space-y-4">
                                 <div className="form-control">
                                     <label className="label">
+                                        <span className="label-text font-medium">MobilePay Transaction number</span>
+                                    </label>
+                                    <input 
+                                        type="text"
+                                        placeholder="Enter transaction number"
+                                        className="input input-bordered w-full"
+                                        value={`#${mobilePayTransactionNumber}`}
+                                        onChange={(e) => {
+                                            const value = e.target.value.replace('#', '');
+                                            if(value.length <= 11 && /^\d*$/.test(value)){
+                                                setMobilePayTransactionNumber(value);
+                                            }
+                                        }}
+                                        required
+                                    />
+                                </div>
+                                <div className="form-control">
+                                    <label className="label">
                                         <span className="label-text font-medium">Amount (DKK)</span>
                                     </label>
                                     <input 
@@ -141,7 +166,7 @@ export default function Wallet() {
                                         value={depositAmount}
                                         onChange={(e) => setDepositAmount(e.target.value)}
                                         min="0"
-                                        step="0.01"
+                                        step="1"
                                         required
                                     />
                                 </div>
@@ -191,7 +216,7 @@ export default function Wallet() {
                 </div>
 
                 {/* Transaction History */}
-                <div className="card bg-base-200 shadow-lg">
+                <div className="card bg-base-200 shadow-lg mt-11">
                     <div className="card-body">
                         <h2 className="card-title text-2xl mb-4">Transaction History</h2>
                         

@@ -22,6 +22,36 @@ namespace DataAccess.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("DataAccess.Entities.Auth.PlayerWhoApplied", b =>
+                {
+                    b.Property<Guid>("id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("createdAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("playerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("reviewedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("status")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("updatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("id");
+
+                    b.HasIndex("playerId")
+                        .IsUnique();
+
+                    b.ToTable("WhoApplied");
+                });
+
             modelBuilder.Entity("DataAccess.Entities.Auth.Role", b =>
                 {
                     b.Property<Guid>("Id")
@@ -93,6 +123,13 @@ namespace DataAccess.Migrations
                         .HasMaxLength(512)
                         .HasColumnType("character varying(512)");
 
+                    b.Property<string>("ResetPasswordToken")
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)");
+
+                    b.Property<DateTime?>("ResetPasswordTokenExpiry")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -106,6 +143,30 @@ namespace DataAccess.Migrations
                     b.UseTptMappingStrategy();
                 });
 
+            modelBuilder.Entity("DataAccess.Entities.Auth.UserConfirmationEntity", b =>
+                {
+                    b.Property<Guid>("PlayerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ConfirmationToken")
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)");
+
+                    b.Property<string>("Result")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Role")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("isActive")
+                        .HasColumnType("boolean");
+
+                    b.HasKey("PlayerId");
+
+                    b.ToTable("UserConfirmations", (string)null);
+                });
+
             modelBuilder.Entity("DataAccess.Entities.Finance.Transaction", b =>
                 {
                     b.Property<Guid>("Id")
@@ -117,6 +178,9 @@ namespace DataAccess.Migrations
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("MobilePayTransactionNumber")
+                        .HasColumnType("text");
 
                     b.Property<string>("Name")
                         .HasColumnType("text");
@@ -211,16 +275,13 @@ namespace DataAccess.Migrations
                     b.Property<Guid>("CreatedById")
                         .HasColumnType("uuid");
 
-                    b.Property<DateTime>("DrawDate")
+                    b.Property<DateTime?>("DrawDate")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<DateTime?>("ExpirationDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int?>("ExpirationDayOfWeek")
+                    b.Property<int?>("DrawDayOfWeek")
                         .HasColumnType("integer");
 
-                    b.Property<TimeOnly?>("ExpirationTimeOfDay")
+                    b.Property<TimeOnly?>("DrawTimeOfDay")
                         .HasColumnType("time without time zone");
 
                     b.Property<Guid>("GameTemplateId")
@@ -391,6 +452,26 @@ namespace DataAccess.Migrations
                     b.ToTable("Players", (string)null);
                 });
 
+            modelBuilder.Entity("DataAccess.Entities.Auth.PlayerWhoApplied", b =>
+                {
+                    b.HasOne("DataAccess.Entities.Auth.Player", "Player")
+                        .WithOne("PlayerWhoApplied")
+                        .HasForeignKey("DataAccess.Entities.Auth.PlayerWhoApplied", "playerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Player");
+                });
+
+            modelBuilder.Entity("DataAccess.Entities.Auth.UserConfirmationEntity", b =>
+                {
+                    b.HasOne("DataAccess.Entities.Auth.Player", null)
+                        .WithMany()
+                        .HasForeignKey("PlayerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("DataAccess.Entities.Finance.Transaction", b =>
                 {
                     b.HasOne("DataAccess.Entities.Finance.Wallet", "Wallet")
@@ -532,6 +613,8 @@ namespace DataAccess.Migrations
             modelBuilder.Entity("DataAccess.Entities.Auth.Player", b =>
                 {
                     b.Navigation("LotteryTickets");
+
+                    b.Navigation("PlayerWhoApplied");
 
                     b.Navigation("Wallet");
                 });

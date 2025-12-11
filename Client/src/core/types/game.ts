@@ -38,11 +38,10 @@ export interface GameInstanceDto {
     template?: GameTemplateDto;
     status: "Active" | "Completed" | "Pending Draw" | 0 | 1 | 2;
     isAutoRepeatable: boolean;
-    expirationDate?: string;
-    expirationDayOfWeek?: number; // 0 (Sunday) to 6 (Saturday) for weekly repeats
-    expirationTimeOfDay?: string; // "HH:MM" format for daily repeats
-    week: number;
     drawDate?: Date;
+    drawDayOfWeek?: number; // 0 (Sunday) to 6 (Saturday) for weekly repeats
+    drawTimeOfDay?: string; // "HH:MM" format for daily repeats
+    week: number;
     isDrawn: boolean;
     participants: number;
     isExpired: boolean;

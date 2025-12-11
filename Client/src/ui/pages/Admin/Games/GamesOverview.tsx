@@ -11,8 +11,12 @@ export const GamesOverview: React.FC = () => {
     const [, fetchGameTemplates] = useAtom(fetchGameTemplatesAtom);
 
     useEffect(() => {
-        fetchActiveGames();
-        fetchGameTemplates();
+        if(activeGames.length === 0) {
+            fetchActiveGames();
+        }
+        if(templates.length === 0) {
+            fetchGameTemplates();
+        }
     }, []);
 
     const stats = {
@@ -52,7 +56,7 @@ export const GamesOverview: React.FC = () => {
     };
 
     return (
-        <div className="container mx-auto px-4 py-6 my-7">
+        <div className="container mx-auto">
             <div className="space-y-8">
             {/* Header */}
             <div className="flex items-center gap-4 pb-4 border-b-2 border-primary">
@@ -60,8 +64,8 @@ export const GamesOverview: React.FC = () => {
                     <h1 className="text-4xl font-bold text-primary">Games Overview</h1>
                     <p className="text-base text-base-content/70 mt-1">Manage and monitor all lottery games</p>
                 </div>
-                <NavLink to="/admin/games/templates/create" className="btn btn-primary">
-                    + New Game
+                <NavLink to="/admin/games/start" className="btn bg-amber-900 hover:bg-amber-800 text-white border-0">
+                    + Start New Game
                 </NavLink>
             </div>
 
@@ -187,13 +191,13 @@ export const GamesOverview: React.FC = () => {
                         <h2 className="card-title mb-4">Quick Actions</h2>
                         <div className="space-y-3">
                             <NavLink 
-                                to="/admin/games/templates/create" 
-                                className="btn btn-block btn-primary justify-start text-base"
+                                to="/admin/games/start" 
+                                className="btn btn-block bg-amber-900 hover:bg-amber-800 text-white border-0 justify-start text-base"
                             >
                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
                                 </svg>
-                                Create New Game
+                                Start New Game
                             </NavLink>
                             
                             <NavLink 

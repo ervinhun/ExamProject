@@ -35,7 +35,7 @@ export default function AllPlayers() {
     }
 
     return (
-        <div className="container mx-auto px-4 py-6 my-7">
+        <div className="container mx-auto">
             <div className="space-y-8">
                 {/* Header */}
                 <div className="flex items-center gap-4 pb-4 border-b-2 border-primary">

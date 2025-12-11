@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace DataAccess.Migrations
 {
     /// <inheritdoc />
-    public partial class INIT : Migration
+    public partial class Init : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -16,8 +16,8 @@ namespace DataAccess.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    Name = table.Column<string>(type: "text", nullable: false),
-                    Description = table.Column<string>(type: "text", nullable: false),
+                    Name = table.Column<string>(type: "text", nullable: true),
+                    Description = table.Column<string>(type: "text", nullable: true),
                     GameType = table.Column<int>(type: "integer", nullable: false),
                     PoolOfNumbers = table.Column<int>(type: "integer", nullable: false),
                     MaxWinningNumbers = table.Column<int>(type: "integer", nullable: false),
@@ -58,9 +58,13 @@ namespace DataAccess.Migrations
                     PasswordSalt = table.Column<byte[]>(type: "bytea", nullable: false),
                     RefreshTokenHash = table.Column<string>(type: "character varying(512)", maxLength: 512, nullable: false),
                     RefreshTokenExpires = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    Activated = table.Column<bool>(type: "boolean", nullable: false),
+                    ExpireDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false)
+                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false),
+                    ResetPasswordToken = table.Column<string>(type: "character varying(512)", maxLength: 512, nullable: true),
+                    ResetPasswordTokenExpiry = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -73,11 +77,10 @@ namespace DataAccess.Migrations
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     GameTemplateId = table.Column<Guid>(type: "uuid", nullable: false),
-                    ExpirationDayOfWeek = table.Column<int>(type: "integer", nullable: true),
-                    ExpirationTimeOfDay = table.Column<TimeOnly>(type: "time without time zone", nullable: true),
-                    ExpirationDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    DrawDayOfWeek = table.Column<int>(type: "integer", nullable: true),
+                    DrawTimeOfDay = table.Column<TimeOnly>(type: "time without time zone", nullable: true),
+                    DrawDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     IsAutoRepeatable = table.Column<bool>(type: "boolean", nullable: false),
-                    DrawDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     Status = table.Column<int>(type: "integer", nullable: false),
                     CreatedById = table.Column<Guid>(type: "uuid", nullable: false),
                     Week = table.Column<int>(type: "integer", nullable: false),
@@ -118,8 +121,7 @@ namespace DataAccess.Migrations
                 name: "Players",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    Activated = table.Column<bool>(type: "boolean", nullable: false)
+                    Id = table.Column<Guid>(type: "uuid", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -176,12 +178,65 @@ namespace DataAccess.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "LotteryTickets",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    GameInstanceId = table.Column<Guid>(type: "uuid", nullable: false),
+                    PlayerId = table.Column<Guid>(type: "uuid", nullable: false),
+                    FullPrice = table.Column<double>(type: "double precision", nullable: false),
+                    IsWinning = table.Column<bool>(type: "boolean", nullable: false),
+                    IsPaid = table.Column<bool>(type: "boolean", nullable: false),
+                    BoughtAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_LotteryTickets", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_LotteryTickets_GameInstances_GameInstanceId",
+                        column: x => x.GameInstanceId,
+                        principalTable: "GameInstances",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_LotteryTickets_Players_PlayerId",
+                        column: x => x.PlayerId,
+                        principalTable: "Players",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "UserConfirmations",
+                columns: table => new
+                {
+                    PlayerId = table.Column<Guid>(type: "uuid", nullable: false),
+                    ConfirmationToken = table.Column<string>(type: "character varying(512)", maxLength: 512, nullable: true),
+                    isActive = table.Column<bool>(type: "boolean", nullable: false),
+                    Result = table.Column<string>(type: "text", nullable: false),
+                    Role = table.Column<string>(type: "text", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_UserConfirmations", x => x.PlayerId);
+                    table.ForeignKey(
+                        name: "FK_UserConfirmations_Players_PlayerId",
+                        column: x => x.PlayerId,
+                        principalTable: "Players",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Wallets",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     PlayerId = table.Column<Guid>(type: "uuid", nullable: false),
-                    Balance = table.Column<double>(type: "double precision", nullable: false)
+                    AccountNumber = table.Column<string>(type: "text", nullable: true),
+                    Balance = table.Column<double>(type: "double precision", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -195,16 +250,56 @@ namespace DataAccess.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "WhoApplied",
+                columns: table => new
+                {
+                    id = table.Column<Guid>(type: "uuid", nullable: false),
+                    playerId = table.Column<Guid>(type: "uuid", nullable: false),
+                    status = table.Column<string>(type: "text", nullable: false),
+                    createdAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    updatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    reviewedBy = table.Column<Guid>(type: "uuid", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_WhoApplied", x => x.id);
+                    table.ForeignKey(
+                        name: "FK_WhoApplied_Players_playerId",
+                        column: x => x.playerId,
+                        principalTable: "Players",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "PickedNumbers",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    TicketId = table.Column<Guid>(type: "uuid", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_PickedNumbers", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_PickedNumbers_LotteryTickets_TicketId",
+                        column: x => x.TicketId,
+                        principalTable: "LotteryTickets",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Transactions",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    PlayerId = table.Column<Guid>(type: "uuid", nullable: false),
-                    UserId = table.Column<Guid>(type: "uuid", nullable: true),
+                    UserId = table.Column<Guid>(type: "uuid", nullable: false),
                     WalletId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Name = table.Column<string>(type: "text", nullable: true),
+                    MobilePayTransactionNumber = table.Column<string>(type: "text", nullable: true),
                     Status = table.Column<int>(type: "integer", nullable: false),
                     Type = table.Column<int>(type: "integer", nullable: false),
-                    ActionUser = table.Column<Guid>(type: "uuid", nullable: false),
                     Amount = table.Column<double>(type: "double precision", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
@@ -212,17 +307,6 @@ namespace DataAccess.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Transactions", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_Transactions_Players_PlayerId",
-                        column: x => x.PlayerId,
-                        principalTable: "Players",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_Transactions_Users_UserId",
-                        column: x => x.UserId,
-                        principalTable: "Users",
-                        principalColumn: "Id");
                     table.ForeignKey(
                         name: "FK_Transactions_Wallets_WalletId",
                         column: x => x.WalletId,
@@ -236,7 +320,10 @@ namespace DataAccess.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    TransactionId = table.Column<Guid>(type: "uuid", nullable: false)
+                    TransactionId = table.Column<Guid>(type: "uuid", nullable: false),
+                    ActionUser = table.Column<Guid>(type: "uuid", nullable: false),
+                    Status = table.Column<int>(type: "integer", nullable: false),
+                    Type = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -257,6 +344,21 @@ namespace DataAccess.Migrations
                 filter: "\"Status\" = 0");
 
             migrationBuilder.CreateIndex(
+                name: "IX_LotteryTickets_GameInstanceId",
+                table: "LotteryTickets",
+                column: "GameInstanceId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_LotteryTickets_PlayerId",
+                table: "LotteryTickets",
+                column: "PlayerId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_PickedNumbers_TicketId",
+                table: "PickedNumbers",
+                column: "TicketId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_RoleUser_UsersId",
                 table: "RoleUser",
                 column: "UsersId");
@@ -265,16 +367,6 @@ namespace DataAccess.Migrations
                 name: "IX_TransactionHistories_TransactionId",
                 table: "TransactionHistories",
                 column: "TransactionId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Transactions_ActionUser",
-                table: "Transactions",
-                column: "ActionUser");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Transactions_PlayerId",
-                table: "Transactions",
-                column: "PlayerId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Transactions_UserId",
@@ -299,6 +391,12 @@ namespace DataAccess.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "IX_WhoApplied_playerId",
+                table: "WhoApplied",
+                column: "playerId",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_WinningNumbers_GameInstanceId",
                 table: "WinningNumbers",
                 column: "GameInstanceId");
@@ -311,13 +409,25 @@ namespace DataAccess.Migrations
                 name: "Admins");
 
             migrationBuilder.DropTable(
+                name: "PickedNumbers");
+
+            migrationBuilder.DropTable(
                 name: "RoleUser");
 
             migrationBuilder.DropTable(
                 name: "TransactionHistories");
 
             migrationBuilder.DropTable(
+                name: "UserConfirmations");
+
+            migrationBuilder.DropTable(
+                name: "WhoApplied");
+
+            migrationBuilder.DropTable(
                 name: "WinningNumbers");
+
+            migrationBuilder.DropTable(
+                name: "LotteryTickets");
 
             migrationBuilder.DropTable(
                 name: "Roles");

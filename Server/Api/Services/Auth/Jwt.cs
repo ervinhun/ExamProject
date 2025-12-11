@@ -92,6 +92,7 @@ public class Jwt(JwtSettings jwtSettings, MyDbContext ctx): IJwt
             new Claim(ClaimTypes.Name, user.FirstName),
             new Claim(ClaimTypes.Surname, user.LastName),
             new Claim(ClaimTypes.DateOfBirth, DateTimeHelper.ToCopenhagen(user.DateOfBirth).ToString(CultureInfo.CurrentCulture)),
+            new Claim(ClaimTypes.Expired, (!user.Activated).ToString(CultureInfo.CurrentCulture)),
         };
 
         foreach (var role in user.Roles)

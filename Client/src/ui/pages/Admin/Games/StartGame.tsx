@@ -1,18 +1,17 @@
 import { useEffect, useState } from "react";
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import type { GameInstanceDto } from "@core/types/game";
-import { useAtom } from "jotai";
+import { useAtom, useSetAtom } from "jotai";
 import { activeGamesAtom, gameTemplatesAtom, fetchActiveGamesAtom, fetchGameTemplatesAtom, startGameInstanceAtom } from "@core/atoms/game";
 import { authAtom } from "@core/atoms/auth";
+import { addNotificationAtom } from "@core/atoms/error";
 
 export const StartGame: React.FC = () => {
     const [selectedTemplate, setSelectedTemplate] = useState<string>("");
     const [isAutoRepeatable, setIsAutoRepeatable] = useState(false);
     const [drawDate, setDrawDate] = useState("");
-    const [drawTime, setDrawTime] = useState("");
-    const [expirationDate, setExpirationDate] = useState("");
-    const [expirationDayOfWeek, setExpirationDayOfWeek] = useState<number>(6); // Saturday by default
-    const [expirationTimeOfDay, setExpirationTimeOfDay] = useState("17:00");
+    const [drawDayOfWeek, setDrawDayOfWeek] = useState<number>(6); // Saturday by default
+    const [drawTimeOfDay, setDrawTimeOfDay] = useState("17:00");
 
     const [auth,] = useAtom(authAtom);
     const [,startGameInstance] = useAtom(startGameInstanceAtom);
@@ -20,6 +19,10 @@ export const StartGame: React.FC = () => {
     const [,fetchGameTemplates] = useAtom(fetchGameTemplatesAtom);
     const [templates,] = useAtom(gameTemplatesAtom);
     const [activeGames,] = useAtom(activeGamesAtom);
+    const addNotification = useSetAtom(addNotificationAtom);
+
+    const navigate = useNavigate();
+
 
     useEffect(() => {
         fetchGameTemplates();
@@ -42,26 +45,48 @@ export const StartGame: React.FC = () => {
         const gameInstance = {
             createdById: auth?.id || "",
             templateId: selectedTemplate,
-            drawDate: new Date(`${drawDate}T${drawTime}`),
             isAutoRepeatable: isAutoRepeatable,
-            expirationDateTime: isAutoRepeatable
+            drawDateTime: isAutoRepeatable
                 ? null
-                : new Date(`${expirationDate}T${drawTime}`),
-            expirationDayOfWeek: isAutoRepeatable ? expirationDayOfWeek : null,
-            expirationTimeOfDay: isAutoRepeatable ? expirationTimeOfDay : null,
+                : new Date(`${drawDate}T${drawTimeOfDay}`),
+            drawDayOfWeek: isAutoRepeatable ? drawDayOfWeek : null,
+            drawTimeOfDay: isAutoRepeatable ? drawTimeOfDay : null,
         };
         
-        await startGameInstance(gameInstance as Partial<GameInstanceDto>).finally(() => {
+        await startGameInstance(gameInstance as Partial<GameInstanceDto>).then(() => {
+            // Reset form
+            setSelectedTemplate("");
+            setIsAutoRepeatable(false);
+            setDrawDate("");
+            setDrawTimeOfDay("");
+            setDrawDate("");
+            setDrawDayOfWeek(6);
+            setDrawTimeOfDay("17:00");
+
+            addNotification({
+                message: "Game instance started successfully",
+                type: "success"
+            });
+            // Refresh active games list
+            navigate('/admin/games/overview');
             fetchActiveGames();
+        }).catch((error) => {
+            console.error('Error starting game instance:', error);
+            
+            // Extract error message from various possible error formats
+            let errorMessage = 'Unknown error occurred';
+            
+            if (error?.message) {
+                // Standard Error object
+                errorMessage = error.message;
+            } 
+            
+            addNotification({
+                message: `Failed to start game instance: ${errorMessage}`,
+                type: 'error'
+            });
         });
-        // Reset form
-        setSelectedTemplate("");
-        setIsAutoRepeatable(false);
-        setDrawDate("");
-        setDrawTime("");
-        setExpirationDate("");
-        setExpirationDayOfWeek(6);
-        setExpirationTimeOfDay("17:00");
+
     };
 
     // const formatDate = (dateStr: string) => {
@@ -86,7 +111,7 @@ export const StartGame: React.FC = () => {
     // };
 
     const getGameTypeColor = (type: string) => {
-        return type === "Lotto" ? "badge-primary" : "badge-secondary";
+        return type === "Lotto" ? "badge-custom-pink" : "badge-custom-light-blue";
     };
 
     // Filter templates that don't have active games
@@ -95,7 +120,7 @@ export const StartGame: React.FC = () => {
     );
     
     return (
-        <div className="container mx-auto px-4 py-6 my-7">
+        <div className="container mx-auto ">
             <div className="space-y-8">
                 {/* Header */}
                 <div className="flex items-center gap-4 pb-4 border-b-2 border-primary">
@@ -111,7 +136,12 @@ export const StartGame: React.FC = () => {
                 {/* Available Templates */}
                 <div className="card bg-base-200 shadow-lg">
                     <div className="card-body">
-                        <h2 className="card-title text-2xl mb-4">Game Templates</h2>
+                        <div className="flex justify-between items-center mb-4">
+                            <h2 className="card-title text-2xl">Game Templates</h2>
+                            <NavLink to="/admin/games/templates/create" className="btn btn-primary btn-sm">
+                                + Create New Template
+                            </NavLink>
+                        </div>
                         
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                             {templates.map((template) => {
@@ -180,7 +210,7 @@ export const StartGame: React.FC = () => {
                 </div>
 
                 {/* Start New Game Form */}
-                <div className="card bg-base-200 shadow-lg">
+                <div className="card bg-base-200 shadow-lg max-w-4xl mx-auto">
                     <div className="card-body">
                         <h2 className="card-title text-2xl mb-4">Start New Game Instance</h2>
                         
@@ -213,40 +243,7 @@ export const StartGame: React.FC = () => {
                                 )}
                             </div>
 
-                            {/* Draw Date & Time */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                {/* Draw Date */}
-                                <div className="form-control">
-                                    <label className="label">
-                                        <span className="label-text font-medium">Draw Date</span>
-                                        <span className="label-text-alt text-error">*</span>
-                                    </label>
-                                    <input 
-                                        type="date"
-                                        className="input input-bordered w-full"
-                                        value={drawDate}
-                                        onChange={(e) => setDrawDate(e.target.value)}
-                                        required
-                                    />
-                                </div>
-
-                                {/* Draw Time */}
-                                <div className="form-control">
-                                    <label className="label">
-                                        <span className="label-text font-medium">Draw Time</span>
-                                        <span className="label-text-alt text-error">*</span>
-                                    </label>
-                                    <input 
-                                        type="time"
-                                        className="input input-bordered w-full"
-                                        value={drawTime}
-                                        onChange={(e) => setDrawTime(e.target.value)}
-                                        step="60"
-                                        required
-                                    />
-                                </div>
-                            </div>
-
+                            
                             {/* Auto Repeatable */}
                             <div className="form-control">
                                 <label className="label cursor-pointer justify-start gap-4">
@@ -270,14 +267,14 @@ export const StartGame: React.FC = () => {
                                 // Show only expiration date when NOT auto-repeatable
                                 <div className="form-control">
                                     <label className="label">
-                                        <span className="label-text font-medium">Expiration Date</span>
+                                        <span className="label-text font-medium">Draw Date</span>
                                         <span className="label-text-alt text-error">*</span>
                                     </label>
                                     <input 
                                         type="date"
                                         className="input input-bordered w-full"
-                                        value={expirationDate}
-                                        onChange={(e) => setExpirationDate(e.target.value)}
+                                        value={drawDate}
+                                        onChange={(e) => setDrawDate(e.target.value)}
                                         required
                                     />
                                 </div>
@@ -286,13 +283,13 @@ export const StartGame: React.FC = () => {
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div className="form-control">
                                         <label className="label">
-                                            <span className="label-text font-medium">Expiration Day of Week</span>
+                                            <span className="label-text font-medium">Draw Day of Week</span>
                                             <span className="label-text-alt text-error">*</span>
                                         </label>
                                         <select 
                                             className="select select-bordered w-full"
-                                            value={expirationDayOfWeek}
-                                            onChange={(e) => setExpirationDayOfWeek(Number(e.target.value))}
+                                            value={drawDayOfWeek}
+                                            onChange={(e) => setDrawDayOfWeek(Number(e.target.value))}
                                             required
                                         >
                                             <option value={0}>Sunday</option>
@@ -307,17 +304,21 @@ export const StartGame: React.FC = () => {
 
                                     <div className="form-control">
                                         <label className="label">
-                                            <span className="label-text font-medium">Expiration Time of Day</span>
+                                            <span className="label-text font-medium">Draw Time of Day</span>
                                             <span className="label-text-alt text-error">*</span>
                                         </label>
                                         <input 
                                             type="time"
-                                            className="input input-bordered w-full"
-                                            value={expirationTimeOfDay}
-                                            onChange={(e) => setExpirationTimeOfDay(e.target.value)}
-                                            step="60"
+                                            className="time input input-bordered w-full"
+                                            value={drawTimeOfDay}
+                                            onChange={(e) => setDrawTimeOfDay(e.target.value)}
+                                            step="3600"
+                                            placeholder="17:00"
                                             required
                                         />
+                                        <label className="label">
+                                            <span className="label-text-alt">Use 24-hour format (e.g., 17:00 for 5 PM)</span>
+                                        </label>
                                     </div>
                                 </div>
                             )}
@@ -328,18 +329,24 @@ export const StartGame: React.FC = () => {
                                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-current shrink-0 w-6 h-6">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                     </svg>
-                                    <div className="text-sm">
+                                    <div className="flex-1">
                                         {(() => {
                                             const template = templates.find(t => t.id === selectedTemplate);
                                             return template ? (
-                                                <div>
-                                                    <p className="font-semibold">{template.name}</p>
-                                                    <p>{template.description}</p>
-                                                    <p className="mt-1">
-                                                        Numbers: 1-{template.poolOfNumbers} | 
-                                                        Winning: {template.maxWinningNumbers} | 
-                                                        Price: {template.basePrice} DKK
-                                                    </p>
+                                                <div className="space-y-2">
+                                                    <p className="font-bold text-lg">{template.name}</p>
+                                                    <p className="text-base">{template.description}</p>
+                                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mt-2">
+                                                        <div>
+                                                            <span className="font-semibold">Number Pool:</span> 1-{template.poolOfNumbers}
+                                                        </div>
+                                                        <div>
+                                                            <span className="font-semibold">Winning Numbers:</span> {template.maxWinningNumbers}
+                                                        </div>
+                                                        <div>
+                                                            <span className="font-semibold">Ticket Price:</span> {template.basePrice} DKK
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             ) : null;
                                         })()}
