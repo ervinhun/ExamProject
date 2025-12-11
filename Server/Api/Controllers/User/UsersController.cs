@@ -1,10 +1,7 @@
 using System.Security.Claims;
 using Api.Dto.User;
-using api.Services;
-using api.Services.Auth;
 using Api.Services.Management;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc;
 using Utils.Exceptions;
 
@@ -84,18 +81,13 @@ public class UsersController(IUserManagementService userManagementService) : Con
     {
         var adminId = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
         if (adminId == null) return BadRequest("Admin id not found");
-        if (!User.Identity!.IsAuthenticated ||
-            (!User.IsInRole("admin") && !User.IsInRole("superadmin")))
-        {
-            return Unauthorized(new { message = "User is not authorized" });
-        }
 
         var success = await userManagementService.ConfirmMembership(userId, isApproved, isActive, new Guid(adminId));
 
         if (!success)
-            return BadRequest("Failed to approve user");
+            return BadRequest(new {error = "Failed to approve user"});
 
-        return Ok(new { success = true});
+        return Ok(new { success = true });
     }
 
 

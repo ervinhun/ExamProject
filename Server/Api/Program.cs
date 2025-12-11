@@ -17,7 +17,6 @@ using Api.Services.Game;
 using Api.Services.Management;
 using DotNetEnv;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Npgsql;
 
 namespace Api;
 
@@ -38,7 +37,7 @@ public static class Program
                 Console.WriteLine("Warning: .env file not found. Using system environment variables.");
             }
         }
-        
+
         // Validate required environment variables
         EnvironmentHelper.ValidateRequired(
             "CONNECTION_STRING",
@@ -52,7 +51,7 @@ public static class Program
             "CLIENT_HOST"
         );
     }
-    
+
     private static AppSettings BuildAppSettings()
     {
         return new AppSettings
@@ -89,7 +88,7 @@ public static class Program
             }
         };
     }
-    
+
     private static void ConfigureServices(IServiceCollection services, AppSettings appSettings)
     {
         // Register AppSettings for dependency injection
@@ -98,13 +97,10 @@ public static class Program
         services.AddSingleton(appSettings.Jwt);
         services.AddSingleton(appSettings.Email);
         services.AddSingleton(appSettings.Cors);
-        
+
         // Add DbContext
-        services.AddDbContext<MyDbContext>(options =>
-        {
-            options.UseNpgsql(appSettings.Database.ConnectionString);
-        });
-        
+        services.AddDbContext<MyDbContext>(options => { options.UseNpgsql(appSettings.Database.ConnectionString); });
+
         // Add scoped services
         services.AddScoped<IJwt, Jwt>();
         services.AddScoped<IMyAuthenticationService, MyAuthenticationService>();
@@ -112,7 +108,8 @@ public static class Program
         services.AddScoped<IGameManagementService, GameManagementService>();
         services.AddScoped<IWalletTransactionsService, WalletTransactionsService>();
         services.AddScoped<IEmailService, EmailService>();
-        
+        services.AddScoped<ITicketService, TicketService>();
+
         // Configure JWT Authentication
         services
             .AddAuthentication("Bearer")
@@ -128,8 +125,8 @@ public static class Program
                     ValidAudience = appSettings.Jwt.Audience,
                     IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(appSettings.Jwt.Secret))
                 };
-                
-                // Read JWT from cookie or Authorization header
+
+                // Read JWT from cookies, or Authorization header
                 options.Events = new JwtBearerEvents
                 {
                     OnMessageReceived = context =>
@@ -138,13 +135,13 @@ public static class Program
                         if (token != null)
                         {
                             context.Token = token;
-                        } 
-                        
+                        }
+
                         return Task.CompletedTask;
                     }
                 };
             });
-        
+
         // Configure CORS
         services.AddCors(options =>
         {
@@ -157,10 +154,10 @@ public static class Program
                     .AllowCredentials();
             });
         });
-        
+
         // Add controllers to the api
         services.AddControllers();
-                
+
         services.AddControllers()
             .AddJsonOptions(configure: options =>
             {
@@ -168,8 +165,8 @@ public static class Program
             });
 
         services.AddAuthorization();
-        
-        
+
+
         // Add Swagger in Development
         if (EnvironmentHelper.IsDevelopment())
         {
@@ -187,15 +184,14 @@ public static class Program
                 configure.OperationProcessors.Add(item: new AspNetCoreOperationSecurityScopeProcessor(name: "JWT"));
             });
         }
-
     }
-    
+
     private static async Task EnsureRolesAreCreatedAsync(IServiceProvider serviceProvider)
     {
-        using var  scope = serviceProvider.CreateScope();
+        using var scope = serviceProvider.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<MyDbContext>();
 
-        
+
         var existingRoleNames = await dbContext.Roles
             .Select(r => r.Name)
             .ToListAsync();
@@ -213,20 +209,21 @@ public static class Program
 
         await dbContext.SaveChangesAsync();
     }
-    
-    private static async Task EnsureSuperAdminIsCreatedAsync(IServiceProvider serviceProvider, SuperSettings superSettings)
+
+    private static async Task EnsureSuperAdminIsCreatedAsync(IServiceProvider serviceProvider,
+        SuperSettings superSettings)
     {
         using var scope = serviceProvider.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<MyDbContext>();
 
         var user = await dbContext.Users.AnyAsync(x => x.Email == superSettings.Email);
         var superAdminRole = await dbContext.Roles.FirstOrDefaultAsync(r => r.Name == UserRole.SuperAdmin);
-        
+
         if (superAdminRole == null)
         {
             throw new Exception("SuperAdmin role not found in database");
         }
-        
+
         if (!user)
         {
             HashUtils.CreatePasswordHash(superSettings.Password, out var passwordHash, out var passwordSalt);
@@ -238,13 +235,13 @@ public static class Program
                 PasswordSalt = passwordSalt,
                 Activated = true
             };
-            
+
             superAdmin.Roles.Add(superAdminRole);
             superAdminRole.Users.Add(superAdmin);
 
             dbContext.Users.Add(superAdmin);
             await dbContext.SaveChangesAsync();
-            
+
             Console.WriteLine($"SuperAdmin created: {superSettings.Email}");
         }
     }
@@ -255,26 +252,35 @@ public static class Program
         {
             // Load and validate environment variables
             LoadEnvironmentVariables();
-            
-            // Build configuration from environment
+
+            // Build configuration from environments
             var appSettings = BuildAppSettings();
-            
+
             var builder = WebApplication.CreateBuilder(args);
-            
+
+            // Add logging
+            builder.Services.AddLogging(logging =>
+            {
+                logging.ClearProviders();
+                logging.AddConsole();
+                logging.SetMinimumLevel(LogLevel.Error);
+                logging.AddProvider(new FileLoggerProvider("logs/app.log"));
+            });
+
             // Configure services with validated settings
             ConfigureServices(builder.Services, appSettings);
-            
+
             // Add controllers
             builder.Services.AddControllers()
                 .AddJsonOptions(options =>
                 {
                     options.JsonSerializerOptions.Converters.Add(new DateTimeConverterCopenhagen());
                 });
-            
+
             builder.Services.AddAuthorization();
 
             var app = builder.Build();
-            
+
             // Development-only middleware
             if (app.Environment.IsDevelopment())
             {
@@ -286,13 +292,13 @@ public static class Program
             {
                 Console.WriteLine("✓ Running in Production mode");
             }
-            
+
             // Configure middleware pipeline
             app.UseCors("AllowFrontend");
             app.UseAuthentication();
             app.UseAuthorization();
             app.MapControllers();
-            
+
             // Apply pending migrations automatically
             /*using (var scope = app.Services.CreateScope())
             {
@@ -310,16 +316,16 @@ public static class Program
                     Console.WriteLine("[DB] ✓ Database schema is up to date");
                 }
             }*/
-            
+
             // Initialize database
             await EnsureRolesAreCreatedAsync(app.Services);
             await EnsureSuperAdminIsCreatedAsync(app.Services, appSettings.Super);
-            
+
             Console.WriteLine($"  Application started successfully");
             Console.WriteLine($"  Environment: {EnvironmentHelper.GetEnvironment()}");
             Console.WriteLine($"  Database: {appSettings.Database.ConnectionString.Split(';')[0]}");
             Console.WriteLine($"  CORS Origins: {string.Join(", ", appSettings.Cors.AllowedOrigins)}");
-            
+
             await app.RunAsync();
         }
         catch (Exception ex)

@@ -4,5 +4,6 @@ public class PickedNumber
 {
     public Guid Id { get; set; }
     public Guid TicketId { get; set; }
+    public int Number { get; set; }
     public LotteryTicket? Ticket { get; set; }
 }

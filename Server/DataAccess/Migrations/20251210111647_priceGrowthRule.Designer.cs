@@ -3,6 +3,7 @@ using System;
 using DataAccess;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace DataAccess.Migrations
 {
     [DbContext(typeof(MyDbContext))]
-    partial class MyDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251210111647_priceGrowthRule")]
+    partial class priceGrowthRule
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -179,9 +182,6 @@ namespace DataAccess.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("MobilePayTransactionNumber")
-                        .HasColumnType("text");
-
                     b.Property<string>("Name")
                         .HasColumnType("text");
 
@@ -275,13 +275,16 @@ namespace DataAccess.Migrations
                     b.Property<Guid>("CreatedById")
                         .HasColumnType("uuid");
 
-                    b.Property<DateTime?>("DrawDate")
+                    b.Property<DateTime>("DrawDate")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<int?>("DrawDayOfWeek")
+                    b.Property<DateTime?>("ExpirationDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("ExpirationDayOfWeek")
                         .HasColumnType("integer");
 
-                    b.Property<TimeOnly?>("DrawTimeOfDay")
+                    b.Property<TimeOnly?>("ExpirationTimeOfDay")
                         .HasColumnType("time without time zone");
 
                     b.Property<Guid>("GameTemplateId")
@@ -374,9 +377,6 @@ namespace DataAccess.Migrations
                     b.Property<Guid>("GameInstanceId")
                         .HasColumnType("uuid");
 
-                    b.Property<Guid>("GameTemplateId")
-                        .HasColumnType("uuid");
-
                     b.Property<bool>("IsPaid")
                         .HasColumnType("boolean");
 
@@ -385,9 +385,6 @@ namespace DataAccess.Migrations
 
                     b.Property<Guid>("PlayerId")
                         .HasColumnType("uuid");
-
-                    b.Property<int?>("Repeatings")
-                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -403,9 +400,6 @@ namespace DataAccess.Migrations
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
-
-                    b.Property<int>("Number")
-                        .HasColumnType("integer");
 
                     b.Property<Guid>("TicketId")
                         .HasColumnType("uuid");

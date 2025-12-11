@@ -382,10 +382,4 @@ public class UserManagementService(MyDbContext ctx, IEmailService emailService) 
 
         return new string(result);
     }
-
-    private User CheckWhoIsLoggedInFromToken(string token) // TODO: Check on the controller instead like in transaction
-    {
-        return ctx.Users.Include(u => u.Roles).SingleOrDefault(u => u.RefreshTokenHash == token)
-               ?? throw new UnauthorizedAccessException();
-    }
 }
