@@ -297,10 +297,7 @@ namespace DataAccess.Migrations
                     UserId = table.Column<Guid>(type: "uuid", nullable: false),
                     WalletId = table.Column<Guid>(type: "uuid", nullable: false),
                     Name = table.Column<string>(type: "text", nullable: true),
-<<<<<<<< HEAD:Server/DataAccess/Migrations/20251204190333_Init.cs
                     MobilePayTransactionNumber = table.Column<string>(type: "text", nullable: true),
-========
->>>>>>>> 332e0e8f95d2228192f3dbbd3eb3f2ba67a50d0a:Server/DataAccess/Migrations/20251205110115_init.cs
                     Status = table.Column<int>(type: "integer", nullable: false),
                     Type = table.Column<int>(type: "integer", nullable: false),
                     Amount = table.Column<double>(type: "double precision", nullable: false),

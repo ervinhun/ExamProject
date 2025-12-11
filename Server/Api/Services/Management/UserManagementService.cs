@@ -90,6 +90,14 @@ public class UserManagementService(MyDbContext ctx, IEmailService emailService) 
         var role = ctx.Roles.SingleOrDefaultAsync(r => r.Name == UserRole.Player).Result ?? throw new Exception("Player role not found");
         player.Roles.Add(role);
 
+        var wallet = new Wallet
+        {
+            Player = player,
+            Balance = 0,
+            CreatedAt = DateTime.UtcNow,
+        };
+        player.Wallet = wallet;
+        
         try
         {
             await ctx.Players.AddAsync(player);

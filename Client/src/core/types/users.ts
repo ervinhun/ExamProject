@@ -35,6 +35,7 @@ export const PlayerSchema = z.object({
     id: z.uuid().optional(),
     firstName: z.string(),
     lastName: z.string(),
+    birthDate: z.date(),
     email: z.email(),
     dob: z.string().transform(val => new Date(val)).optional(),
     isActive: z.boolean().default(true).optional(),
