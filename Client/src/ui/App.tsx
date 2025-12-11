@@ -21,14 +21,14 @@ import Settings from "./pages/Admin/Settings.tsx";
 import RequirePlayer from "./pages/structure/Auth/RequiredPlayer.tsx";
 import RequireAdmin from "./pages/structure/Auth/RequiredAdmin.tsx";
 import Forbidden403 from "./pages/Errors/Forbidden403.tsx";
-import { CreateGameTemplate } from './pages/Admin/Games/CreateGameTemplate.tsx';
-import { GamesOverview } from './pages/Admin/Games/GamesOverview.tsx';
-import { StartGame } from './pages/Admin/Games/StartGame.tsx';
+import {CreateGameTemplate} from './pages/Admin/Games/CreateGameTemplate.tsx';
+import {GamesOverview} from './pages/Admin/Games/GamesOverview.tsx';
+import {StartGame} from './pages/Admin/Games/StartGame.tsx';
 import ErrorPopUp from './pages/Errors/ErrorPopUp.tsx';
 import Applications from "@ui/pages/Admin/Players/Applications.tsx";
 import MyTickets from "@ui/pages/Player/MyTickets.tsx";
-import GamesDashboard from './pages/Games/GamesDashboard.tsx';
-import LottoGame from './pages/Games/LottoGame.tsx';
+import Play from "@ui/pages/Games/Play.tsx";
+import GamesDashboard from "@ui/pages/Games/GamesDashboard.tsx";
 
 const router = createBrowserRouter([
     {
@@ -40,22 +40,25 @@ const router = createBrowserRouter([
             {path: "/register", element: <Register/>},
 
             //Error page
-            { path: "/403", element: <Forbidden403 /> },
+            {path: "/403", element: <Forbidden403/>},
 
             // Player //
             {
                 element: <RequirePlayer/>,
                 children: [
                     {path: "/wallet", element: <Wallet/>},
-                    {path: "/tickets", element: <MyTickets />},
+                    {path: "/tickets", element: <MyTickets/>},
 
                     {path: "/boards", element: <MyBoards/>},
                     {path: "/boards/new", element: <CreateBoard/>},
                     {path: "/boards/repeating", element: <RepeatingBoards/>},
 
                     {path: "/games", element: <GamesDashboard/>},
-                    {path: "/games/play/lotto/:gameId", element: <LottoGame/>},
-                    {path: "/games/wins", element: <WinningBoards/>},
+                    {path: "/games/play/lotto/:gameId", element: <Play/>},
+
+                    {path: "/history/games", element: <GameHistory/>},
+                    {path: "/history/wins", element: <WinningBoards/>},
+
 
                     {path: "/profile", element: <Profile/>}
                 ],
@@ -92,7 +95,7 @@ function App() {
     return (
         <>
             <RouterProvider router={router}/>
-            <ErrorPopUp />
+            <ErrorPopUp/>
         </>
     )
 }

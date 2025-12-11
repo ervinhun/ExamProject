@@ -86,10 +86,10 @@ export default function DockPlayer() {
                     className="dropdown-content menu p-2 shadow bg-base-200 rounded-box w-52"
                 >
                     <li>
-                        <NavLink to="/games">Game History</NavLink>
+                        <NavLink to="/history/games">Game History</NavLink>
                     </li>
                     <li>
-                        <NavLink to="/games/wins">Winning Boards</NavLink>
+                        <NavLink to="/history/wins">Winning Boards</NavLink>
                     </li>
                 </ul>
             </div>
