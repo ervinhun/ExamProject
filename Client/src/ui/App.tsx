@@ -27,6 +27,8 @@ import { StartGame } from './pages/Admin/Games/StartGame.tsx';
 import ErrorPopUp from './pages/Errors/ErrorPopUp.tsx';
 import Applications from "@ui/pages/Admin/Players/Applications.tsx";
 import MyTickets from "@ui/pages/Player/MyTickets.tsx";
+import GamesDashboard from './pages/Games/GamesDashboard.tsx';
+import LottoGame from './pages/Games/LottoGame.tsx';
 
 const router = createBrowserRouter([
     {
@@ -51,7 +53,8 @@ const router = createBrowserRouter([
                     {path: "/boards/new", element: <CreateBoard/>},
                     {path: "/boards/repeating", element: <RepeatingBoards/>},
 
-                    {path: "/games", element: <GameHistory/>},
+                    {path: "/games", element: <GamesDashboard/>},
+                    {path: "/games/play/lotto/:gameId", element: <LottoGame/>},
                     {path: "/games/wins", element: <WinningBoards/>},
 
                     {path: "/profile", element: <Profile/>}
