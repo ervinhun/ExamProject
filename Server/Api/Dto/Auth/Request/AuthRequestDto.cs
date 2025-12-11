@@ -15,6 +15,9 @@ public record RefreshTokenRequestDto
 
 public record RegisterRequestDto
 {
+    public required string FirstName { get; set; } = null;
+    public required string LastName { get; set; } = null;
+    public DateTime Dob { get; set; }
     public required string Email { get; set; }
     public required string Password { get; set; }
 }

@@ -37,10 +37,10 @@ public class AuthenticationController(IMyAuthenticationService authenticationSer
     {
         try
         {
-            if (User.Identity is { IsAuthenticated: true })
+            /*if (User.Identity is { IsAuthenticated: true })
             {
                 throw new Exception("Already logged in");
-            }
+            }*/
 
             var result = await authenticationService.Login(loginRequestDto);
 
@@ -149,7 +149,7 @@ public class AuthenticationController(IMyAuthenticationService authenticationSer
         var baseUrl = $"{Request.Scheme}://{Request.Host}";
         var message = $"To reset the password click on the link: {baseUrl}/reset-password/{newPassToken}";
 
-        emailToUser(email, message);
+        EmailToUser(email, message);
 
         return Ok("Password reset email sent.");
     }
@@ -168,7 +168,20 @@ public class AuthenticationController(IMyAuthenticationService authenticationSer
     }
 
 
-    private static void emailToUser(string email, string message)
+    [HttpPost("player-application-request")]
+    public async Task<IActionResult> PlayerApplicationRequest(
+        [FromBody] RequestRegistrationDto request)
+    {
+        var success = await authenticationService.RequestMembership(request);
+
+        if (!success)
+            return BadRequest("Error during sending the request");
+
+        return Ok(new { success = true});
+    }
+
+
+    private static void EmailToUser(string email, string message)
     {
         // TODO: Implement the feature - https://easv365-team-bokczyi7.atlassian.net/browse/SEM-60
         throw new NotImplementedException();

@@ -3,7 +3,6 @@ using System;
 using DataAccess;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
-using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -12,11 +11,9 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace DataAccess.Migrations
 {
     [DbContext(typeof(MyDbContext))]
-    [Migration("20251202131212_TransactionMod2")]
-    partial class TransactionMod2
+    partial class MyDbContextModelSnapshot : ModelSnapshot
     {
-        /// <inheritdoc />
-        protected override void BuildTargetModel(ModelBuilder modelBuilder)
+        protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -24,6 +21,36 @@ namespace DataAccess.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
+
+            modelBuilder.Entity("DataAccess.Entities.Auth.PlayerWhoApplied", b =>
+                {
+                    b.Property<Guid>("id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("createdAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("playerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("reviewedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("status")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("updatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("id");
+
+                    b.HasIndex("playerId")
+                        .IsUnique();
+
+                    b.ToTable("WhoApplied");
+                });
 
             modelBuilder.Entity("DataAccess.Entities.Auth.Role", b =>
                 {
@@ -45,6 +72,9 @@ namespace DataAccess.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<bool>("Activated")
+                        .HasColumnType("boolean");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -55,6 +85,9 @@ namespace DataAccess.Migrations
                         .IsRequired()
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)");
+
+                    b.Property<DateTime?>("ExpireDate")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("FirstName")
                         .IsRequired()
@@ -90,6 +123,13 @@ namespace DataAccess.Migrations
                         .HasMaxLength(512)
                         .HasColumnType("character varying(512)");
 
+                    b.Property<string>("ResetPasswordToken")
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)");
+
+                    b.Property<DateTime?>("ResetPasswordTokenExpiry")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -103,6 +143,30 @@ namespace DataAccess.Migrations
                     b.UseTptMappingStrategy();
                 });
 
+            modelBuilder.Entity("DataAccess.Entities.Auth.UserConfirmationEntity", b =>
+                {
+                    b.Property<Guid>("PlayerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ConfirmationToken")
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)");
+
+                    b.Property<string>("Result")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Role")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("isActive")
+                        .HasColumnType("boolean");
+
+                    b.HasKey("PlayerId");
+
+                    b.ToTable("UserConfirmations", (string)null);
+                });
+
             modelBuilder.Entity("DataAccess.Entities.Finance.Transaction", b =>
                 {
                     b.Property<Guid>("Id")
@@ -114,6 +178,9 @@ namespace DataAccess.Migrations
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Name")
+                        .HasColumnType("text");
 
                     b.Property<int>("Status")
                         .HasColumnType("integer");
@@ -382,10 +449,27 @@ namespace DataAccess.Migrations
                 {
                     b.HasBaseType("DataAccess.Entities.Auth.User");
 
-                    b.Property<bool>("Activated")
-                        .HasColumnType("boolean");
-
                     b.ToTable("Players", (string)null);
+                });
+
+            modelBuilder.Entity("DataAccess.Entities.Auth.PlayerWhoApplied", b =>
+                {
+                    b.HasOne("DataAccess.Entities.Auth.Player", "Player")
+                        .WithOne("PlayerWhoApplied")
+                        .HasForeignKey("DataAccess.Entities.Auth.PlayerWhoApplied", "playerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Player");
+                });
+
+            modelBuilder.Entity("DataAccess.Entities.Auth.UserConfirmationEntity", b =>
+                {
+                    b.HasOne("DataAccess.Entities.Auth.Player", null)
+                        .WithMany()
+                        .HasForeignKey("PlayerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("DataAccess.Entities.Finance.Transaction", b =>
@@ -529,6 +613,8 @@ namespace DataAccess.Migrations
             modelBuilder.Entity("DataAccess.Entities.Auth.Player", b =>
                 {
                     b.Navigation("LotteryTickets");
+
+                    b.Navigation("PlayerWhoApplied");
 
                     b.Navigation("Wallet");
                 });
