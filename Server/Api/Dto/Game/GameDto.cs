@@ -12,6 +12,8 @@ public class CreateGameTemplateRequestDto
     public double BasePrice { get; set; }
     public int MinNumbersPerTicket { get; set; }
     public int MaxNumbersPerTicket { get; set; }
+    public string? PriceGrowthRule { get; set; }
+
 }
 
 public class GameTemplateResponseDto : CreateGameTemplateRequestDto
@@ -41,6 +43,7 @@ public class GameInstanceDto
     public bool IsDrawn { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
+    public string? PriceGrowthRule { get; set; }
 }
 
 public class UpdateGameDto

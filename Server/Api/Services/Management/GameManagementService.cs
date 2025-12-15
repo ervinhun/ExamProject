@@ -16,25 +16,27 @@ public class GameManagementService(MyDbContext ctx) : IGameManagementService
     {
         try
         {
-            if(gameTemplateDto.Name == null) throw new ServiceException("Name cannot be null");
-            if(gameTemplateDto.Description == null) throw new ServiceException("Description cannot be null");
-            if(gameTemplateDto.GameType == null ) throw new ServiceException("Game type cannot be null");
-            if(gameTemplateDto.BasePrice <= 0) throw new ServiceException("Base price cannot be less or equals than 0");
-            
+            if (gameTemplateDto.Name == null) throw new ServiceException("Name cannot be null");
+            if (gameTemplateDto.Description == null) throw new ServiceException("Description cannot be null");
+            if (gameTemplateDto.GameType == null) throw new ServiceException("Game type cannot be null");
+            if (gameTemplateDto.BasePrice <= 0)
+                throw new ServiceException("Base price cannot be less or equals than 0");
+
             var newGameTemplate = new GameTemplate
             {
                 Name = gameTemplateDto.Name,
                 Description = gameTemplateDto.Description,
                 GameType = Enum.Parse<GameType>(gameTemplateDto.GameType),
                 PoolOfNumbers = gameTemplateDto.PoolOfNumbers,
-                MaxWinningNumbers =  gameTemplateDto.MaxWinningNumbers,
+                MaxWinningNumbers = gameTemplateDto.MaxWinningNumbers,
                 MinNumbersPerTicket = gameTemplateDto.MinNumbersPerTicket,
-                MaxNumbersPerTicket =  gameTemplateDto.MaxNumbersPerTicket,
+                MaxNumbersPerTicket = gameTemplateDto.MaxNumbersPerTicket,
                 BasePrice = gameTemplateDto.BasePrice,
                 CreatedAt = DateTime.UtcNow,
-                UpdatedAt = default
+                UpdatedAt = default,
+                PriceGrowthRule = gameTemplateDto.PriceGrowthRule
             };
-            
+
             await ctx.GameTemplates.AddAsync(newGameTemplate);
             await ctx.SaveChangesAsync();
         }
@@ -64,7 +66,8 @@ public class GameManagementService(MyDbContext ctx) : IGameManagementService
                     MinNumbersPerTicket = gameTemplate.MinNumbersPerTicket,
                     MaxNumbersPerTicket = gameTemplate.MaxNumbersPerTicket,
                     CreatedAt = gameTemplate.CreatedAt,
-                    UpdatedAt = gameTemplate.UpdatedAt
+                    UpdatedAt = gameTemplate.UpdatedAt,
+                    PriceGrowthRule = gameTemplate.PriceGrowthRule
                 });
             }
 
@@ -80,7 +83,8 @@ public class GameManagementService(MyDbContext ctx) : IGameManagementService
     {
         try
         {
-            var activeGames = ctx.GameInstances.Include(g=> g.GameTemplate).Where(g=>g.Status == GameStatus.Active).ToList();
+            var activeGames = ctx.GameInstances.Include(g => g.GameTemplate).Where(g => g.Status == GameStatus.Active)
+                .ToList();
             var activeGamesDtos = new List<GameInstanceDto>();
             foreach (var game in activeGames)
             {
@@ -96,13 +100,15 @@ public class GameManagementService(MyDbContext ctx) : IGameManagementService
                     MaxNumbersPerTicket = game.GameTemplate.MaxNumbersPerTicket,
                     Id = game.GameTemplate.Id,
                     CreatedAt = game.GameTemplate.CreatedAt,
-                    UpdatedAt = game.GameTemplate.CreatedAt
+                    UpdatedAt = game.GameTemplate.CreatedAt,
+                    PriceGrowthRule = game.GameTemplate.PriceGrowthRule
+                    
                 };
 
                 var participants = await ctx.Players
                     .Where(p => p.LotteryTickets.Any(lt => lt.GameInstanceId == game.Id && lt.IsPaid))
                     .CountAsync();
-                
+
                 activeGamesDtos.Add(new GameInstanceDto
                 {
                     Id = game.Id,
@@ -117,11 +123,14 @@ public class GameManagementService(MyDbContext ctx) : IGameManagementService
                     DrawTimeOfDay = game.DrawTimeOfDay,
                     IsDrawn = game.IsDrawn,
                     CreatedAt = game.CreatedAt,
-                    UpdatedAt = game.UpdatedAt
+                    UpdatedAt = game.UpdatedAt,
+                    PriceGrowthRule = game.GameTemplate.PriceGrowthRule
                 });
             }
+
             return await Task.FromResult(activeGamesDtos);
-        }catch(Exception e)
+        }
+        catch (Exception e)
         {
             throw new ServiceException(e.Message, e);
         }
@@ -131,9 +140,10 @@ public class GameManagementService(MyDbContext ctx) : IGameManagementService
     {
         throw new NotImplementedException();
     }
-    
 
-    public Task<GameTemplateResponseDto> UpdateGameTemplateById(Guid templateId, CreateGameTemplateRequestDto gameTemplateDto)
+
+    public Task<GameTemplateResponseDto> UpdateGameTemplateById(Guid templateId,
+        CreateGameTemplateRequestDto gameTemplateDto)
     {
         throw new NotImplementedException();
     }
@@ -142,14 +152,14 @@ public class GameManagementService(MyDbContext ctx) : IGameManagementService
     {
         throw new NotImplementedException();
     }
-    
+
 
     public async Task StartGameInstance(GameInstanceDto gameInstanceDto)
     {
         try
         {
-            if(gameInstanceDto.DrawDate < DateTime.Now) throw new ServiceException("Draw date cannot be in the past");
-            
+            if (gameInstanceDto.DrawDate < DateTime.Now) throw new ServiceException("Draw date cannot be in the past");
+
             var currentWeek = ISOWeek.GetWeekOfYear(DateTime.Now);
 
             var gameInstance = new GameInstance
