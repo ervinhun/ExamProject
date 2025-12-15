@@ -109,28 +109,36 @@ public class WalletTransactionsService(MyDbContext ctx) : IWalletTransactionsSer
                 throw new ServiceException("Not enough funds, please make a deposit.");
             }
 
-            await RemoveAmountFromWallet(transactionDto.Id, transactionDto.WalletId, transactionDto.Amount);
+            // Deduct from wallet balance immediately
+            wallet.Balance -= transactionDto.Amount;
+            transactionDto.Status = TransactionStatus.Approved;
         }
+        
         var transaction = new Transaction
         {
             UserId = transactionDto.UserId,
             Name = transactionDto.Name,
             WalletId = transactionDto.WalletId,
+            PurchaseTicketId = transactionDto.PurchaseTicketId,
             MobilePayTransactionNumber = transactionDto.MobilePayTransactionNumber,
             Status = transactionDto.Status,
             Type = transactionDto.Type,
             Amount = transactionDto.Amount,
             CreatedAt = DateTime.UtcNow,
         };
+        
+        // Save transaction first
+        ctx.Transactions.Add(transaction);
+        await ctx.SaveChangesAsync();
+        
+        // Then create and save transaction history with the saved transaction ID
         var transactionHistory = new TransactionHistory
         {
             TransactionId = transaction.Id,
-            Transaction = transaction,
             ActionUser = actionUser,
             Status = transactionDto.Status,
             Type = transactionDto.Type,
         };
-        ctx.Transactions.Add(transaction);
         ctx.TransactionHistories.Add(transactionHistory);
         await ctx.SaveChangesAsync();
     }

@@ -1,106 +1,145 @@
-import {useEffect, useState} from "react";
+import {useEffect} from "react";
 import {useAtom} from "jotai";
 import {activeGamesAtom} from "@core/atoms/game.ts";
-import {gameApi} from "@core/api/controllers/game.ts";
-import {GameInstanceDto} from "@core/types/game.ts";
-import {ticketApi} from "@core/api/controllers/ticket.ts";
-import {myTicketsAtom} from "@core/atoms/tickets.ts";
+import {fetchTicketsForPlayerAtom, myTicketsAtom} from "@core/atoms/tickets.ts";
 
 export default function MyTickets() {
-    const [chosenGameTemplate, setChosenGameTemplate] = useState<GameInstanceDto | null>(null)
 
-    const [gameInstance, setGameInstance] = useAtom(activeGamesAtom)
-    const [myTickets, setMyTickets] = useAtom(myTicketsAtom)
-
-    useEffect(() => {
-        if (gameInstance.length === 0) {
-            gameApi.getAllActiveGames().then((data) => {
-                setGameInstance(data);
-                if (chosenGameTemplate === null) {
-                    setChosenGameTemplate(data[0]);
-                }
-            });
-        }
-    }, []);
+    const [,fetchTicketsForPlayer] = useAtom(fetchTicketsForPlayerAtom);
+    const [gameInstance] = useAtom(activeGamesAtom)
+    const [myTickets] = useAtom(myTicketsAtom)
 
     useEffect(() => {
-        if (myTickets.length === 0) {
-            ticketApi.getAllActiveTickets().then(setMyTickets);
-        }
-    }, [myTickets, setMyTickets]);
+        fetchTicketsForPlayer();
+    }, [fetchTicketsForPlayer]);
+
+    // Sort tickets by purchase date (latest first)
+    const sortedTickets = [...myTickets].sort((a, b) => {
+        return new Date(b.boughtAt).getTime() - new Date(a.boughtAt).getTime();
+    });
+
+    const formatCurrency = (amount: number) => {
+        return new Intl.NumberFormat('da-DK', { 
+            style: 'currency', 
+            currency: 'DKK',
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0
+        }).format(amount);
+    };
+
+    const formatDate = (dateStr: string) => {
+        const date = new Date(dateStr);
+        return date.toLocaleDateString("da-DK", { 
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric"
+        });
+    };
 
 
     return (
-        <div className="container mx-auto px-4 py-6 my-7">
+        <div className="container mx-auto">
             <div className="space-y-8">
                 {/* Title */}
                 <div className="flex items-center gap-4 pb-4 border-b-2 border-primary">
                     <div className="flex-1">
-                        <h1 className="text-3xl font-bold">Lottery Tickets</h1>
-                        <p className="text-gray-600">Check your tickets</p>
+                        <h1 className="text-4xl font-bold text-primary ml-3">My Tickets</h1>
+                        <p className="text-base text-base-content/70 mt-1 ml-3">View all your purchased tickets</p>
                     </div>
                 </div>
+
                 {/* Active Tickets */}
-                <div className="bg-amber-100 p-6 rounded-xl shadow-md">
-                    <h2 className="text-xl font-semibold mb-4">Active Tickets</h2>
+                <div className="bg-amber-50 p-6 rounded-xl shadow-md">
+                    <h2 className="text-2xl font-semibold mb-4">Active Tickets</h2>
 
-                    {myTickets.length === 0 ? (
-                        <p className="text-gray-500">You don't have any active tickets yet.</p>
+                    {sortedTickets.length === 0 ? (
+                        <div className="text-center py-8">
+                            <p className="text-gray-500 mb-4">You don't have any tickets yet.</p>
+                            <a href="/games" className="btn btn-primary">
+                                Buy Your First Ticket
+                            </a>
+                        </div>
                     ) : (
-                        <table className="w-full border-collapse">
-                            <thead>
-                            <tr className="bg-gray-200 text-left">
-                                <th className="p-2">Game</th>
-                                <th className="p-2">Numbers</th>
-                                <th className="p-2">Repeat</th>
-                            </tr>
-                            </thead>
-
-                            <tbody>
-                            {myTickets.map((t) => {
-                                const gameInstanceColor = gameInstance.find(
-                                    gi => gi.id === t.gameInstanceId
-                                );
-
-                                // Default values if something missing
-                                const status = gameInstanceColor?.status ?? 0;
-                                const result = t.results?.[0]?.isWinning ?? false;
-
-                                // Color selection
-                                let rowClass = "";
-                                if (result) {
-                                    rowClass = "bg-green-100";
-                                } else if (!result && status !== 0) {
-                                    rowClass = "bg-red-100";
-                                } else if (status === 0) {
-                                    rowClass = "bg-yellow-100";
-                                }
-
-                                return (
-                                    <tr key={t.id} className={rowClass}>
-                                        <td className="p-2 font-medium">
-                                            {gameInstanceColor?.template?.name ?? "Unknown Game Template"}{" (W"}{gameInstanceColor?.week}{")"}
-                                        </td>
-                                        <td className="p-2">
-                                            <div className="flex flex-wrap gap-2">
-                                                {t.selectedNumbers.map(n => (
-                                                    <div
-                                                        key={`${t.id}-${n}`}
-                                                        className="w-8 h-8 flex items-center justify-center rounded-full bg-orange-500 text-white font-semibold shadow"
-                                                    >
-                                                        {n}
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        </td>
-                                        <td className="p-2">
-                                            {t.repeat}
-                                        </td>
+                        <div className="overflow-x-auto">
+                            <table className="table table-zebra w-full">
+                                <thead>
+                                    <tr>
+                                        <th>Game</th>
+                                        <th>Numbers</th>
+                                        <th>Price</th>
+                                        <th>Purchase Date</th>
+                                        <th>Status</th>
                                     </tr>
-                                );
-                            })}
-                            </tbody>
-                        </table>
+                                </thead>
+
+                                <tbody>
+                                {sortedTickets.map((t) => {
+                                    const gameInstanceColor = gameInstance.find(
+                                        gi => gi.id === t.gameInstanceId
+                                    );
+
+                                    // Default values if something missing
+                                    const status = gameInstanceColor?.status ?? 0;
+                                    const isWinning = t.isWinning ?? false;
+
+                                    // Status badge
+                                    let statusBadge = "";
+                                    let statusText = "";
+                                    if (isWinning) {
+                                        statusBadge = "badge-success";
+                                        statusText = "🎉 Won!";
+                                    } else if (status === 2) {
+                                        statusBadge = "badge-error";
+                                        statusText = "Lost";
+                                    } else if (status === 1) {
+                                        statusBadge = "badge-warning";
+                                        statusText = "In Progress";
+                                    } else {
+                                        statusBadge = "badge-info";
+                                        statusText = "Pending";
+                                    }
+
+                                    return (
+                                        <tr key={t.id}>
+                                            <td>
+                                                <div>
+                                                    <div className="font-semibold">
+                                                        {gameInstanceColor?.template?.name ?? "Unknown Game"}
+                                                    </div>
+                                                    <div className="text-sm text-gray-500">
+                                                        Week {gameInstanceColor?.week ?? "?"}
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div className="flex flex-wrap gap-2">
+                                                    {t.pickedNumbers.map(n => (
+                                                        <div
+                                                            key={`${t.id}-${n}`}
+                                                            className="w-9 h-9 flex items-center justify-center rounded-full bg-primary text-white font-semibold shadow-md"
+                                                        >
+                                                            {n}
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </td>
+                                            <td className="font-semibold text-primary">
+                                                {formatCurrency(t.fullPrice)}
+                                            </td>
+                                            <td className="text-sm text-gray-600">
+                                                {formatDate(t.boughtAt)}
+                                            </td>
+                                            <td>
+                                                <span className={`badge ${statusBadge} badge-lg`}>
+                                                    {statusText}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
+                                </tbody>
+                            </table>
+                        </div>
                     )}
                 </div>
 

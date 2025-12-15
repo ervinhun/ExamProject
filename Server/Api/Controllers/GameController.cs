@@ -24,7 +24,7 @@ public class GameController(IGameManagementService gameManagementService) : Cont
     {
         try
         {
-            var activeGames = gameManagementService.GetAllActiveGamesAsync().Result;
+            var activeGames = await gameManagementService.GetAllActiveGamesAsync();
             return Ok(activeGames);
         }
         catch (ServiceException ex)
@@ -33,6 +33,7 @@ public class GameController(IGameManagementService gameManagementService) : Cont
         }
     }
 
+    [Authorize(Roles = "superadmin,admin")]
     [HttpPost("start-game")]
     public async Task<IActionResult> StartGameInstanceAsync([FromBody] GameInstanceDto gameInstanceDto)
     {

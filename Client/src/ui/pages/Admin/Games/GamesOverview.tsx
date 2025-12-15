@@ -169,7 +169,12 @@ export const GamesOverview: React.FC = () => {
                                                     <div className="flex gap-2">
                                                         <button className="btn btn-xs btn-info">View</button>
                                                         {!game.isDrawn && (
-                                                            <button className="btn btn-xs btn-warning">Draw</button>
+                                                            <NavLink 
+                                                                to={`/admin/games/draw/${game.id}`}
+                                                                className="btn btn-xs btn-warning"
+                                                            >
+                                                                Draw
+                                                            </NavLink>
                                                         )}
                                                     </div>
                                                 </td>

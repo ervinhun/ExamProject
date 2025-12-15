@@ -10,6 +10,7 @@ public record TransactionDto
     public Guid UserId { get; set; }
     public string? Name { get; set; }
     public Guid WalletId { get; set; }
+    public Guid? PurchaseTicketId { get; set; }
     public string? MobilePayTransactionNumber { get; set; }
     public double Amount { get; set; }
     public ICollection<TransactionHistoryDto>  TransactionHistory { get; set; }

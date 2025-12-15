@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using DataAccess.Entities.Auth;
+using DataAccess.Entities.Game;
 using DataAccess.Enums;
 
 namespace DataAccess.Entities.Finance;
@@ -9,6 +10,7 @@ public class Transaction
     public Guid Id { get; set; }
     public required Guid UserId { get; set; }
     public required Guid WalletId { get; set; }
+    public Guid? PurchaseTicketId { get; set; }
     public string? Name { get; set; }
     public string? MobilePayTransactionNumber { get; set; } 
     public TransactionStatus Status { get; set; }

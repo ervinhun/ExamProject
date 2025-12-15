@@ -1,13 +1,35 @@
 import {authAtom, isLoggedInAtom, logoutAtom} from "@core/atoms/auth";
 import {useAtom} from "jotai";
 import { NavLink } from "react-router-dom";
+import { walletAtom } from "@core/atoms/wallet";
 
 export default function Header() {
 
     const [authUser,] = useAtom(authAtom);
     const [, logout] = useAtom(logoutAtom);
     const [isLoggedIn,] = useAtom(isLoggedInAtom);
+    const [wallet] = useAtom(walletAtom);
 
+    const formatCurrency = (amount: number) => {
+        return new Intl.NumberFormat('da-DK', { 
+            style: 'currency', 
+            currency: 'DKK',
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0
+        }).format(amount);
+    };
+
+    const isPlayer = authUser?.roles?.includes(0);
+
+    // Debug logging
+    console.log("Header Debug:", {
+        isPlayer,
+        wallet,
+        authUser,
+        roles: authUser?.roles,
+        hasWallet: !!wallet,
+        walletBalance: wallet?.balance
+    });
 
     function getTitle() {
         console.log("Rendering Header, isLoggedIn:", isLoggedIn, "authAtom:", authUser);
@@ -40,6 +62,21 @@ export default function Header() {
                                 </svg>
                                 <span className="hidden sm:inline text-base">Home</span>
                             </NavLink>
+
+                            {/* Wallet Balance - Only for Players */}
+                            {isPlayer && wallet && (
+                                <NavLink 
+                                    to="/wallet"
+                                    className="hidden lg:flex btn btn-ghost gap-2 bg-gradient-to-r from-primary/10 to-secondary/10 hover:from-primary/20 hover:to-secondary/20 border border-primary/30"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                                    </svg>
+                                    <span className="font-bold text-primary">
+                                        {formatCurrency(wallet.balance)}
+                                    </span>
+                                </NavLink>
+                            )}
 
                             {/* User Info */}
                             <div className="hidden md:flex items-center gap-2 px-4 py-2 bg-base-200 rounded-lg">

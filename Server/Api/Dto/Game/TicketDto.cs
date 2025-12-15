@@ -2,7 +2,7 @@
 
 namespace Api.Dto.Game;
 
-public class TicketDto
+public class TickettDto
 {
     public class CreateTicketRequestDto
     {
@@ -24,4 +24,21 @@ public class TicketDto
         public double TicketPrice { get; set;}
         public bool IsPaid { get; set;}
     }
+}
+
+public class PurchaseTicketDto
+{
+    public Guid GameInstanceId { get; set; }
+    public Guid PlayerId { get; set; }
+    public Guid WalletId { get; set; }
+    public int[] PickedNumbers { get; set; } = [];
+    public double FullPrice { get; set; }
+}
+
+public class TicketDto : PurchaseTicketDto
+{
+    public Guid Id { get; set; }
+    public DateTime BoughtAt { get; set; }
+    public bool IsWinning { get; set; }
+    public bool IsPaid { get; set; }
 }

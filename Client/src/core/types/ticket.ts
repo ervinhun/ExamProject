@@ -1,40 +1,22 @@
 import {z} from "zod";
 
-export const CreateTicketToGameDtoSchema = z.object({
+export const MyTicketSchema = z.object({
+    id: z.string(),
     gameInstanceId: z.string(),
-    gameTemplateId: z.string(),
-    selectedNumbers: z.array(z.number().positive()),
-    repeat: z.number()
+    playerId: z.string(),
+    fullPrice: z.number(),
+    pickedNumbers: z.array(z.number()),
+    isWinning: z.boolean().nullable(),
+    boughtAt: z.string(),
 });
 
-export type CreateTicketToGameDto = z.infer<typeof CreateTicketToGameDtoSchema>;
+export type MyTicketDto = z.infer<typeof MyTicketSchema>;
 
-export const TicketResultDtoSchema = z.object({
-    gameInstanceId: z.string(),
-    numbers: z.array(z.number()),
-    matchedNumbers: z.array(z.number()).optional(),
-    isWinning: z.boolean().optional(),
-    prizeWon: z.number().optional(),
-    drawDate: z.string().or(z.date()),
-});
-
-export type TicketResultDto = z.infer<typeof TicketResultDtoSchema>;
-
-export const MyTicketDtoSchema = z.object({
-    id: z.string().optional(),
-    playerId: z.string().optional(),
-    gameInstanceId: z.string(),
-    gameTemplateId: z.string(),
-    selectedNumbers: z.array(z.number()),
-    repeat: z.number().optional(),
-    results: z.array(TicketResultDtoSchema).optional(),
-    createdAt: z.string().or(z.date()),
-    updatedAt: z.string().or(z.date()).optional(),
-    ticketPrice: z.number().optional(),
-});
-
-export type MyTicketDto = z.infer<typeof MyTicketDtoSchema>;
-
-
-
+export interface PurchaseTicketDto {
+    gameInstanceId: string;
+    playerId: string;
+    walletId: string;
+    fullPrice : number;
+    pickedNumbers: number[];
+}
 

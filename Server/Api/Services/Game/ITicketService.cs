@@ -6,8 +6,9 @@ namespace Api.Services.Game;
 
 public interface ITicketService
 {
-    Task<TicketDto.TicketResponseDto> CreateTicket(Guid playerId, TicketDto.CreateTicketRequestDto ticketDto);
-    Task<List<TicketDto.TicketResponseDto>> GetAllTicketsForPlayerId(Guid playerId, bool activeOnly = true);
-    Task<List<TicketDto.TicketResponseDto>> GetAllTicketsForGameInstance(Guid gameIsntanceId, bool winningOnly = false);
-    Task PurchaseTicket(PurchaseTicketDto ticketDto);
+    // Task PurchaseTicket()
+    // Task<TicketDto.TicketResponseDto> CreateTicket(Guid playerId, TicketDto.CreateTicketRequestDto ticketDto);
+    Task<List<TicketDto>> GetAllTicketsForPlayerId(Guid playerId);
+    // Task<List<TicketDto.TicketResponseDto>> GetAllTicketsForGameInstance(Guid gameIsntanceId, bool winningOnly = false);
+    Task PurchaseTicket(PurchaseTicketDto purchaseTicketDto);
 }
