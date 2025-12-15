@@ -12,10 +12,10 @@ namespace Test;
 
 public class UserManagementServiceTest(MyDbContext ctx, ISeeder seeder, IUserManagementService userManagementService)
 {
-    private static DateTime validDate = new DateTime(2025, 12, 14, 19, 51, 44);
-    private Guid ValidAdminId = new Guid("1");
+    private static readonly DateTime validDate = new DateTime(2025, 12, 14, 19, 51, 44);
+    private readonly Guid ValidAdminId = new Guid("1");
 
-    private UserDto ExistingUser = new UserDto
+    private readonly UserDto ExistingUser = new UserDto
     {
         Id = Guid.NewGuid(),
         FirstName = "John",

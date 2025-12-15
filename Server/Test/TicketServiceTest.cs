@@ -11,10 +11,10 @@ public class TicketServiceTest(
     ISeeder seeder,
     ITicketService ticketService)
 {
-    private Guid ExistingUserIdWhoCanBuyTickets = new Guid("1");
-    private Guid ExistingUserIdWhoCanNotBuyTickets = new Guid("2");
-    private Guid ValidGameInstanceId = new Guid("GameInstance");
-    private Guid ValidGameTemplateId = new Guid("Gametemplate");
+    private readonly Guid ExistingUserIdWhoCanBuyTickets = new Guid("1");
+    private readonly Guid ExistingUserIdWhoCanNotBuyTickets = new Guid("2");
+    private readonly Guid ValidGameInstanceId = new Guid("GameInstance");
+    private readonly Guid ValidGameTemplateId = new Guid("Gametemplate");
 
     [Fact]
     public async Task CreateTicketShouldReturnTicketDto()
@@ -49,7 +49,7 @@ public class TicketServiceTest(
     }
     
     [Fact]
-    public async Task CreateTicketShouldThrowExceptionWhenGameTamplateIdIsIncorrect()
+    public async Task CreateTicketShouldThrowExceptionWhenGameTemplateIdIsIncorrect()
     {
         TicketDto.CreateTicketRequestDto ticketDto = new TicketDto.CreateTicketRequestDto
         {

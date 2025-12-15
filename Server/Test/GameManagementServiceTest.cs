@@ -27,7 +27,7 @@ public class GameManagementServiceTest(MyDbContext ctx, ISeeder seeder, IGameMan
     {
         var createGameTemplateDto = new CreateGameTemplateRequestDto
         {
-            Name = "HelloWolrd",
+            Name = "HelloWorld",
             Description = "No description has been filled out yet",
             PoolOfNumbers = 16,
             GameType = nameof(GameType.Lotto),
@@ -73,7 +73,7 @@ public class GameManagementServiceTest(MyDbContext ctx, ISeeder seeder, IGameMan
         await Assert.ThrowsAsync<ServiceException>(() =>
             gameManagementService.CreateGameTemplate(createGameTemplateDto));
 
-        createGameTemplateDto.Name = "HelloWolrd";
+        createGameTemplateDto.Name = "HelloWorld";
         createGameTemplateDto.Description = null;
 
         await Assert.ThrowsAsync<ServiceException>(() =>
@@ -136,7 +136,7 @@ public class GameManagementServiceTest(MyDbContext ctx, ISeeder seeder, IGameMan
     {
         var newGameInstance = new CreateGameTemplateRequestDto
         {
-            Name = "HelloWolrdNewVersion",
+            Name = "HelloWorldNewVersion",
             Description = "An amazing description",
             PoolOfNumbers = 16,
             GameType = nameof(GameType.Lotto),

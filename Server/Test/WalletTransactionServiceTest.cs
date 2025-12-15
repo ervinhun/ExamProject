@@ -12,14 +12,14 @@ public class WalletTransactionServiceTest(
     ISeeder seeder,
     IWalletTransactionsService walletTransactionsService)
 {
-    private Guid ExistingUserWithWallet = new Guid("1");
-    private Guid ExistinUserWithWalletWalletID = new Guid("WalletId");
-    private double ValidWalletBalance = 100;
-    private Guid ValidTransactionId = new Guid("ValidTransactionId");
-    private Guid ExistingUserWithoutWallet = new Guid("2");
-    private string AlreadyExistingMobilePayeTransactionNumber = "1234";
-    private String ValideMobilePayTransactionNumber = "1234567890";
-    private DateTime dateTimeToUse = new DateTime(2025, 12, 14, 9, 07, 33);
+    private readonly Guid ExistingUserWithWallet = new Guid("1");
+    private readonly Guid ExistingUserWithWalletID = new Guid("WalletId");
+    private readonly double ValidWalletBalance = 100;
+    private readonly Guid ValidTransactionId = new Guid("ValidTransactionId");
+    private readonly Guid ExistingUserWithoutWallet = new Guid("2");
+    private readonly string AlreadyExistingMobilePayTransactionNumber = "1234";
+    private readonly String ValidMobilePayTransactionNumber = "1234567890";
+    private readonly DateTime dateTimeToUse = new DateTime(2025, 12, 14, 9, 07, 33);
 
 
     [Fact]
@@ -59,7 +59,7 @@ public class WalletTransactionServiceTest(
             Id = ValidTransactionId,
             UserId = ExistingUserWithWallet,
             Name = "Top up",
-            WalletId = ExistinUserWithWalletWalletID,
+            WalletId = ExistingUserWithWalletID,
             MobilePayTransactionNumber = "123456789",
             Amount = 200,
             TransactionHistory = new List<TransactionHistoryDto>(ArraySegment<TransactionHistoryDto>.Empty),
@@ -87,7 +87,7 @@ public class WalletTransactionServiceTest(
             Id = ValidTransactionId,
             UserId = ExistingUserWithWallet,
             Name = "Top up",
-            WalletId = ExistinUserWithWalletWalletID,
+            WalletId = ExistingUserWithWalletID,
             MobilePayTransactionNumber = null,
             Amount = 50,
             TransactionHistory = new List<TransactionHistoryDto>(ArraySegment<TransactionHistoryDto>.Empty),
@@ -100,12 +100,12 @@ public class WalletTransactionServiceTest(
         await Assert.ThrowsAsync<ServiceException>(() =>
             walletTransactionsService.RegisterTransaction(ExistingUserWithWallet, transactionDtonew));
 
-        transactionDtonew.MobilePayTransactionNumber = AlreadyExistingMobilePayeTransactionNumber;
+        transactionDtonew.MobilePayTransactionNumber = AlreadyExistingMobilePayTransactionNumber;
 
         await Assert.ThrowsAsync<ServiceException>(() =>
             walletTransactionsService.RegisterTransaction(ExistingUserWithWallet, transactionDtonew));
 
-        transactionDtonew.MobilePayTransactionNumber = ValideMobilePayTransactionNumber;
+        transactionDtonew.MobilePayTransactionNumber = ValidMobilePayTransactionNumber;
         transactionDtonew.Amount = 0;
         transactionDtonew.Type = TransactionType.TicketPurchase;
 
@@ -165,7 +165,7 @@ public class WalletTransactionServiceTest(
             Id = ValidTransactionId,
             UserId = ExistingUserWithWallet,
             Name = "Top up",
-            WalletId = ExistinUserWithWalletWalletID,
+            WalletId = ExistingUserWithWalletID,
             MobilePayTransactionNumber = null,
             Amount = 50,
             TransactionHistory = new List<TransactionHistoryDto>(ArraySegment<TransactionHistoryDto>.Empty),
