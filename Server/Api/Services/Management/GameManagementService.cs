@@ -139,6 +139,8 @@ public class GameManagementService(MyDbContext ctx) : IGameManagementService
     public Task<GameTemplateResponseDto> GetGameTemplateById(Guid gameTemplateId)
     {
         throw new NotImplementedException();
+        
+        // TODO: Implement test when method is done
     }
 
 
@@ -146,11 +148,13 @@ public class GameManagementService(MyDbContext ctx) : IGameManagementService
         CreateGameTemplateRequestDto gameTemplateDto)
     {
         throw new NotImplementedException();
+        // TODO: Implement test when method is done
     }
 
     public Task DeleteGameTemplateById(Guid templateId)
     {
         throw new NotImplementedException();
+        // TODO: Implement test when method is done
     }
 
 
@@ -158,7 +162,7 @@ public class GameManagementService(MyDbContext ctx) : IGameManagementService
     {
         try
         {
-            if (gameInstanceDto.DrawDate < DateTime.Now) throw new ServiceException("Draw date cannot be in the past");
+            if (gameInstanceDto.DrawDate != null && gameInstanceDto.DrawDate < DateTime.Now) throw new ServiceException("Draw date cannot be in the past");
 
             var currentWeek = ISOWeek.GetWeekOfYear(DateTime.Now);
 

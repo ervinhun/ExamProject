@@ -35,7 +35,7 @@ public class TicketService(MyDbContext ctx) : ITicketService
 
         if (ticketDto.SelectedNumbers.Length < data.GameTemplate.MinNumbersPerTicket ||
             ticketDto.SelectedNumbers.Length > data.GameTemplate.MaxNumbersPerTicket)
-            throw new InvalidOperationException("Invalid number of tickets");
+            throw new InvalidOperationException("Invalid numbers on the ticket");
 
         var numbers = ticketDto.SelectedNumbers.OrderBy(n => n).ToList();
         Dictionary<int, double> priceGrowthRule;
@@ -68,7 +68,6 @@ public class TicketService(MyDbContext ctx) : ITicketService
         var priceOfTheTicket = priceGrowthRule[numbers.Count];
         if (data.Wallet.Balance < priceOfTheTicket)
             throw new InvalidOperationException("Insufficient funds");
-        data.Wallet.Balance -= priceOfTheTicket;
         var ticket = new LotteryTicket
         {
             GameInstanceId = ticketDto.GameInstanceId,

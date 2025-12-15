@@ -18,9 +18,11 @@ public class WalletTransactionsService(MyDbContext ctx) : IWalletTransactionsSer
     {
         try
         {
-            var wallet = await ctx.Wallets.Include(w=>w.Transactions.OrderByDescending(t=>t.CreatedAt).Skip(0).Take(15)).FirstOrDefaultAsync(w=> w.PlayerId == id);
+            var wallet = await ctx.Wallets
+                .Include(w => w.Transactions.OrderByDescending(t => t.CreatedAt).Skip(0).Take(15))
+                .FirstOrDefaultAsync(w => w.PlayerId == id);
             if (wallet == null) throw new ServiceException("Wallet not found");
-            
+
             var transactionsDtos = new List<TransactionDto>();
             foreach (var walletTransaction in wallet.Transactions)
             {
@@ -45,7 +47,6 @@ public class WalletTransactionsService(MyDbContext ctx) : IWalletTransactionsSer
                 Balance = wallet.Balance,
                 Transactions = transactionsDtos,
                 UpdatedAt = wallet.UpdatedAt
-
             };
         }
         catch (Exception e)
@@ -57,7 +58,7 @@ public class WalletTransactionsService(MyDbContext ctx) : IWalletTransactionsSer
     public async Task<List<TransactionDto>> GetPendingTransactions()
     {
         var transactions = await ctx.Transactions
-            .Where(t=>t.Status == TransactionStatus.Requested)
+            .Where(t => t.Status == TransactionStatus.Requested)
             .ToListAsync();
         var transactionsDtos = new List<TransactionDto>();
         foreach (var transaction in transactions)
@@ -83,22 +84,24 @@ public class WalletTransactionsService(MyDbContext ctx) : IWalletTransactionsSer
     public async Task RegisterTransaction(Guid actionUser, TransactionDto transactionDto)
     {
         var user = await ctx.Users.SingleOrDefaultAsync(p => p.Id == actionUser);
-        if(user == null) throw new ServiceException("User not found.");
-        if(!user.Activated) throw new  ServiceException("User must be activated.");
+        if (user == null) throw new ServiceException("User not found.");
+        if (!user.Activated) throw new ServiceException("User must be activated.");
         var wallet = await ctx.Wallets.SingleOrDefaultAsync(w => w.PlayerId == actionUser);
-        if(wallet == null) throw new ServiceException("Wallet not found.");
+        if (wallet == null) throw new ServiceException("Wallet not found.");
         if (wallet.PlayerId != actionUser) throw new ServiceException("Something went wrong, please try again.");
-        
+
         if (transactionDto.Type == TransactionType.Deposit)
         {
             if (transactionDto.MobilePayTransactionNumber == null)
             {
                 throw new ServiceException("Transaction number is required for deposit.");
             }
+
             if (await ctx.Transactions.AnyAsync(t =>
                     t.MobilePayTransactionNumber == transactionDto.MobilePayTransactionNumber))
             {
-                throw new ServiceException("There is already registered transaction with this MobilePay transaction number");
+                throw new ServiceException(
+                    "There is already registered transaction with this MobilePay transaction number");
             }
         }
 
@@ -111,6 +114,7 @@ public class WalletTransactionsService(MyDbContext ctx) : IWalletTransactionsSer
 
             await RemoveAmountFromWallet(transactionDto.Id, transactionDto.WalletId, transactionDto.Amount);
         }
+
         var transaction = new Transaction
         {
             UserId = transactionDto.UserId,
@@ -159,10 +163,11 @@ public class WalletTransactionsService(MyDbContext ctx) : IWalletTransactionsSer
                     transactionHistory.Type = TransactionType.Withdrawal;
                     break;
             }
+
             transactionHistory.Status = TransactionStatus.Approved;
             transaction.Status = TransactionStatus.Approved;
             transaction.UpdatedAt = DateTime.UtcNow;
-            
+
             ctx.TransactionHistories.Add(transactionHistory);
             await ctx.SaveChangesAsync();
         }
@@ -175,13 +180,13 @@ public class WalletTransactionsService(MyDbContext ctx) : IWalletTransactionsSer
     public Task RejectTransaction(Guid actionUser, Guid transactionId)
     {
         throw new NotImplementedException();
+        //Also write the test when method is implemented
     }
 
     public async Task UpdateTransactionById(Guid id, UpdateTransactionDto transactionDto)
     {
         var transaction = await ctx.Transactions.FirstOrDefaultAsync(t => t.Id == id);
         if (transaction == null) throw new ServiceException("Transaction not found");
-        
     }
 
     private async Task SendAmountToWallet(Guid transactionId, Guid walletId, double amount)
@@ -205,7 +210,6 @@ public class WalletTransactionsService(MyDbContext ctx) : IWalletTransactionsSer
         {
             throw new ServiceException(e.Message, e);
         }
-        
     }
 
     private async Task RemoveAmountFromWallet(Guid transactionId, Guid walletId, double amount)
@@ -225,7 +229,7 @@ public class WalletTransactionsService(MyDbContext ctx) : IWalletTransactionsSer
             ctx.TransactionHistories.Add(transactionHistory);
             await ctx.SaveChangesAsync();
         }
-        catch(Exception e)
+        catch (Exception e)
         {
             throw new ServiceException(e.Message, e);
         }
