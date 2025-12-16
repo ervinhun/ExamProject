@@ -1,6 +1,5 @@
 using System.Text;
-using api.Services;
-using api.Services.Auth;
+using Api.Services;
 using Api.Services.Auth;
 using Api.Services.Email;
 using DataAccess;

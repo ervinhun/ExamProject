@@ -1,4 +1,4 @@
-﻿using tests;
+﻿using Test;
 using Xunit;
 
 [CollectionDefinition("Database collection")]

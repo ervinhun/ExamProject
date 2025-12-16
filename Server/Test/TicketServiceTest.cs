@@ -1,15 +1,12 @@
 ﻿using Api.Dto.Game;
 using Api.Services.Game;
-using Api.Services.Management;
 using DataAccess;
-using DataAccess.Entities.Game;
 using Microsoft.EntityFrameworkCore;
 using Test.Util;
 
-namespace tests;
+namespace Test;
 
 [Collection("Database collection")]
-
 public class TicketServiceTest
 {
     private readonly MyDbContext _ctx;
@@ -116,7 +113,7 @@ public class TicketServiceTest
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
             _ticketService.CreateTicket(ExistingUserIdWhoCanBuyTickets, ticketDto));
     }
-    
+
     [Fact]
     public async Task CreateTicketShouldThrowExceptionWhenThereAreLessNumbersThanInTemplate()
     {

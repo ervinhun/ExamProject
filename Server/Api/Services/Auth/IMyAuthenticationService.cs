@@ -6,7 +6,7 @@ using DataAccess.Entities.Auth;
 using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc;
 
-namespace api.Services;
+namespace Api.Services;
 
 public interface IMyAuthenticationService
 {

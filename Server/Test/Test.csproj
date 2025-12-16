@@ -29,7 +29,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="../api/api.csproj"/>
+        <ProjectReference Include="../Api/Api.csproj"/>
         <PackageReference Include="Microsoft.Extensions.TimeProvider.Testing" Version="9.10.0"/>
         <PackageReference Include="Testcontainers.PostgreSql" Version="4.9.0" />
         <PackageReference Include="Xunit.DependencyInjection" Version="10.7.0"/>

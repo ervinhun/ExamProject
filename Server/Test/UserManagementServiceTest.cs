@@ -1,7 +1,6 @@
 ﻿using Api.Dto.test;
 using Api.Dto.User;
 using Api.Services.Admin;
-using api.Services.Auth;
 using Api.Services.Auth;
 using Api.Services.Management;
 using DataAccess;

@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore;
 using Utils;
 using Utils.Exceptions;
 
-namespace api.Services.Auth;
+namespace Api.Services.Auth;
 
 public class MyAuthenticationService(MyDbContext ctx, IJwt jwt) : IMyAuthenticationService
 {
