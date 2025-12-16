@@ -1,4 +1,5 @@
 ﻿using Api.Dto.Game;
+using Api.Services.Game;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Api.Controllers.Internal;

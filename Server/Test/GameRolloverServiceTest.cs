@@ -1,4 +1,5 @@
 ﻿using Api.Dto.Game;
+using Api.Services.Game;
 using DataAccess;
 using DataAccess.Entities.Game;
 using DataAccess.Enums;

@@ -1,9 +1,10 @@
-﻿using DataAccess;
+﻿using Api.Dto.Game;
+using DataAccess;
 using DataAccess.Entities.Game;
 using DataAccess.Enums;
 using Microsoft.EntityFrameworkCore;
 
-namespace Api.Dto.Game;
+namespace Api.Services.Game;
 
 public class GameRolloverService
 {
@@ -14,49 +15,54 @@ public class GameRolloverService
         _ctx = ctx;
     }
 
-    public async Task<RolloverResult> ExecuteAsync()
+    public async Task<RolloverResult> ExecuteAsync(CancellationToken ct = default)
     {
         var now = DateTime.UtcNow;
 
-        var expiredGames = await _ctx.GameInstances
-            .Where(g =>
-                g.Status == GameStatus.Active &&
-                g.DrawDate <= now)
-            .ToListAsync();
+        // Load only active games (cheap DB query)
+        var activeGames = await _ctx.GameInstances
+            .Where(g => g.Status == GameStatus.Active)
+            .ToListAsync(ct);
 
-        if (expiredGames.Count == 0)
-            return RolloverResult.Empty;
+        int closed = 0;
+        int created = 0;
 
-        var closed = 0;
-        var created = 0;
-
-        foreach (var game in expiredGames)
+        foreach (var game in activeGames)
         {
+            var effectiveDrawDate = ResolveDrawDate(game);
+
+            if (effectiveDrawDate > now)
+                continue;
+
+            // Close game
             game.Status = GameStatus.PendingDraw;
             closed++;
 
             if (!game.IsAutoRepeatable)
                 continue;
-            var drawDay = game.DrawDayOfWeek ?? 1;
 
-            if (!Enum.IsDefined(typeof(DayOfWeek), game.DrawDayOfWeek))
-                throw new ArgumentOutOfRangeException(nameof(game.DrawDayOfWeek), "Invalid DayOfWeek value");
+            // Resolve draw day safely
+            var drawDayValue = game.DrawDayOfWeek ?? (int)DayOfWeek.Sunday;
 
-            DayOfWeek dayOfWeek = (DayOfWeek)game.DrawDayOfWeek;
-            TimeSpan timeSpan = (game.DrawTimeOfDay ?? new TimeOnly(0, 0)).ToTimeSpan();
+            if (!Enum.IsDefined(typeof(DayOfWeek), drawDayValue))
+                throw new ArgumentOutOfRangeException(
+                    nameof(game.DrawDayOfWeek),
+                    $"Invalid DayOfWeek value: {drawDayValue}");
 
+            var drawDay = (DayOfWeek)drawDayValue;
+            var drawTime = (game.DrawTimeOfDay ?? new TimeOnly(0, 0)).ToTimeSpan();
 
             var nextDrawDate = CalculateNextDrawDate(
-                dayOfWeek,
-                timeSpan,
-                ResolveDrawDate(game.DrawDate));
+                drawDay,
+                drawTime,
+                effectiveDrawDate);
 
             _ctx.GameInstances.Add(new GameInstance
             {
                 GameTemplateId = game.GameTemplateId,
                 Status = GameStatus.Active,
                 DrawDate = nextDrawDate,
-                DrawDayOfWeek = game.DrawDayOfWeek,
+                DrawDayOfWeek = drawDayValue,
                 DrawTimeOfDay = game.DrawTimeOfDay,
                 IsAutoRepeatable = true,
                 CreatedById = game.CreatedById
@@ -65,9 +71,12 @@ public class GameRolloverService
             created++;
         }
 
-        await _ctx.SaveChangesAsync();
+        if (closed > 0 || created > 0)
+            await _ctx.SaveChangesAsync(ct);
 
-        return new RolloverResult(closed, created);
+        return closed == 0 && created == 0
+            ? RolloverResult.Empty
+            : new RolloverResult(closed, created);
     }
 
     private static DateTime CalculateNextDrawDate(
@@ -75,31 +84,32 @@ public class GameRolloverService
         TimeSpan drawTime,
         DateTime fromDate)
     {
-        var next = fromDate.Date.AddDays(1);
+        int days =
+            ((int)drawDay - (int)fromDate.DayOfWeek + 7) % 7;
 
-        while (next.DayOfWeek != drawDay)
-            next = next.AddDays(1);
+        if (days == 0)
+            days = 7;
 
-        return next.Add(drawTime);
+        return fromDate.Date
+            .AddDays(days)
+            .Add(drawTime);
     }
 
-
-    public static DateTime ResolveDrawDate(DateTime? drawDate)
+    private static DateTime ResolveDrawDate(GameInstance game)
     {
-        if (drawDate.HasValue)
-            return DateTime.SpecifyKind(drawDate.Value, DateTimeKind.Utc);
+        if (game.DrawDate.HasValue)
+            return DateTime.SpecifyKind(game.DrawDate.Value, DateTimeKind.Utc);
 
         var now = DateTime.UtcNow;
 
-        // Sunday = 0
-        int daysUntilSunday = ((int)DayOfWeek.Sunday - (int)now.DayOfWeek + 7) % 7;
+        int daysUntilSunday =
+            ((int)DayOfWeek.Sunday - (int)now.DayOfWeek + 7) % 7;
 
-        // If today is Sunday, we want NEXT Sunday
         if (daysUntilSunday == 0)
             daysUntilSunday = 7;
 
-        var nextSunday = now.Date.AddDays(daysUntilSunday);
-
-        return DateTime.SpecifyKind(nextSunday, DateTimeKind.Utc);
+        return DateTime.SpecifyKind(
+            now.Date.AddDays(daysUntilSunday),
+            DateTimeKind.Utc);
     }
 }
