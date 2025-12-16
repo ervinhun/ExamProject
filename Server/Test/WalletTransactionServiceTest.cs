@@ -133,6 +133,9 @@ public class WalletTransactionServiceTest
     [Fact]
     public async Task ApproveTransactionSuccess()
     {
+        await using var tx = await _ctx.Database.BeginTransactionAsync();
+        
+
         var BalanceBeforeConfirmingTransaction =
             await _walletTransactionsService.GetWalletForPlayerId(ExistingUserWithWallet);
         await _walletTransactionsService.ApproveTransaction(ExistingUserWithWallet, ValidTransactionId);
@@ -143,6 +146,7 @@ public class WalletTransactionServiceTest
         Assert.Equal(BalanceBeforeConfirmingTransaction.Balance + 200, BalanceAfterConfirmingTransaction.Balance);
         Assert.Equal(TransactionStatus.Approved,
             BalanceAfterConfirmingTransaction.Transactions.Single(t => t.Id == ValidTransactionId).Status);
+        await tx.RollbackAsync();
     }
 
     [Fact]

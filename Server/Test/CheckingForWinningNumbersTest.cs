@@ -30,6 +30,8 @@ public class CheckingForWinningNumbersTest
     [Fact]
     public async Task Execute_EvaluatesTicketsCorrectly_ForGameInstance()
     {
+        await using var tx = await _ctx.Database.BeginTransactionAsync();
+        
         // Arrange
         var gameInstanceId = _seeder.GameInstanceId;
 
@@ -75,19 +77,27 @@ public class CheckingForWinningNumbersTest
 
         Assert.True(winningTicket.IsWinning);
         Assert.False(losingTicket.IsWinning);
+        await tx.RollbackAsync();
+        
     }
 
     [Fact]
     public async Task Execute_Throws_WhenGameInstanceNotFound()
     {
+        await using var tx = await _ctx.Database.BeginTransactionAsync();
+        
+
         // Act & Assert
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
             _service.Execute(Guid.NewGuid()));
+        await tx.RollbackAsync();
     }
 
     [Fact]
     public async Task Execute_Throws_WhenGameIsNotActive()
     {
+        await using var tx = await _ctx.Database.BeginTransactionAsync();
+        
         // Arrange
         var gameInstance = await _ctx.GameInstances
             .FirstAsync(g => g.Id == _seeder.GameInstanceId, cancellationToken: TestContext.Current.CancellationToken);
@@ -98,5 +108,6 @@ public class CheckingForWinningNumbersTest
         // Act & Assert
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
             _service.Execute(_seeder.GameInstanceId));
+        await tx.RollbackAsync();
     }
 }
