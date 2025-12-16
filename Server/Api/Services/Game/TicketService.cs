@@ -11,8 +11,8 @@ namespace Api.Services.Game;
 
 public class TicketService(MyDbContext ctx) : ITicketService
 {
-    public async Task<TicketDto.TicketResponseDto> CreateTicket(Guid playerId,
-        TicketDto.CreateTicketRequestDto ticketDto)
+    public async Task<TicketResponseDto> CreateTicket(Guid playerId,
+        CreateTicketRequestDto ticketDto)
     {
         var data = await ctx.GameInstances
             .Where(g => g.Id == ticketDto.GameInstanceId && g.Status == GameStatus.Active)
@@ -98,8 +98,8 @@ public class TicketService(MyDbContext ctx) : ITicketService
         return ConvertTicketToTicketResponseDto(ticket);
     }
 
-    public async Task<List<TicketDto.TicketResponseDto>> GetAllTicketsForPlayerId(
-        Guid playerId, bool activeOnly = true)
+    public async Task<List<TicketResponseDto>> GetAllTicketsForPlayerId(
+        Guid playerId)
     {
         var tickets = ctx.LotteryTickets.Where(t => t.PlayerId == playerId).Include(t => t.PickedNumbers);
 
@@ -107,14 +107,12 @@ public class TicketService(MyDbContext ctx) : ITicketService
             .Include(i => i.GameTemplate)
             .Where(i => i.Status == GameStatus.Active);
 
-        if (activeOnly)
-        {
+        
             var activeInstanceId = await gameInstance
                 .Select(i => i.Id)
                 .FirstOrDefaultAsync();
 
             tickets = tickets.Where(t => t.GameInstanceId == activeInstanceId).Include(t => t.PickedNumbers);
-        }
 
         var ticketList = tickets
             .Select(ConvertTicketToTicketResponseDto)
@@ -124,7 +122,7 @@ public class TicketService(MyDbContext ctx) : ITicketService
     }
 
 
-    public Task<List<TicketDto.TicketResponseDto>> GetAllTicketsForGameInstance(Guid gameInstanceId,
+    public Task<List<TicketResponseDto>> GetAllTicketsForGameInstance(Guid gameInstanceId,
         bool winningOnly = false)
     {
         var gameInstance = ctx.GameInstances
@@ -173,15 +171,15 @@ public class TicketService(MyDbContext ctx) : ITicketService
         }
     }
 
-    private TicketDto.TicketResponseDto ConvertTicketToTicketResponseDto(LotteryTicket ticket)
+    private TicketResponseDto ConvertTicketToTicketResponseDto(LotteryTicket ticket)
     {
-        return new TicketDto.TicketResponseDto
+        return new TicketResponseDto
         {
             Id = ticket.Id,
             GameInstanceId = ticket.GameInstanceId,
             GameTemplateId = ticket.GameTemplateId,
             SelectedNumbers = ticket.PickedNumbers.Select(p => p.Number).ToArray(),
-            Repeat = ticket.Repeatings.GetValueOrDefault(),
+            Repeat = ticket.Repeatings,
             CreatedAt = ticket.BoughtAt,
             UpdatedAt = ticket.BoughtAt,
             IsPaid = ticket.IsPaid,

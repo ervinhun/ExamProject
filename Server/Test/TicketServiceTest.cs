@@ -42,7 +42,7 @@ public class TicketServiceTest
     [Fact]
     public async Task CreateTicketShouldReturnTicketDto()
     {
-        TicketDto.CreateTicketRequestDto ticketDto = new TicketDto.CreateTicketRequestDto
+        CreateTicketRequestDto ticketDto = new CreateTicketRequestDto
         {
             GameInstanceId = ValidGameInstanceId,
             GameTemplateId = ValidGameTemplateId,
@@ -60,7 +60,7 @@ public class TicketServiceTest
     [Fact]
     public async Task CreateTicketShouldThrowExceptionWhenGameInstanceIdIsIncorrect()
     {
-        TicketDto.CreateTicketRequestDto ticketDto = new TicketDto.CreateTicketRequestDto
+        CreateTicketRequestDto ticketDto = new CreateTicketRequestDto
         {
             GameInstanceId = Guid.NewGuid(),
             GameTemplateId = ValidGameTemplateId,
@@ -75,7 +75,7 @@ public class TicketServiceTest
     [Fact]
     public async Task CreateTicketShouldThrowExceptionWhenGameTemplateIdIsIncorrect()
     {
-        TicketDto.CreateTicketRequestDto ticketDto = new TicketDto.CreateTicketRequestDto
+        CreateTicketRequestDto ticketDto = new CreateTicketRequestDto
         {
             GameInstanceId = ValidGameInstanceId,
             GameTemplateId = Guid.NewGuid(),
@@ -90,7 +90,7 @@ public class TicketServiceTest
     [Fact]
     public async Task CreateTicketShouldThrowExceptionWhenPlayerDoesntHaveValidWallet()
     {
-        TicketDto.CreateTicketRequestDto ticketDto = new TicketDto.CreateTicketRequestDto
+        CreateTicketRequestDto ticketDto = new CreateTicketRequestDto
         {
             GameInstanceId = ValidGameInstanceId,
             GameTemplateId = ValidGameTemplateId,
@@ -105,7 +105,7 @@ public class TicketServiceTest
     [Fact]
     public async Task CreateTicketShouldThrowExceptionWhenThereAreMoreNumbersThanInTemplate()
     {
-        TicketDto.CreateTicketRequestDto ticketDto = new TicketDto.CreateTicketRequestDto
+        CreateTicketRequestDto ticketDto = new CreateTicketRequestDto
         {
             GameInstanceId = ValidGameInstanceId,
             GameTemplateId = ValidGameTemplateId,
@@ -120,7 +120,7 @@ public class TicketServiceTest
     [Fact]
     public async Task CreateTicketShouldThrowExceptionWhenThereAreLessNumbersThanInTemplate()
     {
-        TicketDto.CreateTicketRequestDto ticketDto = new TicketDto.CreateTicketRequestDto
+        CreateTicketRequestDto ticketDto = new CreateTicketRequestDto
         {
             GameInstanceId = ValidGameInstanceId,
             GameTemplateId = ValidGameTemplateId,
@@ -135,7 +135,7 @@ public class TicketServiceTest
     [Fact]
     public async Task CreateTicketShouldThrowExceptionWhenThePlayerDoesNotHaveEnoughMoneyToBuyTicket()
     {
-        TicketDto.CreateTicketRequestDto ticketDto = new TicketDto.CreateTicketRequestDto
+        CreateTicketRequestDto ticketDto = new CreateTicketRequestDto
         {
             GameInstanceId = ValidGameInstanceId,
             GameTemplateId = ValidGameTemplateId,
