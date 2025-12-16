@@ -1,18 +1,19 @@
 ﻿using Api.Dto.Game;
 using DataAccess;
+using DataAccess.Entities.Game;
 using Microsoft.EntityFrameworkCore;
 using Test.Util;
 
 namespace Test;
 
 [Collection("Database collection")]
-public class GameEvaluationTest
+public class CheckingForWinningNumbersTest
 {
     private readonly MyDbContext _ctx;
     private readonly CheckingForWinningNumbers _service;
     private readonly Seeder _seeder;
 
-    public GameEvaluationTest(DatabaseFixture fixture)
+    public CheckingForWinningNumbersTest(DatabaseFixture fixture)
     {
         var options = new DbContextOptionsBuilder<MyDbContext>()
             .UseNpgsql(fixture.ConnectionString)
@@ -27,37 +28,75 @@ public class GameEvaluationTest
     }
 
     [Fact]
-    public async Task EvaluateTicketsForGame_SetsTicketResultCorrectly()
+    public async Task Execute_EvaluatesTicketsCorrectly_ForGameInstance()
     {
+        // Arrange
+        var gameInstanceId = _seeder.GameInstanceId;
+
+        // Winning numbers (3 numbers)
+        _ctx.WinningNumbers.AddRange(
+            new WinningNumber { GameInstanceId = gameInstanceId, Number = 1 },
+            new WinningNumber { GameInstanceId = gameInstanceId, Number = 3 },
+            new WinningNumber { GameInstanceId = gameInstanceId, Number = 11 }
+        );
+
+        // Losing ticket (only 2 matches)
+        _ctx.LotteryTickets.Add(new LotteryTicket
+        {
+            Id = Guid.NewGuid(),
+            PlayerId = _seeder.Player2Id,
+            GameInstanceId = gameInstanceId,
+            BoughtAt = DateTime.UtcNow,
+            PickedNumbers =
+            [
+                new() { Number = 1 },
+                new() { Number = 2 },
+                new() { Number = 10 },
+                new() { Number = 11 },
+                new() { Number = 12 }
+            ]
+        });
+
+        await _ctx.SaveChangesAsync(TestContext.Current.CancellationToken);
+
         // Act
-        var gameInstance = await _ctx.GameInstances.FirstAsync(g => g.Id == _seeder.GameInstanceId, cancellationToken: TestContext.Current.CancellationToken);
-        Assert.NotNull(gameInstance);
-        await _service.Execute(_seeder.GameInstanceId);
+        await _service.Execute(gameInstanceId);
 
         // Assert
-        var ticket = await _ctx.LotteryTickets
+        var tickets = await _ctx.LotteryTickets
+            .Where(t => t.GameInstanceId == gameInstanceId)
             .Include(t => t.PickedNumbers)
-            .FirstAsync(t => t.Id == _seeder.TicketId, cancellationToken: TestContext.Current.CancellationToken);
-        
-        Assert.True(ticket.IsWinning);
-        foreach (var number in gameInstance.WinningNumbers)
-        {
-            Assert.Contains(number, ticket.PickedNumbers);
-        }
+            .ToListAsync(cancellationToken: TestContext.Current.CancellationToken);
 
-        // if you store winnings:
-        Assert.True(ticket. >= 0);
+        Assert.True(tickets.Count >= 2);
+
+        var winningTicket = tickets.First(t => t.PlayerId == _seeder.Player1Id);
+        var losingTicket = tickets.First(t => t.PlayerId == _seeder.Player2Id);
+
+        Assert.True(winningTicket.IsWinning);
+        Assert.False(losingTicket.IsWinning);
     }
 
     [Fact]
-    public async Task EvaluateTicketsForGame_CalledTwice_DoesNotDoubleEvaluate()
+    public async Task Execute_Throws_WhenGameInstanceNotFound()
     {
-        await _service.Execute(_seeder.GameInstanceId);
-        await _service.Execute(_seeder.GameInstanceId);
+        // Act & Assert
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            _service.Execute(Guid.NewGuid()));
+    }
 
-        var ticket = await _ctx.LotteryTickets
-            .FirstAsync(t => t.Id == _seeder.TicketId);
+    [Fact]
+    public async Task Execute_Throws_WhenGameIsNotActive()
+    {
+        // Arrange
+        var gameInstance = await _ctx.GameInstances
+            .FirstAsync(g => g.Id == _seeder.GameInstanceId, cancellationToken: TestContext.Current.CancellationToken);
 
-        Assert.True(ticket.IsWinning);
+        gameInstance.Status = DataAccess.Enums.GameStatus.Completed;
+        await _ctx.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        // Act & Assert
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            _service.Execute(_seeder.GameInstanceId));
     }
 }
