@@ -18,7 +18,7 @@ export default function Wallet() {
     const [mobilePayTransactionNumber, setMobilePayTransactionNumber] = useState("");
 
     useEffect(() => {
-        if(authUser?.id && !wallet){
+        if(authUser?.id){
             getWalletForPlayerId(authUser?.id!);
         }
     }, []);

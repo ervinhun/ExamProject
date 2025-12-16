@@ -8,7 +8,7 @@ public class PlayerWhoApplied
     
     public Player Player { get; set; }
     
-    public String status { get; set; }
+    public string status { get; set; }
     public DateTime createdAt { get; set; }
     public DateTime updatedAt { get; set; }
     public Guid? reviewedBy { get; set; }

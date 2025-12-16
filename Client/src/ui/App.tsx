@@ -21,6 +21,7 @@ import Settings from "./pages/Admin/Settings.tsx";
 import RequirePlayer from "./pages/structure/Auth/RequiredPlayer.tsx";
 import RequireAdmin from "./pages/structure/Auth/RequiredAdmin.tsx";
 import Forbidden403 from "./pages/Errors/Forbidden403.tsx";
+import DrawNumbers from "./pages/Admin/Games/DrawNumbers.tsx";
 import {CreateGameTemplate} from './pages/Admin/Games/CreateGameTemplate.tsx';
 import {GamesOverview} from './pages/Admin/Games/GamesOverview.tsx';
 import {StartGame} from './pages/Admin/Games/StartGame.tsx';
@@ -75,8 +76,10 @@ const router = createBrowserRouter([
                     {path: "/admin/players/applications", element: <Applications/>},
                     {path: "/admin/games/overview", element: <GamesOverview/>},
                     {path: "/admin/games/start", element: <StartGame/>},
+                    {path: "/admin/games/draw/:gameId", element: <DrawNumbers/>},
                     {path: "/admin/games/history", element: <GameHistory/>},
                     {path: "/admin/games/boards", element: <WinningBoardsAdmin/>},
+                    {path: "/admin/games/draw/:gameId", element: <DrawNumbers/>},
                     // {path: "/admin/templates", element: <GameTemplatesList/>},
                     {path: "/admin/games/templates/create", element: <CreateGameTemplate/>},
 

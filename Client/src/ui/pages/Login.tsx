@@ -1,12 +1,14 @@
 import {useEffect, useState} from "react";
 import {useAtom, useSetAtom} from "jotai";
 import {useNavigate} from "react-router-dom";
-import { isLoggedInAtom, loginAtom } from "@core/atoms/auth";
+import { authAtom, isLoggedInAtom, loginAtom } from "@core/atoms/auth";
 import ErrorPopUp from "./Errors/ErrorPopUp";
 import { addNotificationAtom } from "@core/atoms/error";
+import { getWalletForPlayerIdAtom } from "@core/atoms/wallet";
 
 export default function Login() {
     const [isLoggedIn, ] = useAtom(isLoggedInAtom);
+    const [authUser, ] = useAtom(authAtom);
     const addNotification = useSetAtom(addNotificationAtom);
 
     const [email, setEmail] = useState("");

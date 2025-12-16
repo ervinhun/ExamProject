@@ -1,14 +1,16 @@
 import { authApi } from '../api/controllers/auth';
-import { atom } from 'jotai'
+import { atom, useAtom } from 'jotai'
 import type { User } from '../types/users';
 import { atomWithStorage } from 'jotai/utils';
 import { errorAtom } from './error';
 import type { AuthUser } from '@core/types/auth';
 import { getDefaultStore } from 'jotai/vanilla';
+import { getWalletForPlayerIdAtom } from './wallet';
+import { walletAtom } from './wallet';
+import { walletApi } from '@core/api/controllers/wallet';
+
 
 // Auth user shape used by the client convenience atoms
-
-
 export const authAtom = atomWithStorage<AuthUser>("auth", {
     id: null,
     name: null,
@@ -52,6 +54,15 @@ isLoggedInAtom.onMount = (setAtom) => {
                         roles: authUser.roles ?? []
                     });
                     setAtom(true);
+                    
+                    // Fetch wallet if user is a player (role 0)
+                    if (authUser.roles?.includes(0)) {
+                        walletApi.getWalletForPlayerId(authUser.id).then((wallet) => {
+                            store.set(walletAtom, wallet);
+                        }).catch((err) => {
+                            console.error('[Auth] Failed to fetch wallet:', err);
+                        });
+                    }
                     return;
                 }
             } catch {
@@ -82,6 +93,15 @@ isLoggedInAtom.onMount = (setAtom) => {
                     store.set(authAtom, newAuthUser);
                     localStorage.setItem('auth', JSON.stringify(newAuthUser));
                     setAtom(true);
+                    
+                    // Fetch wallet if user is a player (role 0)
+                    if (authUser.roles?.includes(0)) {
+                        walletApi.getWalletForPlayerId(authUser.id).then((wallet) => {
+                            store.set(walletAtom, wallet);
+                        }).catch((err) => {
+                            console.error('[Auth] Failed to fetch wallet:', err);
+                        });
+                    }
                     return;
                 }
             } catch {
@@ -115,6 +135,12 @@ export const loginAtom = atom(null,
             set(authAtom, authUser);
             set(isLoggedInAtom, true);
             localStorage.setItem('auth', JSON.stringify(authUser));
+
+            // Fetch wallet after login
+            walletApi.getWalletForPlayerId(user.id!).then((wallet) => {
+                set(walletAtom, wallet);
+            })
+            
         }).catch((err) => {
             set(errorAtom, err.message)
             throw err;

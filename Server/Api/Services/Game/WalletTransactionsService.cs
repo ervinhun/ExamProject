@@ -47,6 +47,7 @@ public class WalletTransactionsService(MyDbContext ctx) : IWalletTransactionsSer
                 Balance = wallet.Balance,
                 Transactions = transactionsDtos,
                 UpdatedAt = wallet.UpdatedAt
+
             };
         }
         catch (Exception e)
@@ -112,22 +113,28 @@ public class WalletTransactionsService(MyDbContext ctx) : IWalletTransactionsSer
                 throw new ServiceException("Not enough funds, please make a deposit.");
             }
 
-            await RemoveAmountFromWallet(transactionDto.Id, transactionDto.WalletId, transactionDto.Amount);
+            // Deduct from wallet balance immediately
+            wallet.Balance -= transactionDto.Amount;
+            transactionDto.Status = TransactionStatus.Approved;
         }
-
         var transaction = new Transaction
         {
             UserId = transactionDto.UserId,
             Name = transactionDto.Name,
             WalletId = transactionDto.WalletId,
+            PurchaseTicketId = transactionDto.PurchaseTicketId,
             MobilePayTransactionNumber = transactionDto.MobilePayTransactionNumber,
             Status = transactionDto.Status,
             Type = transactionDto.Type,
             Amount = transactionDto.Amount,
             CreatedAt = DateTime.UtcNow,
         };
+        
+        // Save transaction first
+        ctx.Transactions.Add(transaction);
         await ctx.SaveChangesAsync();
         
+        // Then create and save transaction history with the saved transaction ID
         var transactionHistory = new TransactionHistory
         {
             TransactionId = transaction.Id,
@@ -136,7 +143,6 @@ public class WalletTransactionsService(MyDbContext ctx) : IWalletTransactionsSer
             Status = transactionDto.Status,
             Type = transactionDto.Type,
         };
-        ctx.Transactions.Add(transaction);
         ctx.TransactionHistories.Add(transactionHistory);
         await ctx.SaveChangesAsync();
     }
@@ -147,7 +153,6 @@ public class WalletTransactionsService(MyDbContext ctx) : IWalletTransactionsSer
         {
             var transaction = await ctx.Transactions.Where(t => t.Status == TransactionStatus.Requested)
                 .FirstOrDefaultAsync(t => t.Id == transactionId);
-            Console.WriteLine("TransactionIdAtTheApproval: " + transactionId);
             if (transaction == null) throw new ServiceException("Transaction not found");
             var transactionHistory = new TransactionHistory
             {
@@ -190,6 +195,7 @@ public class WalletTransactionsService(MyDbContext ctx) : IWalletTransactionsSer
     {
         var transaction = await ctx.Transactions.FirstOrDefaultAsync(t => t.Id == id);
         if (transaction == null) throw new ServiceException("Transaction not found");
+        
     }
 
     private async Task SendAmountToWallet(Guid transactionId, Guid walletId, double amount)
@@ -213,6 +219,7 @@ public class WalletTransactionsService(MyDbContext ctx) : IWalletTransactionsSer
         {
             throw new ServiceException(e.Message, e);
         }
+        
     }
 
     private async Task RemoveAmountFromWallet(Guid transactionId, Guid walletId, double amount)
@@ -232,7 +239,7 @@ public class WalletTransactionsService(MyDbContext ctx) : IWalletTransactionsSer
             ctx.TransactionHistories.Add(transactionHistory);
             await ctx.SaveChangesAsync();
         }
-        catch (Exception e)
+        catch(Exception e)
         {
             throw new ServiceException(e.Message, e);
         }
