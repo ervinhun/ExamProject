@@ -159,7 +159,7 @@ public class GameManagementServiceTest
         await _gameService.CreateGameTemplate(gameTemplate);
 
         var gameTemplateResponse = await _ctx.GameTemplates
-            .FirstOrDefaultAsync(t => t.Name == gameTemplate.Name);
+            .FirstOrDefaultAsync(t => t.Name == gameTemplate.Name, cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.NotNull(gameTemplateResponse);
 
@@ -184,7 +184,7 @@ public class GameManagementServiceTest
         // 👉 ASSERT: query AFTER creation
         var lastGameInstance = await _ctx.GameInstances
             .OrderByDescending(g => g.CreatedAt)
-            .FirstOrDefaultAsync(g => g.GameTemplateId == gameTemplateResponse.Id);
+            .FirstOrDefaultAsync(g => g.GameTemplateId == gameTemplateResponse.Id, cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.NotNull(lastGameInstance);
         Assert.Equal(gameTemplateResponse.Id, lastGameInstance.GameTemplateId);
@@ -192,7 +192,7 @@ public class GameManagementServiceTest
     }
 
 
-    private GameTemplateResponseDto GetGameTemplateFromName(string name)
+    private GameTemplateResponseDto? GetGameTemplateFromName(string name)
     {
         var getAllTemplates = _gameService.GetGameTemplatesAsync().Result;
         return getAllTemplates.FirstOrDefault(t => t.Name == name);

@@ -139,7 +139,7 @@ public class Seeder(MyDbContext context) : ISeeder
             Name = "Test Lotto",
             GameType = GameType.Lotto,
             PoolOfNumbers = 36,
-            MaxWinningNumbers = 7,
+            MaxWinningNumbers = 3,
             BasePrice = 10,
             MinNumbersPerTicket = 5,
             MaxNumbersPerTicket = 8
@@ -211,7 +211,7 @@ public class Seeder(MyDbContext context) : ISeeder
                 new() { Number = 2 },
                 new() { Number = 3 },
                 new() { Number = 4 },
-                new() { Number = 5 }
+                new() { Number = 11 }
             ]
         });
 

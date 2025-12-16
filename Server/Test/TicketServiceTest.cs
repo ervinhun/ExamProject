@@ -39,6 +39,8 @@ public class TicketServiceTest
     [Fact]
     public async Task CreateTicketShouldReturnTicketDto()
     {
+        await using var tx = await _ctx.Database.BeginTransactionAsync();
+
         CreateTicketRequestDto ticketDto = new CreateTicketRequestDto
         {
             GameInstanceId = ValidGameInstanceId,
@@ -52,6 +54,8 @@ public class TicketServiceTest
         Assert.Equal(ticketDto.GameTemplateId, result.GameTemplateId);
         Assert.Equal(ticketDto.SelectedNumbers, result.SelectedNumbers);
         Assert.Equal(ticketDto.Repeat, result.Repeat);
+        
+        await tx.RollbackAsync();
     }
 
     [Fact]
