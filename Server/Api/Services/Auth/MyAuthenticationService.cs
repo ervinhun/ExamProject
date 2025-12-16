@@ -1,3 +1,4 @@
+using System.Data;
 using System.Security.Cryptography;
 using Api.Dto.Auth.Request;
 using Api.Dto.Auth.Response;
@@ -11,7 +12,7 @@ using Microsoft.EntityFrameworkCore;
 using Utils;
 using Utils.Exceptions;
 
-namespace api.Services.Auth;
+namespace Api.Services.Auth;
 
 public class MyAuthenticationService(MyDbContext ctx, IJwt jwt) : IMyAuthenticationService
 {
@@ -33,7 +34,7 @@ public class MyAuthenticationService(MyDbContext ctx, IJwt jwt) : IMyAuthenticat
         var user = await ctx.Users.AnyAsync(u => u.Email == dto.Email);
         if (user)
         {
-            throw new AuthenticationException("User already exists");
+            throw new DuplicateNameException("User already exists");
         }
 
         HashUtils.CreatePasswordHash(dto.Password, out var hash, out var salt);

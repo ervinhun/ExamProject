@@ -1,6 +1,5 @@
 using System.Text;
-using api.Services;
-using api.Services.Auth;
+using Api.Services;
 using Api.Services.Auth;
 using Api.Services.Email;
 using DataAccess;
@@ -89,7 +88,7 @@ public static class Program
         };
     }
 
-    private static void ConfigureServices(IServiceCollection services, AppSettings appSettings)
+    public static void ConfigureServices(IServiceCollection services, AppSettings appSettings)
     {
         // Register AppSettings for dependency injection
         services.AddSingleton(appSettings);

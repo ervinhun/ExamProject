@@ -1,237 +1,190 @@
+using System.Text.Json;
 using Api.Dto.Game;
 using Api.Dto.Transaction;
 using DataAccess;
+using DataAccess.Entities.Finance;
 using DataAccess.Entities.Game;
 using DataAccess.Enums;
 using Microsoft.EntityFrameworkCore;
-using Utils.Exceptions;
 
 namespace Api.Services.Game;
 
-public class TicketService(MyDbContext ctx, IWalletTransactionsService walletTransactionsService) : ITicketService
+public class TicketService(MyDbContext ctx) : ITicketService
 {
-    // public async Task<TicketDto.TicketResponseDto> CreateTicket(Guid playerId,
-    //     TicketDto.CreateTicketRequestDto ticketDto)
-    // {
-    //     var data = await ctx.GameInstances
-    //         .Where(g => g.Id == ticketDto.GameInstanceId && g.Status == GameStatus.Active)
-    //         .Select(g => new
-    //         {
-    //             GameInstance = g,
-    //             GameTemplate = ctx.GameTemplates.FirstOrDefault(t => t.Id == g.GameTemplate.Id),
-    //             Wallet = ctx.Wallets.FirstOrDefault(w => w.PlayerId == playerId)
-    //         })
-    //         .FirstOrDefaultAsync();
-    //
-    //     if (data?.GameInstance == null)
-    //         throw new InvalidOperationException("Active game instance not found or the game is not active.");
-    //
-    //     if (data.GameTemplate == null)
-    //         throw new InvalidOperationException("Game template not found.");
-    //
-    //     if (data.Wallet == null)
-    //         throw new InvalidOperationException("Wallet not found.");
-    //
-    //     if (ticketDto.SelectedNumbers.Length < data.GameTemplate.MinNumbersPerTicket ||
-    //         ticketDto.SelectedNumbers.Length > data.GameTemplate.MaxNumbersPerTicket)
-    //         throw new InvalidOperationException("Invalid number of tickets");
-    //
-    //     var numbers = ticketDto.SelectedNumbers.OrderBy(n => n).ToList();
-    //     Dictionary<int, double> priceGrowthRule;
-    //
-    //     if (!string.IsNullOrWhiteSpace(data.GameTemplate.PriceGrowthRule))
-    //     {
-    //         // JSON exists → deserialize it
-    //         priceGrowthRule = JsonSerializer.Deserialize<Dictionary<int, double>>(
-    //             data.GameTemplate.PriceGrowthRule
-    //         )!;
-    //     }
-    //     else
-    //     {
-    //         // JSON missing → generate default rule
-    //         priceGrowthRule = new Dictionary<int, double>();
-    //
-    //         var j = 0;
-    //         for (var i = data.GameTemplate.MinNumbersPerTicket;
-    //              i <= data.GameTemplate.MaxNumbersPerTicket;
-    //              i++)
-    //         {
-    //             // basePrice * (2^j)
-    //             var price = (data.GameTemplate.BasePrice * Math.Pow(2, j));
-    //
-    //             priceGrowthRule.Add(i, price);
-    //             j++;
-    //         }
-    //     }
-    //
-    //     var priceOfTheTicket = priceGrowthRule[numbers.Count];
-    //     if (data.Wallet.Balance < priceOfTheTicket)
-    //         throw new InvalidOperationException("Insufficient funds");
-    //     data.Wallet.Balance -= priceOfTheTicket;
-    //     var ticket = new LotteryTicket
-    //     {
-    //         GameInstanceId = ticketDto.GameInstanceId,
-    //         GameTemplateId = data.GameTemplate.Id,
-    //         PlayerId = playerId,
-    //         FullPrice = priceOfTheTicket,
-    //         IsWinning = false,
-    //         IsPaid = false,
-    //         Repeatings = ticketDto.Repeat,
-    //         BoughtAt = DateTime.UtcNow,
-    //     };
-    //     ctx.LotteryTickets.Add(ticket);
-    //     await ctx.SaveChangesAsync();
-    //
-    //     Console.WriteLine("New ticket Id: " + ticket.Id);
-    //     foreach (var number in numbers)
-    //     {
-    //         ticket.PickedNumbers.Add(new PickedNumber
-    //             {
-    //                 TicketId = ticket.Id,
-    //                 Number = number
-    //             }
-    //         );
-    //     }
-    //
-    //     data.Wallet.Balance -= priceOfTheTicket;
-    //     await ctx.SaveChangesAsync();
-    //     await SaveTicketPurchaseHistory(ticket, data.Wallet.Id);
-    //     return ConvertTicketToTicketResponseDto(ticket);
-    // }
-    //
-    public async Task<List<TicketDto>> GetAllTicketsForPlayerId(
+    public async Task<TicketResponseDto> CreateTicket(Guid playerId,
+        CreateTicketRequestDto ticketDto)
+    {
+        var data = await ctx.GameInstances
+            .Where(g => g.Id == ticketDto.GameInstanceId && g.Status == GameStatus.Active)
+            .Select(g => new
+            {
+                GameInstance = g,
+                GameTemplate = ctx.GameTemplates.FirstOrDefault(t => t.Id == g.GameTemplate.Id),
+                Wallet = ctx.Wallets.FirstOrDefault(w => w.PlayerId == playerId)
+            })
+            .FirstOrDefaultAsync();
+
+        if (data?.GameInstance == null)
+            throw new InvalidOperationException("Active game instance not found or the game is not active.");
+
+        if (data.GameInstance.GameTemplateId != ticketDto.GameTemplateId)
+            throw new InvalidOperationException("Game template does not match game instance.");
+
+        if (data.Wallet == null)
+            throw new InvalidOperationException("Wallet not found.");
+
+        if (ticketDto.SelectedNumbers.Length < data.GameTemplate.MinNumbersPerTicket ||
+            ticketDto.SelectedNumbers.Length > data.GameTemplate.MaxNumbersPerTicket)
+            throw new InvalidOperationException("Invalid numbers on the ticket");
+
+        var numbers = ticketDto.SelectedNumbers.OrderBy(n => n).ToList();
+        Dictionary<int, double> priceGrowthRule;
+
+        if (!string.IsNullOrWhiteSpace(data.GameTemplate.PriceGrowthRule))
+        {
+            // JSON exists → deserialize it
+            priceGrowthRule = JsonSerializer.Deserialize<Dictionary<int, double>>(
+                data.GameTemplate.PriceGrowthRule
+            )!;
+        }
+        else
+        {
+            // JSON missing → generate default rule
+            priceGrowthRule = new Dictionary<int, double>();
+
+            var j = 0;
+            for (var i = data.GameTemplate.MinNumbersPerTicket;
+                 i <= data.GameTemplate.MaxNumbersPerTicket;
+                 i++)
+            {
+                // basePrice * (2^j)
+                var price = (data.GameTemplate.BasePrice * Math.Pow(2, j));
+
+                priceGrowthRule.Add(i, price);
+                j++;
+            }
+        }
+
+        var priceOfTheTicket = priceGrowthRule[numbers.Count];
+        if (data.Wallet.Balance < priceOfTheTicket)
+            throw new InvalidOperationException("Insufficient funds");
+        var ticket = new LotteryTicket
+        {
+            GameInstanceId = ticketDto.GameInstanceId,
+            GameTemplateId = data.GameTemplate.Id,
+            PlayerId = playerId,
+            FullPrice = priceOfTheTicket,
+            IsWinning = false,
+            IsPaid = false,
+            Repeatings = ticketDto.Repeat,
+            BoughtAt = DateTime.UtcNow,
+        };
+        ctx.LotteryTickets.Add(ticket);
+        await ctx.SaveChangesAsync();
+
+        Console.WriteLine("New ticket Id: " + ticket.Id);
+        foreach (var number in numbers)
+        {
+            ticket.PickedNumbers.Add(new PickedNumber
+                {
+                    TicketId = ticket.Id,
+                    Number = number
+                }
+            );
+        }
+        
+        await ctx.SaveChangesAsync();
+        await SaveTicketPurchaseHistory(ticket, data.Wallet.Id);
+        return ConvertTicketToTicketResponseDto(ticket);
+    }
+
+    public async Task<List<TicketResponseDto>> GetAllTicketsForPlayerId(
         Guid playerId)
     {
-        var tickets = await ctx.LotteryTickets.Include(t => t.PickedNumbers).Where(t => t.PlayerId == playerId)
-            .ToListAsync();
+        var tickets = ctx.LotteryTickets.Where(t => t.PlayerId == playerId).Include(t => t.PickedNumbers);
 
-        if (tickets.Count == 0) return [];
+        var gameInstance = ctx.GameInstances
+            .Include(i => i.GameTemplate)
+            .Where(i => i.Status == GameStatus.Active);
+
         
-        var ticketsDto = tickets.Select(ConvertTicketToTicketResponseDto).ToList();
+            var activeInstanceId = await gameInstance
+                .Select(i => i.Id)
+                .FirstOrDefaultAsync();
 
-        return ticketsDto;
+            tickets = tickets.Where(t => t.GameInstanceId == activeInstanceId).Include(t => t.PickedNumbers);
+
+        var ticketList = tickets
+            .Select(ConvertTicketToTicketResponseDto)
+            .ToList();
+
+        return ticketList;
     }
-    
-    
-    // public Task<List<TicketDto.TicketResponseDto>> GetAllTicketsForGameInstance(Guid gameInstanceId,
-    //     bool winningOnly = false)
-    // {
-    //     var gameInstance = ctx.GameInstances
-    //         .Include(i => i.GameTemplate);
-    //     if (gameInstance == null) throw new InvalidOperationException("Game instance not found");
-    //     return Task.FromResult(ctx.LotteryTickets.Where(t => t.GameInstanceId == gameInstanceId
-    //                                                          && t.IsWinning == winningOnly)
-    //         .Select(ConvertTicketToTicketResponseDto).ToList());
-    // }
-    //
-    //
-    // private async Task SaveTicketPurchaseHistory(LotteryTicket ticket, Guid walletId)
-    // {
-    //     try
-    //     {
-    //         var now = DateTime.UtcNow;
-    //         var transaction = new Transaction
-    //         {
-    //             UserId = ticket.PlayerId,
-    //             WalletId = walletId,
-    //             Name = "Ticket purchase",
-    //             Status = TransactionStatus.Approved,
-    //             Type = TransactionType.TicketPurchase,
-    //             Amount = ticket.FullPrice,
-    //             CreatedAt = now
-    //         };
-    //         ctx.Transactions.Add(transaction);
-    //         await ctx.SaveChangesAsync();
-    //         var history = new TransactionHistory
-    //         {
-    //             TransactionId = transaction.Id,
-    //             ActionUser = ticket.PlayerId,
-    //             Status = TransactionStatus.Approved,
-    //             Type = TransactionType.TicketPurchase
-    //         };
-    //         ctx.TransactionHistories.Add(history);
-    //         await ctx.SaveChangesAsync();
-    //     }
-    //     catch (Exception e)
-    //     {
-    //         Console.WriteLine("Transaction history failed: " + e.Message);
-    //     }
-    // }
-    //
-    private static TicketDto ConvertTicketToTicketResponseDto(LotteryTicket ticket)
+
+
+    public Task<List<TicketResponseDto>> GetAllTicketsForGameInstance(Guid gameInstanceId,
+        bool winningOnly = false)
     {
-        return new TicketDto
+        var gameInstance = ctx.GameInstances
+            .Include(i => i.GameTemplate);
+        if (gameInstance == null) throw new InvalidOperationException("Game instance not found");
+        return Task.FromResult(ctx.LotteryTickets.Where(t => t.GameInstanceId == gameInstanceId
+                                                             && t.IsWinning == winningOnly)
+            .Select(ConvertTicketToTicketResponseDto).ToList());
+    }
+
+    public Task PurchaseTicket(PurchaseTicketDto ticketDto)
+    {
+        throw new NotImplementedException();
+    }
+
+    private async Task SaveTicketPurchaseHistory(LotteryTicket ticket, Guid walletId)
+    {
+        try
+        {
+            var now = DateTime.UtcNow;
+            var transaction = new Transaction
+            {
+                UserId = ticket.PlayerId,
+                WalletId = walletId,
+                Name = "Ticket purchase",
+                Status = TransactionStatus.Approved,
+                Type = TransactionType.TicketPurchase,
+                Amount = ticket.FullPrice,
+                CreatedAt = now
+            };
+            ctx.Transactions.Add(transaction);
+            await ctx.SaveChangesAsync();
+            var history = new TransactionHistory
+            {
+                TransactionId = transaction.Id,
+                ActionUser = ticket.PlayerId,
+                Status = TransactionStatus.Approved,
+                Type = TransactionType.TicketPurchase
+            };
+            ctx.TransactionHistories.Add(history);
+            await ctx.SaveChangesAsync();
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine("Transaction history failed: " + e.Message);
+        }
+    }
+
+    private TicketResponseDto ConvertTicketToTicketResponseDto(LotteryTicket ticket)
+    {
+        return new TicketResponseDto
         {
             Id = ticket.Id,
             GameInstanceId = ticket.GameInstanceId,
-            PickedNumbers = ticket.PickedNumbers.Select(p => p.Number).ToArray(),
-            BoughtAt = ticket.BoughtAt,
+            GameTemplateId = ticket.GameTemplateId,
+            SelectedNumbers = ticket.PickedNumbers.Select(p => p.Number).ToArray(),
+            Repeat = ticket.Repeatings,
+            CreatedAt = ticket.BoughtAt,
+            UpdatedAt = ticket.BoughtAt,
             IsPaid = ticket.IsPaid,
             IsWinning = ticket.IsWinning,
-            FullPrice = ticket.FullPrice
+            TicketPrice = ticket.FullPrice
         };
-    }
-
-    public async Task PurchaseTicket(PurchaseTicketDto purchaseTicketDto)
-    {
-        var game = await ctx.GameInstances.Include(g => g.GameTemplate)
-            .FirstOrDefaultAsync(g => g.Id == purchaseTicketDto.GameInstanceId);
-        if (game == null || game.Status != GameStatus.Active)
-            throw new ServiceException("Game instance not found or is not active");
-        
-        // Validate number of selected numbers
-        var numbersCount = purchaseTicketDto.PickedNumbers.Length;
-        if (numbersCount < game.GameTemplate!.MinNumbersPerTicket ||
-            numbersCount > game.GameTemplate.MaxNumbersPerTicket)
-            throw new ServiceException(
-                $"Invalid number of selected numbers. Must be between {game.GameTemplate.MinNumbersPerTicket} and {game.GameTemplate.MaxNumbersPerTicket}");
-
-        // Calculate expected price: base price * 2^(numbersCount - minNumbers)
-        var basePrice = game.GameTemplate.BasePrice;
-        var minNumbers = game.GameTemplate.MinNumbersPerTicket;
-        var expectedPrice = basePrice * Math.Pow(2, numbersCount - minNumbers);
-
-        // Validate the price from DTO
-        var priceDifference = Math.Abs(purchaseTicketDto.FullPrice - expectedPrice);
-        var isValidPrice = priceDifference <= 0.01;
-
-        if (!isValidPrice)
-            throw new ServiceException(
-                $"Invalid ticket price. Expected {expectedPrice} but received {purchaseTicketDto.FullPrice}");
-
-        var ticket = new LotteryTicket
-        {
-            GameInstanceId = game.Id,
-            PlayerId = purchaseTicketDto.PlayerId,
-            FullPrice = purchaseTicketDto.FullPrice,
-            IsWinning = false,
-            BoughtAt = DateTime.UtcNow
-        };
-        
-        foreach (var pickedNumber in purchaseTicketDto.PickedNumbers)
-        {
-            ticket.PickedNumbers.Add(new PickedNumber
-            {
-                Number = pickedNumber,
-                Ticket = ticket
-            });
-        }
-
-        await ctx.LotteryTickets.AddAsync(ticket);
-        await ctx.SaveChangesAsync();
-
-        var transactionDto = new TransactionDto
-        {
-            UserId = purchaseTicketDto.PlayerId,
-            Name = "Ticket purchase",
-            WalletId = purchaseTicketDto.WalletId,
-            Amount = purchaseTicketDto.FullPrice,
-            Status = TransactionStatus.Requested,
-            Type = TransactionType.TicketPurchase,
-            PurchaseTicketId = ticket.Id,
-            CreatedAt = DateTime.UtcNow,
-        };
-
-        await walletTransactionsService.RegisterTransaction(purchaseTicketDto.PlayerId, transactionDto);
     }
 }
