@@ -1,20 +1,43 @@
 ﻿using Api.Dto.Game;
 using Api.Services.Game;
+using Api.Services.Management;
 using DataAccess;
 using DataAccess.Entities.Game;
+using Microsoft.EntityFrameworkCore;
 using Test.Util;
 
-namespace Test;
+namespace tests;
 
-public class TicketServiceTest(
-    MyDbContext ctx,
-    ISeeder seeder,
-    ITicketService ticketService)
+[Collection("Database collection")]
+
+public class TicketServiceTest
 {
-    private readonly Guid ExistingUserIdWhoCanBuyTickets = new Guid("1");
-    private readonly Guid ExistingUserIdWhoCanNotBuyTickets = new Guid("2");
-    private readonly Guid ValidGameInstanceId = new Guid("GameInstance");
-    private readonly Guid ValidGameTemplateId = new Guid("Gametemplate");
+    private readonly MyDbContext _ctx;
+    private readonly TicketService _ticketService;
+    private readonly DatabaseFixture _fixture;
+    private readonly Seeder _seeder;
+
+    public TicketServiceTest(DatabaseFixture fixture)
+    {
+        _fixture = fixture;
+
+        var options = new DbContextOptionsBuilder<MyDbContext>()
+            .UseNpgsql(fixture.ConnectionString)
+            .Options;
+
+        _ctx = new MyDbContext(options);
+
+        //var seeder = new Seeder(_ctx);
+        _seeder = new Seeder(_ctx);
+        _seeder.Seed().GetAwaiter().GetResult();
+        _ticketService = new TicketService(_ctx);
+    }
+
+
+    private Guid ExistingUserIdWhoCanBuyTickets => _seeder.Player1Id;
+    private Guid ExistingUserIdWhoCanNotBuyTickets => _seeder.UserWithoutWalletId;
+    private Guid ValidGameInstanceId => _seeder.GameInstanceId;
+    private Guid ValidGameTemplateId => _seeder.GameTemplateId;
 
     [Fact]
     public async Task CreateTicketShouldReturnTicketDto()
@@ -23,10 +46,10 @@ public class TicketServiceTest(
         {
             GameInstanceId = ValidGameInstanceId,
             GameTemplateId = ValidGameTemplateId,
-            SelectedNumbers = new [] { 1, 2, 3, 4, 5 },
+            SelectedNumbers = new[] { 1, 2, 3, 4, 5 },
             Repeat = 1
         };
-        var result = await ticketService.CreateTicket(ExistingUserIdWhoCanBuyTickets, ticketDto);
+        var result = await _ticketService.CreateTicket(ExistingUserIdWhoCanBuyTickets, ticketDto);
         Assert.NotNull(result);
         Assert.Equal(ticketDto.GameInstanceId, result.GameInstanceId);
         Assert.Equal(ticketDto.GameTemplateId, result.GameTemplateId);
@@ -39,95 +62,116 @@ public class TicketServiceTest(
     {
         TicketDto.CreateTicketRequestDto ticketDto = new TicketDto.CreateTicketRequestDto
         {
-            GameInstanceId = new Guid("GameInstanceIdNotValid"),
-            GameTemplateId =ValidGameTemplateId,
+            GameInstanceId = Guid.NewGuid(),
+            GameTemplateId = ValidGameTemplateId,
             SelectedNumbers = new int[] { 1, 2, 3, 4, 5 },
             Repeat = 1
         };
-        
-        await Assert.ThrowsAsync<InvalidOperationException>(() => ticketService.CreateTicket(ExistingUserIdWhoCanBuyTickets, ticketDto));
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            _ticketService.CreateTicket(ExistingUserIdWhoCanBuyTickets, ticketDto));
     }
-    
+
     [Fact]
     public async Task CreateTicketShouldThrowExceptionWhenGameTemplateIdIsIncorrect()
     {
         TicketDto.CreateTicketRequestDto ticketDto = new TicketDto.CreateTicketRequestDto
         {
             GameInstanceId = ValidGameInstanceId,
-            GameTemplateId = new Guid("NotAValidGameTemplateId"),
+            GameTemplateId = Guid.NewGuid(),
             SelectedNumbers = new int[] { 1, 2, 3, 4, 5 },
             Repeat = 1
         };
-        
-        await Assert.ThrowsAsync<InvalidOperationException>(() => ticketService.CreateTicket(ExistingUserIdWhoCanBuyTickets, ticketDto));
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            _ticketService.CreateTicket(ExistingUserIdWhoCanBuyTickets, ticketDto));
     }
-    
+
     [Fact]
     public async Task CreateTicketShouldThrowExceptionWhenPlayerDoesntHaveValidWallet()
     {
         TicketDto.CreateTicketRequestDto ticketDto = new TicketDto.CreateTicketRequestDto
         {
             GameInstanceId = ValidGameInstanceId,
-            GameTemplateId =ValidGameTemplateId,
+            GameTemplateId = ValidGameTemplateId,
             SelectedNumbers = new int[] { 1, 2, 3, 4, 5 },
             Repeat = 1
         };
-        
-        await Assert.ThrowsAsync<InvalidOperationException>(() => ticketService.CreateTicket(new Guid("InvalidPlayerSoItHasNoWallet"), ticketDto));
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            _ticketService.CreateTicket(_seeder.UserWithoutWalletId, ticketDto));
     }
-    
+
     [Fact]
-    public async Task CreateTicketShouldThrowExceptionWhenThereAreMoreOrLessNumbersThanInTemplate()
+    public async Task CreateTicketShouldThrowExceptionWhenThereAreMoreNumbersThanInTemplate()
     {
         TicketDto.CreateTicketRequestDto ticketDto = new TicketDto.CreateTicketRequestDto
         {
             GameInstanceId = ValidGameInstanceId,
-            GameTemplateId =ValidGameTemplateId,
-            SelectedNumbers = new int[] { 1, 2},
+            GameTemplateId = ValidGameTemplateId,
+            SelectedNumbers = new int[] { 1, 2 },
             Repeat = 1
         };
-        
-        await Assert.ThrowsAsync<InvalidOperationException>(() => ticketService.CreateTicket(ExistingUserIdWhoCanBuyTickets, ticketDto));
-        
-        ticketDto.SelectedNumbers = new []{1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20};
-        await Assert.ThrowsAsync<InvalidOperationException>(() => ticketService.CreateTicket(ExistingUserIdWhoCanBuyTickets, ticketDto));
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            _ticketService.CreateTicket(ExistingUserIdWhoCanBuyTickets, ticketDto));
     }
     
+    [Fact]
+    public async Task CreateTicketShouldThrowExceptionWhenThereAreLessNumbersThanInTemplate()
+    {
+        TicketDto.CreateTicketRequestDto ticketDto = new TicketDto.CreateTicketRequestDto
+        {
+            GameInstanceId = ValidGameInstanceId,
+            GameTemplateId = ValidGameTemplateId,
+            SelectedNumbers = new int[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20 },
+            Repeat = 1
+        };
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            _ticketService.CreateTicket(ExistingUserIdWhoCanBuyTickets, ticketDto));
+    }
+
     [Fact]
     public async Task CreateTicketShouldThrowExceptionWhenThePlayerDoesNotHaveEnoughMoneyToBuyTicket()
     {
         TicketDto.CreateTicketRequestDto ticketDto = new TicketDto.CreateTicketRequestDto
         {
             GameInstanceId = ValidGameInstanceId,
-            GameTemplateId =ValidGameTemplateId,
-            SelectedNumbers = new int[] { 1, 2},
+            GameTemplateId = ValidGameTemplateId,
+            SelectedNumbers = new int[] { 1, 2, 3, 4, 5 },
             Repeat = 1
         };
-        
-        await Assert.ThrowsAsync<InvalidOperationException>(() => ticketService.CreateTicket(ExistingUserIdWhoCanBuyTickets, ticketDto));
-        
-        ticketDto.SelectedNumbers = new []{1,2,3,4,5};
-        await Assert.ThrowsAsync<InvalidOperationException>(() => ticketService.CreateTicket(ExistingUserIdWhoCanNotBuyTickets, ticketDto));
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            _ticketService.CreateTicket(ExistingUserIdWhoCanNotBuyTickets, ticketDto));
     }
-    
+
     [Fact]
     public async Task GetAllTicketsForPlayerIdShouldReturnListOfTickets()
     {
-        var result = await ticketService.GetAllTicketsForPlayerId(ExistingUserIdWhoCanBuyTickets);
+        var result = await _ticketService.GetAllTicketsForPlayerId(ExistingUserIdWhoCanBuyTickets);
         Assert.NotEmpty(result);
+    }
+
+    [Fact]
+    public async Task GetAllTicketsForPlayerIdShouldReturnEmptyListWhenPlayerHasNoTickets()
+    {
+        var result = await _ticketService.GetAllTicketsForPlayerId(ExistingUserIdWhoCanNotBuyTickets);
+        Assert.Empty(result);
     }
 
     [Fact]
     public async Task GetAllTicketsForGameInstanceSuccess()
     {
-        var result = await ticketService.GetAllTicketsForGameInstance(ValidGameInstanceId);
+        var result = await _ticketService.GetAllTicketsForGameInstance(ValidGameInstanceId);
         Assert.NotEmpty(result);
     }
-    
+
     [Fact]
     public async Task GetAllTicketsForGameInstanceFail()
     {
-        var result = await ticketService.GetAllTicketsForGameInstance(new Guid("NotAValidGameInstanceId"));
+        var result = await _ticketService.GetAllTicketsForGameInstance(Guid.NewGuid());
         Assert.Empty(result);
     }
 }

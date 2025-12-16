@@ -1,22 +1,54 @@
 ﻿using System.Data;
+using Api.Configuration;
 using Api.Dto.Auth.Request;
-using api.Services;
+using Api.Dto.User;
+using api.Services.Auth;
+using Api.Services.Auth;
 using DataAccess;
+using Microsoft.EntityFrameworkCore;
 using Test.Util;
 using Utils.Exceptions;
 
 namespace Test;
 
-public class AuthTest(
-    MyDbContext ctx,
-    ISeeder seeder,
-    IMyAuthenticationService authService)
+[Collection("Database collection")]
+public class AuthTest
 {
-    
+    private readonly MyDbContext _ctx;
+    private readonly MyAuthenticationService _authService;
+    private readonly DatabaseFixture _fixture;
+    private readonly Seeder _seeder;
+
+    public AuthTest(DatabaseFixture fixture)
+    {
+        _fixture = fixture;
+
+        var options = new DbContextOptionsBuilder<MyDbContext>()
+            .UseNpgsql(fixture.ConnectionString)
+            .Options;
+
+        _ctx = new MyDbContext(options);
+
+        //var seeder = new Seeder(_ctx);
+        _seeder = new Seeder(_ctx);
+        _seeder.Seed().GetAwaiter().GetResult();
+
+        // Construct dependencies MANUALLY
+        var jwtSettings = new JwtSettings
+        {
+            Secret = "SuperSecretJwtSigningKey_32Chars!",
+            Issuer = "localhost",
+            Audience = "localhost",
+            ExpirationMinutes = 30,
+            RefreshTokenDays = 1
+        };
+        _authService = new MyAuthenticationService(_ctx, new Jwt(jwtSettings, _ctx));
+    }
+
     [Fact]
     public async Task LoginReturnsJwt()
     {
-        var result = await authService.Login(new LoginRequestDto
+        var result = await _authService.Login(new LoginRequestDto
         {
             Email = "admin@admin.com",
             Password = "admin"
@@ -35,12 +67,12 @@ public class AuthTest(
     public async Task LoginThrowsExceptionWhenPasswordIsWrongOrEmpty()
     {
         await Assert.ThrowsAsync<AuthenticationException>(() =>
-            authService.Login(new LoginRequestDto { Email = "admin@admin.com", Password = "" }));
-        await Assert.ThrowsAsync<AuthenticationException>(() => authService.Login(new LoginRequestDto
+            _authService.Login(new LoginRequestDto { Email = "admin@admin.com", Password = "" }));
+        await Assert.ThrowsAsync<AuthenticationException>(() => _authService.Login(new LoginRequestDto
             { Email = "admin@admin.com", Password = "DefinitelyNotTheRightPassword" }));
         await Assert.ThrowsAsync<AuthenticationException>(() =>
-            authService.Login(new LoginRequestDto { Email = "", Password = "admin" }));
-        await Assert.ThrowsAsync<AuthenticationException>(() => authService.Login(new LoginRequestDto
+            _authService.Login(new LoginRequestDto { Email = "", Password = "admin" }));
+        await Assert.ThrowsAsync<AuthenticationException>(() => _authService.Login(new LoginRequestDto
             { Email = "not.existing.email@email.com", Password = "SuperStrongPassword1234" }));
     }
 
@@ -48,23 +80,31 @@ public class AuthTest(
     [Fact]
     public async Task RegisterReturnsJwtWhichCanVerifyAgain()
     {
-        var result = await authService.Register(new RegisterRequestDto
+        var userDob = new DateTime(1990, 01, 01, 0, 0, 0, DateTimeKind.Utc);
+        
+        var resultBool = await _authService.RequestMembership(new RequestRegistrationDto()
         {
             FirstName = "Test",
             LastName = "Testsson",
-            Dob = new DateTime(1990, 01, 01),
-            Email = "test@email.dk",
+            Dob = userDob,
+            Email = "test99@email.dk",
+            PhoneNo = "+4512345678",
             Password = "asædkjlsadjsadjlksad"
         });
+        
+        Assert.True(resultBool);
+
+        var result = await _ctx.Players
+            .FirstOrDefaultAsync(p => p.Email == "test99@email.dk");
+
 
         Assert.NotNull(result);
         Assert.Equal("Test", result.FirstName);
         Assert.Equal("Testsson", result.LastName);
-        Assert.Equal(DateTime.Parse("1990-01-01"), result.DateOfBirth);
+        Assert.Equal(userDob, result.DateOfBirth);
         Assert.False(result.Activated);
         Assert.False(result.IsDeleted);
-        Assert.Equal(result.CreatedAt, result.UpdatedAt);
-        Assert.Equal("test@email.dk", result.Email);
+        Assert.Equal("test99@email.dk", result.Email);
         Assert.NotNull(result.PasswordHash);
         Assert.NotNull(result.PasswordSalt);
         Assert.Null(result.ResetPasswordToken);
@@ -74,14 +114,14 @@ public class AuthTest(
     [Fact]
     public async Task RegisterWhenUserAlreadyExistsThrowsException()
     {
-        await Assert.ThrowsAsync<DuplicateNameException>(() => authService.Register(
+        await Assert.ThrowsAsync<DuplicateNameException>(() => _authService.Register(
             new RegisterRequestDto
             {
                 Email = "admin@admin.com",
                 Password = "admin",
                 FirstName = "Admin",
                 LastName = "Adminsson",
-                Dob = new DateTime(1990, 01, 01)
+                Dob = new DateTime(1990, 01, 01, 0, 0, 0, DateTimeKind.Utc)
             }));
     }
 }

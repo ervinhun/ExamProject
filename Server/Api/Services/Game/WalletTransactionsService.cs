@@ -126,6 +126,8 @@ public class WalletTransactionsService(MyDbContext ctx) : IWalletTransactionsSer
             Amount = transactionDto.Amount,
             CreatedAt = DateTime.UtcNow,
         };
+        await ctx.SaveChangesAsync();
+        
         var transactionHistory = new TransactionHistory
         {
             TransactionId = transaction.Id,
@@ -145,6 +147,7 @@ public class WalletTransactionsService(MyDbContext ctx) : IWalletTransactionsSer
         {
             var transaction = await ctx.Transactions.Where(t => t.Status == TransactionStatus.Requested)
                 .FirstOrDefaultAsync(t => t.Id == transactionId);
+            Console.WriteLine("TransactionIdAtTheApproval: " + transactionId);
             if (transaction == null) throw new ServiceException("Transaction not found");
             var transactionHistory = new TransactionHistory
             {

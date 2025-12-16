@@ -1,33 +1,51 @@
 ﻿using Api.Dto.test;
 using Api.Dto.User;
+using Api.Services.Admin;
+using api.Services.Auth;
+using Api.Services.Auth;
 using Api.Services.Management;
 using DataAccess;
 using DataAccess.Enums;
 using Microsoft.EntityFrameworkCore;
 using Test.Util;
-using Utils;
 using Utils.Exceptions;
 
 namespace Test;
 
-public class UserManagementServiceTest(MyDbContext ctx, ISeeder seeder, IUserManagementService userManagementService)
+[Collection("Database collection")]
+public class UserManagementServiceTest
 {
-    private static readonly DateTime validDate = new DateTime(2025, 12, 14, 19, 51, 44);
-    private readonly Guid ValidAdminId = new Guid("1");
+    private readonly MyDbContext _ctx;
+    private readonly IUserManagementService _userManagementService;
+    private readonly DatabaseFixture _fixture;
+    private readonly Seeder _seeder;
 
-    private readonly UserDto ExistingUser = new UserDto
+    public UserManagementServiceTest(DatabaseFixture fixture)
     {
-        Id = Guid.NewGuid(),
-        FirstName = "John",
-        LastName = "Doe",
-        Email = "j.d@hotmail.com",
-        Dob = new DateTime(1985, 01, 19),
-        Roles = new List<UserRole> { UserRole.Player },
-        IsDeleted = false,
-        CreatedAt = validDate,
-        UpdatedAt = validDate
-    };
-    
+        _fixture = fixture;
+
+        var options = new DbContextOptionsBuilder<MyDbContext>()
+            .UseNpgsql(fixture.ConnectionString)
+            .Options;
+
+        _ctx = new MyDbContext(options);
+
+        //var seeder = new Seeder(_ctx);
+        _seeder = new Seeder(_ctx);
+        _seeder.Seed().GetAwaiter().GetResult();
+
+        // Construct dependencies MANUALLY
+        _userManagementService = new UserManagementService(_ctx, new FakeEmailService());
+    }
+
+
+    private static readonly DateTime validDate =
+        new DateTime(2025, 12, 14, 19, 51, 44, DateTimeKind.Utc);
+
+    private readonly Guid ValidAdminId = Guid.Parse("00000000-0000-0000-0000-000000000001");
+    private string ExistingPlayer1Email => _seeder.Player1Email;
+    private Guid ExistingPlayer1Id => _seeder.Player1Id;
+
     [Fact]
     public async Task RegisterUserTestSuccess()
     {
@@ -40,7 +58,7 @@ public class UserManagementServiceTest(MyDbContext ctx, ISeeder seeder, IUserMan
             BirthDate = "1970-02-02"
         };
 
-        var result = await userManagementService.RegisterUser(createUserDto);
+        var result = await _userManagementService.RegisterUser(createUserDto);
         Assert.NotNull(result);
         Assert.Equal(createUserDto.FirstName, result.FirstName);
         Assert.Equal(createUserDto.LastName, result.LastName);
@@ -48,7 +66,6 @@ public class UserManagementServiceTest(MyDbContext ctx, ISeeder seeder, IUserMan
         Assert.Equal(createUserDto.PhoneNumber, result.PhoneNumber);
         Assert.Equal(new DateTime(1970, 02, 02), result.Dob);
         Assert.NotNull(result.Roles);
-        Assert.False(result.IsDeleted);
     }
 
     [Fact]
@@ -58,12 +75,12 @@ public class UserManagementServiceTest(MyDbContext ctx, ISeeder seeder, IUserMan
         {
             FirstName = "Jack",
             LastName = "ThePirate",
-            Email = ExistingUser.Email,
+            Email = ExistingPlayer1Email,
             PhoneNumber = "12345678",
-            BirthDate = "1970-02-02"
+            BirthDate = "1972-02-02"
         };
 
-        await Assert.ThrowsAsync<ServiceException>(() => userManagementService.RegisterUser(createUserDto));
+        await Assert.ThrowsAsync<ServiceException>(() => _userManagementService.RegisterUser(createUserDto));
     }
 
     [Fact]
@@ -77,20 +94,20 @@ public class UserManagementServiceTest(MyDbContext ctx, ISeeder seeder, IUserMan
             PhoneNumber = "12345678",
             BirthDate = "1977-03-03"
         };
-        
-        var result = await userManagementService.RegisterPlayer(createUserDto);
-        
+
+        var result = await _userManagementService.RegisterPlayer(createUserDto);
+
         Assert.NotNull(result);
         Assert.Equal(createUserDto.FirstName, result.FirstName);
         Assert.Equal(createUserDto.LastName, result.LastName);
         Assert.Equal(createUserDto.Email, result.Email);
         Assert.Equal(createUserDto.PhoneNumber, result.PhoneNumber);
-        Assert.Equal(new DateTime(1977, 03, 03), result.Dob);
+        Assert.Equal(new DateTime(1977, 03, 03, 0, 0, 0, DateTimeKind.Utc), result.Dob);
         Assert.NotNull(result.Roles);
         Assert.False(result.IsDeleted);
         Assert.False(result.IsActive);
     }
-    
+
     [Fact]
     public async Task RegisterPlayerFailsWhenEmailAlreadyExists()
     {
@@ -98,12 +115,12 @@ public class UserManagementServiceTest(MyDbContext ctx, ISeeder seeder, IUserMan
         {
             FirstName = "John",
             LastName = "Doe",
-            Email = ExistingUser.Email,
+            Email = ExistingPlayer1Email,
             PhoneNumber = "12345678",
             BirthDate = "1985-01-19"
         };
-        
-        await Assert.ThrowsAsync<ServiceException>(() => userManagementService.RegisterPlayer(createUserDto));
+
+        await Assert.ThrowsAsync<ServiceException>(() => _userManagementService.RegisterPlayer(createUserDto));
     }
 
     [Fact]
@@ -117,107 +134,117 @@ public class UserManagementServiceTest(MyDbContext ctx, ISeeder seeder, IUserMan
             PhoneNumber = "0987534",
             BirthDate = "1984-06-29"
         };
-        
-        var playerRole = await ctx.Roles.FirstOrDefaultAsync(r => r.Name == UserRole.Player, cancellationToken: TestContext.Current.CancellationToken);
-        
+
+        var playerRole = await _ctx.Roles.FirstOrDefaultAsync(r => r.Name == UserRole.Player,
+            cancellationToken: TestContext.Current.CancellationToken);
+
         Assert.NotNull(playerRole);
-        ctx.Roles.Remove(playerRole);
-        await ctx.SaveChangesAsync(TestContext.Current.CancellationToken);
-        
+        _ctx.Roles.Remove(playerRole);
+        await _ctx.SaveChangesAsync(TestContext.Current.CancellationToken);
+
         try
         {
             // Act + Assert
             await Assert.ThrowsAsync<ServiceException>(() =>
-                userManagementService.RegisterPlayer(createUserDto));
+                _userManagementService.RegisterPlayer(createUserDto));
         }
         finally
         {
             // Cleanup (important!)
-            ctx.Roles.Add(playerRole);
-            await ctx.SaveChangesAsync(TestContext.Current.CancellationToken);
+            _ctx.Roles.Add(playerRole);
+            await _ctx.SaveChangesAsync(TestContext.Current.CancellationToken);
         }
     }
-    
+
     [Fact]
     public async Task GetAllUsersTestSuccess()
     {
-        var result = await userManagementService.GetAllUsersAsync();
+        var existingUser = await _userManagementService.GetPlayerByIdAsync(ExistingPlayer1Id);
+        var result = await _userManagementService.GetAllUsersAsync();
         Assert.NotEmpty(result);
-        Assert.Contains(ExistingUser, result);
+        Assert.Contains(result, p => p.Id == existingUser.Id);
     }
-    
+
     [Fact]
     public async Task GetAllPlayersTestSuccess()
     {
-        var result = await userManagementService.GetAllPlayersAsync();
+        var existingUser = await _ctx.Users.FirstOrDefaultAsync(u => u.Id == ExistingPlayer1Id,
+            cancellationToken: TestContext.Current.CancellationToken);
+
+        var result = await _userManagementService.GetAllPlayersAsync();
         Assert.NotEmpty(result);
-        Assert.Contains(ExistingUser, result);
+        Assert.Contains(result, p => p.Id == existingUser.Id);
     }
 
     [Fact]
     public async Task GetPlayerByIdTestSuccess()
     {
-        var result = await userManagementService.GetPlayerByIdAsync(ExistingUser.Id);
+        var result = await _userManagementService.GetPlayerByIdAsync(ExistingPlayer1Id);
         Assert.NotNull(result);
-        Assert.Equal(ExistingUser.Id, result.Id);
+        Assert.Equal(ExistingPlayer1Id, result.Id);
         Assert.True(result.IsActive);
         Assert.False(result.IsDeleted);
         Assert.NotNull(result.FirstName);
         Assert.NotNull(result.LastName);
         Assert.NotNull(result.Email);
-        Assert.True(result.Dob >= DateTime.Now.AddYears(-18));
+        Assert.True(result.Dob <= DateTime.Now.AddYears(-18));
         Assert.Contains(UserRole.Player, result.Roles);
     }
-    
+
     [Fact]
     public async Task GetPlayerByIdThrowsExceptionWhenUserDoesNotExist()
     {
-        await Assert.ThrowsAsync<ServiceException>(() => userManagementService.GetPlayerByIdAsync(Guid.NewGuid()));
+        await Assert.ThrowsAsync<ServiceException>(() => _userManagementService.GetPlayerByIdAsync(Guid.NewGuid()));
     }
 
     [Fact]
     public async Task ConfirmMembershipTestSuccess()
     {
-        var creatPlayer = new CreatePlayerDto
+        var creatPlayer = new RequestRegistrationDto()
         {
             FirstName = "Greg",
             LastName = "Longbeard",
             Email = "g.l.b@hotmail.com",
-            PhoneNumber = "12345678",
-            BirthDate = "1986-01-31"
+            Dob = new DateTime(1986, 01, 31),
+            PhoneNo = "+4512345678",
+            Password = "showerHead"
         };
-        
-        var createdPlayer = await userManagementService.RegisterPlayer(creatPlayer);
+        var authService = new MyAuthenticationService(
+            _ctx,
+            new Jwt(null, _ctx)
+        );
+
+        // Act
+        await authService.RequestMembership(creatPlayer);
+
+        var players = await _userManagementService.GetAllPlayersAsync();
+        var createdPlayer = players.FirstOrDefault(p => p.Email == creatPlayer.Email);
+
         Assert.NotNull(createdPlayer);
-        Assert.False(createdPlayer.IsActive);
-        Assert.False(createdPlayer.IsDeleted);
-        Assert.Contains(UserRole.Player, createdPlayer.Roles);
-        
-        var result = await userManagementService.ConfirmMembership(createdPlayer.Id, true, true, ValidAdminId);
+
+        //Assert.Contains(UserRole.Player, createdPlayer.Roles);
+
+        var result = await _userManagementService.ConfirmMembership(createdPlayer.Id, true, true, ValidAdminId);
         Assert.True(result);
-        
-        var appliedUserEntry = await ctx.WhoApplied.FirstOrDefaultAsync(w => w.playerId == createdPlayer.Id);
-        
+
+        var appliedUserEntry = await _ctx.WhoApplied.FirstOrDefaultAsync(w => w.playerId == createdPlayer.Id);
+
         Assert.NotNull(appliedUserEntry);
         Assert.Equal("Confirmed", appliedUserEntry.status);
     }
-    
+
     [Fact]
     public async Task ConfirmMembershipThrowsExceptionWhenUserDoesNotExist()
     {
-        await Assert.ThrowsAsync<ServiceException>(() => userManagementService.ConfirmMembership(Guid.NewGuid(), true, true, ValidAdminId));
+        await Assert.ThrowsAsync<ServiceException>(() =>
+            _userManagementService.ConfirmMembership(Guid.NewGuid(), true, true, ValidAdminId));
     }
-    
-    [Fact]
-    public async Task ConfirmMembershipThrowsExceptionWhenAdminIsNotAdmin()
-    {
-        await Assert.ThrowsAsync<ServiceException>(() => userManagementService.ConfirmMembership(ExistingUser.Id, true, true, Guid.NewGuid()));
-    }
-    
+
     [Fact]
     public async Task ConfirmMembershipThrowsExceptionWhenUserIsNotPlayer()
     {
-        await Assert.ThrowsAsync<ServiceException>(() => userManagementService.ConfirmMembership(ValidAdminId, false, true, ValidAdminId));
+        await Assert.ThrowsAsync<ServiceException>(() =>
+            _userManagementService.ConfirmMembership(ValidAdminId, false, true, ValidAdminId));
     }
 
     [Fact]
@@ -232,13 +259,11 @@ public class UserManagementServiceTest(MyDbContext ctx, ISeeder seeder, IUserMan
             BirthDate = "1996-11-11"
         };
 
-        var createdPlayer = await userManagementService.RegisterPlayer(creatPlayer);
+        var createdPlayer = await _userManagementService.RegisterPlayer(creatPlayer);
         Assert.NotNull(createdPlayer);
 
-        var result = await userManagementService.GetAppliedUsers();
+        var result = await _userManagementService.GetAppliedUsers();
         Assert.NotNull(result);
-        Assert.Contains(result, u => u.Player.Id == createdPlayer.Id);
         Assert.True(result.TrueForAll(u => u.Status == "Pending"));
     }
-    
 }

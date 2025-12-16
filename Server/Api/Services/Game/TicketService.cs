@@ -27,8 +27,8 @@ public class TicketService(MyDbContext ctx) : ITicketService
         if (data?.GameInstance == null)
             throw new InvalidOperationException("Active game instance not found or the game is not active.");
 
-        if (data.GameTemplate == null)
-            throw new InvalidOperationException("Game template not found.");
+        if (data.GameInstance.GameTemplateId != ticketDto.GameTemplateId)
+            throw new InvalidOperationException("Game template does not match game instance.");
 
         if (data.Wallet == null)
             throw new InvalidOperationException("Wallet not found.");
