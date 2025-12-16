@@ -34,12 +34,12 @@ public class WalletTransactionServiceTest
 
     private Guid ExistingUserWithWallet => _seeder.Player1Id;
     private Guid ExistingUserWithWalletID => _seeder.Player1WalletId;
-    private double ValidWalletBalance = 100;
+    private readonly double ValidWalletBalance = 100;
     private Guid ValidTransactionId => _seeder.PendingDepositTransactionId;
     private Guid ExistingUserWithoutWallet => _seeder.UserWithoutWalletId;
-    private string AlreadyExistingMobilePayTransactionNumber = "1234";
-    private String ValidMobilePayTransactionNumber = "1234567890";
-    private DateTime dateTimeToUse = new DateTime(2025, 12, 14, 9, 07, 33, DateTimeKind.Utc);
+    private readonly string AlreadyExistingMobilePayTransactionNumber = "1234";
+    private readonly String ValidMobilePayTransactionNumber = "1234567890";
+    private readonly DateTime dateTimeToUse = new DateTime(2025, 12, 14, 9, 07, 33, DateTimeKind.Utc);
 
 
     [Fact]
@@ -141,7 +141,6 @@ public class WalletTransactionServiceTest
         await _walletTransactionsService.ApproveTransaction(ExistingUserWithWallet, ValidTransactionId);
         var BalanceAfterConfirmingTransaction =
             await _walletTransactionsService.GetWalletForPlayerId(ExistingUserWithWallet);
-        ValidWalletBalance += 200;
         Assert.NotEqual(BalanceBeforeConfirmingTransaction.Balance, BalanceAfterConfirmingTransaction.Balance);
         Assert.Equal(BalanceBeforeConfirmingTransaction.Balance + 200, BalanceAfterConfirmingTransaction.Balance);
         Assert.Equal(TransactionStatus.Approved,
