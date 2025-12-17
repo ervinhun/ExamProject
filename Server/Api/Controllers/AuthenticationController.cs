@@ -4,7 +4,7 @@ using Api.Dto.Auth.Request;
 using Api.Dto.Auth.Response;
 using Api.Dto.User;
 using Api.Helpers;
-using api.Services;
+using Api.Services;
 using Api.Services.Auth;
 using DataAccess.Enums;
 using Microsoft.AspNetCore.Identity.Data;

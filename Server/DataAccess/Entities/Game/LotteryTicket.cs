@@ -13,6 +13,7 @@ public class LotteryTicket
     public double FullPrice { get; set; }
     public ICollection<PickedNumber> PickedNumbers { get; set; } = new HashSet<PickedNumber>();
     public bool IsWinning { get; set; }
+    public int Repeatings { get; set; }
     public bool IsPaid { get; set; }
     
     public bool IsExpired { get; set; }
