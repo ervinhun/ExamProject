@@ -7,6 +7,7 @@ import { authAtom } from "@core/atoms/auth.ts";
 import { PurchaseTicketDto } from "@core/types/ticket.ts";
 import { ticketApi } from "@core/api/controllers/ticket.ts";
 import { useParams, useNavigate } from "react-router-dom";
+import { calculateExponentialPrice } from "@utils/priceUtils.ts";
 
 export default function Play() {
     const { gameId } = useParams();
@@ -34,13 +35,7 @@ export default function Play() {
     const canSubmit = picked.length >= minNumbers;
     
     // Exponential pricing - doubles for each additional number
-    // Example: if base=20, min=5: 5->20, 6->40, 7->80, 8->160
-    const calculatePrice = (numCount: number) => {
-        if (numCount < minNumbers) return 0;
-        return baseTicketPrice * Math.pow(2, numCount - minNumbers);
-    };
-    
-    const totalPrice = calculatePrice(picked.length);
+    const totalPrice = calculateExponentialPrice(picked.length, minNumbers, baseTicketPrice);
     const overBalance = wallet?.balance !== undefined && totalPrice > wallet.balance;
 
     const toggleNumber = (num: number) => {

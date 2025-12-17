@@ -12,8 +12,6 @@ public class CreateGameTemplateRequestDto
     public double BasePrice { get; set; }
     public int MinNumbersPerTicket { get; set; }
     public int MaxNumbersPerTicket { get; set; }
-    public string? PriceGrowthRule { get; set; }
-
 }
 
 public class GameTemplateResponseDto : CreateGameTemplateRequestDto
@@ -33,6 +31,8 @@ public class GameInstanceDto
     public Guid CreatedById { get; set; }
     public bool IsAutoRepeatable {get; set;}
     public int Participants { get; set; }
+    public int TicketsSold { get; set; }
+    public double PrizePool { get; set; }
     public GameStatus Status { get; set; }
     public int? DrawDayOfWeek { get; set; }
     public TimeOnly? DrawTimeOfDay { get; set; }
@@ -43,7 +43,6 @@ public class GameInstanceDto
     public bool IsDrawn { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
-    public string? PriceGrowthRule { get; set; }
 }
 
 public class UpdateGameDto
@@ -52,4 +51,9 @@ public class UpdateGameDto
     public DateOnly? EndDate { get; set; }
     public bool? IsClosed { get; set; }
     public DateTime? ClosedAt { get; set; }
+}
+
+public class DrawWinningNumbersDto {
+    public Guid GameInstanceId { get; set; }
+    public int[]  WinningNumbers { get; set; }
 }

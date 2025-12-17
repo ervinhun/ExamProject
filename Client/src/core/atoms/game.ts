@@ -64,3 +64,16 @@ export const fetchActiveGamesAtom = atom(null,
         });
     }
 );
+
+export const allGamesAtom = atom<GameInstanceDto[]>([]);
+
+export const fetchAllGamesAtom = atom(null,
+    async (_get, set) => {
+        await gameApi.getAllGameInstances().then((res) => {
+            set(allGamesAtom, res);
+            return res;
+        }).catch((err) => {
+            throw err;
+        });
+    }
+);

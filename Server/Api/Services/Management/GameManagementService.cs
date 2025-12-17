@@ -1,6 +1,5 @@
 using System.Globalization;
 using Api.Dto.Game;
-using Api.Dto.test;
 using DataAccess;
 using DataAccess.Entities.Game;
 using DataAccess.Enums;
@@ -34,7 +33,6 @@ public class GameManagementService(MyDbContext ctx) : IGameManagementService
                 BasePrice = gameTemplateDto.BasePrice,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = default,
-                PriceGrowthRule = gameTemplateDto.PriceGrowthRule
             };
 
             await ctx.GameTemplates.AddAsync(newGameTemplate);
@@ -67,7 +65,6 @@ public class GameManagementService(MyDbContext ctx) : IGameManagementService
                     MaxNumbersPerTicket = gameTemplate.MaxNumbersPerTicket,
                     CreatedAt = gameTemplate.CreatedAt,
                     UpdatedAt = gameTemplate.UpdatedAt,
-                    PriceGrowthRule = gameTemplate.PriceGrowthRule
                 });
             }
 
@@ -83,7 +80,9 @@ public class GameManagementService(MyDbContext ctx) : IGameManagementService
     {
         try
         {
-            var activeGames = ctx.GameInstances.Include(g => g.GameTemplate).Where(g => g.Status == GameStatus.Active)
+            var activeGames = ctx.GameInstances
+                .Include(g => g.GameTemplate)
+                .Where(g => g.Status == GameStatus.Active)
                 .ToList();
             var activeGamesDtos = new List<GameInstanceDto>();
             foreach (var game in activeGames)
@@ -101,14 +100,21 @@ public class GameManagementService(MyDbContext ctx) : IGameManagementService
                     Id = game.GameTemplate.Id,
                     CreatedAt = game.GameTemplate.CreatedAt,
                     UpdatedAt = game.GameTemplate.CreatedAt,
-                    PriceGrowthRule = game.GameTemplate.PriceGrowthRule
-                    
                 };
 
                 var participants = await ctx.Players
-                    .Where(p => p.LotteryTickets.Any(lt => lt.GameInstanceId == game.Id && lt.IsPaid))
+                    .Where(p => p.LotteryTickets.Any(lt => lt.GameInstanceId == game.Id))
                     .CountAsync();
 
+                var ticketsSold = await ctx.LotteryTickets
+                    .Where(lt => lt.GameInstanceId == game.Id)
+                    .CountAsync();
+
+                // Calculate prize pool by summing all ticket prices for this game
+                var prizePool = await ctx.LotteryTickets
+                    .Where(lt => lt.GameInstanceId == game.Id)
+                    .SumAsync(lt => lt.FullPrice);
+            
                 activeGamesDtos.Add(new GameInstanceDto
                 {
                     Id = game.Id,
@@ -117,6 +123,8 @@ public class GameManagementService(MyDbContext ctx) : IGameManagementService
                     Status = game.Status,
                     Week = game.Week,
                     Participants = participants,
+                    TicketsSold = ticketsSold,
+                    PrizePool = prizePool,
                     IsAutoRepeatable = game.IsAutoRepeatable,
                     DrawDate = game.DrawDate,
                     DrawDayOfWeek = game.DrawDayOfWeek,
@@ -124,7 +132,6 @@ public class GameManagementService(MyDbContext ctx) : IGameManagementService
                     IsDrawn = game.IsDrawn,
                     CreatedAt = game.CreatedAt,
                     UpdatedAt = game.UpdatedAt,
-                    PriceGrowthRule = game.GameTemplate.PriceGrowthRule
                 });
             }
 
@@ -189,6 +196,154 @@ public class GameManagementService(MyDbContext ctx) : IGameManagementService
 
             await ctx.GameInstances.AddAsync(gameInstance);
             await ctx.SaveChangesAsync();
+        }
+        catch (Exception e)
+        {
+            throw new ServiceException(e.Message, e);
+        }
+    }
+
+    public async Task DrawWinningNumbersForGameInstance(DrawWinningNumbersDto drawWinningNumbersDto)
+    {
+        try
+        {
+            var game = await ctx.GameInstances.Include(gi => gi.GameTemplate).FirstOrDefaultAsync(gi => gi.Id == drawWinningNumbersDto.GameInstanceId);
+            if (game == null) throw new ServiceException("Game instance not found");
+            if (game.GameTemplate!.MaxWinningNumbers != drawWinningNumbersDto.WinningNumbers.Length) throw new ServiceException("Number of winning numbers do not match");
+            if (game.IsExpired) throw new ServiceException("Game expired");
+            if (game.IsDrawn) throw new ServiceException("Game drawn");
+            
+            // Validate draw date/day
+            var today = DateTime.UtcNow.Date;
+            var todayDayOfWeek = (int)DateTime.UtcNow.DayOfWeek;
+            
+            if (game.IsAutoRepeatable)
+            {
+                // For auto-repeatable games, check if draw day of week matches today
+                if (game.DrawDayOfWeek.HasValue && game.DrawDayOfWeek.Value != todayDayOfWeek)
+                {
+                    var scheduledDay = (DayOfWeek)game.DrawDayOfWeek.Value;
+                    var currentDay = DateTime.UtcNow.DayOfWeek;
+                    throw new ServiceException($"Cannot draw winning numbers. Game draw is scheduled for {scheduledDay} but today is {currentDay}");
+                }
+            }
+            else
+            {
+                // For one-time games, check if draw date is today
+                if (game.DrawDate.HasValue && game.DrawDate.Value.Date != today)
+                {
+                    throw new ServiceException($"Cannot draw winning numbers. Game is scheduled for {game.DrawDate.Value.Date:yyyy-MM-dd} but today is {today:yyyy-MM-dd}");
+                }
+            }
+            
+            var winningNumbersList = drawWinningNumbersDto.WinningNumbers.ToList();
+            
+            foreach (var winningNumber in winningNumbersList)
+            {
+                game.WinningNumbers.Add(new  WinningNumber
+                {
+                    GameInstanceId = game.Id,
+                    Number = winningNumber
+                });
+            }
+            
+            game.IsDrawn = true;
+            game.IsExpired = true;
+            game.Status = GameStatus.Completed;
+            await ctx.SaveChangesAsync();
+            
+            var ticketsForGame = await ctx.LotteryTickets
+                .Include(lt => lt.PickedNumbers)
+                .Where(lt => lt.GameInstanceId == game.Id)
+                .ToListAsync();
+            
+            foreach (var ticket in ticketsForGame)
+            {
+                var pickedNumbers = ticket.PickedNumbers.Select(pn=>pn.Number).ToList();
+                var matchingNumbers = pickedNumbers.Intersect(winningNumbersList).Count();
+                if (matchingNumbers == game.GameTemplate.MaxWinningNumbers)
+                {
+                    ticket.IsWinning = true;
+                }
+
+                ticket.IsExpired = true;
+            }
+            await ctx.SaveChangesAsync();
+            
+            if (game.IsAutoRepeatable)
+            {
+                var nextWeek = game.Week + 1;
+                var maxWeeksInYear = ISOWeek.GetWeeksInYear(DateTime.UtcNow.Year);
+                
+                if (nextWeek > maxWeeksInYear)
+                {
+                    nextWeek = 1;
+                }
+                
+                await StartGameInstance(new GameInstanceDto
+                {
+                    TemplateId = game.GameTemplateId,
+                    IsAutoRepeatable = true,
+                    Status = GameStatus.Active,
+                    Week = nextWeek,
+                    DrawDayOfWeek = game.DrawDayOfWeek,
+                    DrawTimeOfDay = game.DrawTimeOfDay,
+                    DrawDate = game.DrawDate,
+                    WinningNumbers = [],
+                    IsExpired = false,
+                    IsDrawn = false,
+                    CreatedAt = DateTime.UtcNow,
+                });
+            }
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+            throw;
+        }
+    }
+
+    public async Task<List<GameInstanceDto>> GetAllGames()
+    {
+        try
+        {
+            var games = await ctx.GameInstances.Include(gi => gi.GameTemplate).AsNoTracking().ToListAsync();
+            var activeGamesDtos = new List<GameInstanceDto>();
+            foreach (var game in games)
+            {
+                var gameTemplateDto = new GameTemplateResponseDto
+                {
+                    Name = game.GameTemplate!.Name,
+                    Description = game.GameTemplate!.Description,
+                    PoolOfNumbers = game.GameTemplate!.PoolOfNumbers,
+                    GameType = game.GameTemplate.GameType.ToString(),
+                    MaxWinningNumbers = game.GameTemplate.MaxWinningNumbers,
+                    BasePrice = game.GameTemplate.BasePrice,
+                    MinNumbersPerTicket = game.GameTemplate.MinNumbersPerTicket,
+                    MaxNumbersPerTicket = game.GameTemplate.MaxNumbersPerTicket,
+                    Id = game.GameTemplate.Id,
+                    CreatedAt = game.GameTemplate.CreatedAt,
+                    UpdatedAt = game.GameTemplate.CreatedAt,
+                };
+                
+                activeGamesDtos.Add(new GameInstanceDto
+                {
+                    Id = game.Id,
+                    CreatedById = game.CreatedById,
+                    Template = gameTemplateDto,
+                    Status = game.Status,
+                    Week = game.Week,
+                    IsAutoRepeatable = game.IsAutoRepeatable,
+                    DrawDate = game.DrawDate,
+                    DrawDayOfWeek = game.DrawDayOfWeek,
+                    DrawTimeOfDay = game.DrawTimeOfDay,
+                    IsDrawn = game.IsDrawn,
+                    CreatedAt = game.CreatedAt,
+                    UpdatedAt = game.UpdatedAt,
+                });
+            }
+            
+            return activeGamesDtos;
         }
         catch (Exception e)
         {

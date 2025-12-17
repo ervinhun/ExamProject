@@ -1,40 +1,27 @@
 import {useEffect} from "react";
 import {useAtom} from "jotai";
-import {activeGamesAtom} from "@core/atoms/game.ts";
+import {allGamesAtom, fetchAllGamesAtom} from "@core/atoms/game.ts";
 import {fetchTicketsForPlayerAtom, myTicketsAtom} from "@core/atoms/tickets.ts";
+import {formatCurrency} from "@utils/priceUtils.ts";
+import {formatDate} from "@utils/dateUtils.ts";
+import {getTicketStatus} from "@utils/gameUtils.ts";
 
 export default function MyTickets() {
 
     const [,fetchTicketsForPlayer] = useAtom(fetchTicketsForPlayerAtom);
-    const [gameInstance] = useAtom(activeGamesAtom)
+    const [,fetchAllGames] = useAtom(fetchAllGamesAtom);
+    const [gameInstance] = useAtom(allGamesAtom)
     const [myTickets] = useAtom(myTicketsAtom)
 
     useEffect(() => {
         fetchTicketsForPlayer();
-    }, [fetchTicketsForPlayer]);
+        fetchAllGames();
+    }, [fetchTicketsForPlayer, fetchAllGames]);
 
     // Sort tickets by purchase date (latest first)
     const sortedTickets = [...myTickets].sort((a, b) => {
         return new Date(b.boughtAt).getTime() - new Date(a.boughtAt).getTime();
     });
-
-    const formatCurrency = (amount: number) => {
-        return new Intl.NumberFormat('da-DK', { 
-            style: 'currency', 
-            currency: 'DKK',
-            minimumFractionDigits: 0,
-            maximumFractionDigits: 0
-        }).format(amount);
-    };
-
-    const formatDate = (dateStr: string) => {
-        const date = new Date(dateStr);
-        return date.toLocaleDateString("da-DK", { 
-            day: "2-digit",
-            month: "2-digit",
-            year: "numeric"
-        });
-    };
 
 
     return (
@@ -74,40 +61,30 @@ export default function MyTickets() {
 
                                 <tbody>
                                 {sortedTickets.map((t) => {
-                                    const gameInstanceColor = gameInstance.find(
+                                    const game = gameInstance.find(
                                         gi => gi.id === t.gameInstanceId
                                     );
 
-                                    // Default values if something missing
-                                    const status = gameInstanceColor?.status ?? 0;
+                                    // Get ticket status
+                                    const gameStatus = typeof game?.status === 'number' ? game.status : 0;
                                     const isWinning = t.isWinning ?? false;
-
-                                    // Status badge
-                                    let statusBadge = "";
-                                    let statusText = "";
-                                    if (isWinning) {
-                                        statusBadge = "badge-success";
-                                        statusText = "🎉 Won!";
-                                    } else if (status === 2) {
-                                        statusBadge = "badge-error";
-                                        statusText = "Lost";
-                                    } else if (status === 1) {
-                                        statusBadge = "badge-warning";
-                                        statusText = "In Progress";
-                                    } else {
-                                        statusBadge = "badge-info";
-                                        statusText = "Pending";
-                                    }
+                                    const isDrawn = game?.isDrawn ?? false;
+                                    
+                                    const { badge: statusBadge, text: statusText } = getTicketStatus(
+                                        gameStatus,
+                                        isDrawn,
+                                        isWinning
+                                    );
 
                                     return (
                                         <tr key={t.id}>
                                             <td>
                                                 <div>
                                                     <div className="font-semibold">
-                                                        {gameInstanceColor?.template?.name ?? "Unknown Game"}
+                                                        {game?.template?.name ?? "Unknown Game"}
                                                     </div>
                                                     <div className="text-sm text-gray-500">
-                                                        Week {gameInstanceColor?.week ?? "?"}
+                                                        Week {game?.week ?? "?"}
                                                     </div>
                                                 </div>
                                             </td>

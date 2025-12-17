@@ -27,7 +27,6 @@ export interface GameTemplateDto {
     minNumbersPerTicket: number;
     maxNumbersPerTicket: number;
     basePrice: number;
-    priceGrowthRule?: string;
     createdAt?: string;
     updatedAt?: string;
 }
@@ -44,6 +43,8 @@ export interface GameInstanceDto {
     week: number;
     isDrawn: boolean;
     participants: number;
+    ticketsSold: number;
+    prizePool: number;
     isExpired: boolean;
     winningNumbers: number[];
     createdAt: string;

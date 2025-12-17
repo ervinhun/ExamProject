@@ -25,9 +25,6 @@ public class GameTemplate
     [Range(0, double.MaxValue)]
     public double BasePrice { get; set; }
     
-    [MaxLength(512)]
-    public string? PriceGrowthRule { get; set; }
-    
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; }
 }

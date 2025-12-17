@@ -2,7 +2,8 @@ import {useEffect} from "react";
 import {NavLink} from "react-router-dom";
 import {useAtom} from "jotai";
 import {activeGamesAtom, fetchActiveGamesAtom} from "@core/atoms/game";
-import {mapGameStatus} from "@core/types/game";
+import {formatDate, mapDayOfWeek} from "@utils/dateUtils";
+import {getStatusColor, getGameStatus} from "@utils/gameUtils";
 import lott from "@ui/assets/lott.png";
 
 export default function GamesDashboard() {
@@ -10,42 +11,8 @@ export default function GamesDashboard() {
     const [, fetchActiveGames] = useAtom(fetchActiveGamesAtom);
 
     useEffect(() => {
-        if (activeGames.length === 0) {
-            fetchActiveGames();
-        }
+        fetchActiveGames();
     }, []);
-
-    const formatDate = (dateStr: string | Date | undefined) => {
-        if (!dateStr) return "N/A";
-        const date = new Date(dateStr);
-        return date.toLocaleDateString("da-DK", {
-            day: "2-digit",
-            month: "2-digit",
-            year: "numeric",
-            hour: "2-digit",
-            minute: "2-digit",
-            hour12: false
-        });
-    };
-
-    const mapDayOfWeek = (dayNum: number | undefined) => {
-        const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-        if (dayNum === undefined || dayNum < 0 || dayNum > 6) return "N/A";
-        return days[dayNum];
-    };
-
-    const getStatusColor = (status: string) => {
-        switch (status) {
-            case "Active":
-                return "badge-success";
-            case "Pending Draw":
-                return "badge-warning";
-            case "Completed":
-                return "badge-info";
-            default:
-                return "badge-ghost";
-        }
-    };
 
     const getGameTypeColor = (type: string) => {
         return type === "Lotto" ? "badge-custom-pink" : "badge-custom-light-blue";
@@ -88,7 +55,7 @@ export default function GamesDashboard() {
                         </div>
                     ) : (
                         activeGames.map((game) => {
-                            const statusText = mapGameStatus(game.status);
+                            const statusText = getGameStatus(game);
                             const dateText = game.isAutoRepeatable
                                 ? `${mapDayOfWeek(game.drawDayOfWeek)}, ${game.drawTimeOfDay?.substring(0, 5)}`
                                 : formatDate(game.drawDate);
