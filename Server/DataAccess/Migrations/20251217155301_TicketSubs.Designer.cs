@@ -3,6 +3,7 @@ using System;
 using DataAccess;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace DataAccess.Migrations
 {
     [DbContext(typeof(MyDbContext))]
-    partial class MyDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251217155301_TicketSubs")]
+    partial class TicketSubs
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -305,10 +308,7 @@ namespace DataAccess.Migrations
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<int?>("Week")
-                        .HasColumnType("integer");
-
-                    b.Property<int?>("Year")
+                    b.Property<int>("Week")
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
@@ -409,7 +409,7 @@ namespace DataAccess.Migrations
                     b.Property<int>("Number")
                         .HasColumnType("integer");
 
-                    b.Property<Guid?>("TicketId")
+                    b.Property<Guid>("TicketId")
                         .HasColumnType("uuid");
 
                     b.Property<Guid?>("TicketSubscriptionId")
@@ -586,7 +586,8 @@ namespace DataAccess.Migrations
                     b.HasOne("DataAccess.Entities.Game.LotteryTicket", "Ticket")
                         .WithMany("PickedNumbers")
                         .HasForeignKey("TicketId")
-                        .OnDelete(DeleteBehavior.Restrict);
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
                     b.HasOne("DataAccess.Entities.Game.TicketSubscription", null)
                         .WithMany("PickedNumbers")

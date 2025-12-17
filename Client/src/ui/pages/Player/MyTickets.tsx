@@ -1,7 +1,7 @@
 import {useEffect} from "react";
 import {useAtom} from "jotai";
 import {allGamesAtom, fetchAllGamesAtom} from "@core/atoms/game.ts";
-import {fetchTicketsForPlayerAtom, myTicketsAtom} from "@core/atoms/tickets.ts";
+import {fetchSubscribedTicketsForPlayerAtom, fetchTicketsForPlayerAtom, mySubscribedTicketsAtom, myTicketsAtom} from "@core/atoms/tickets.ts";
 import {formatCurrency} from "@utils/priceUtils.ts";
 import {formatDate} from "@utils/dateUtils.ts";
 import {getTicketStatus} from "@utils/gameUtils.ts";
@@ -9,12 +9,15 @@ import {getTicketStatus} from "@utils/gameUtils.ts";
 export default function MyTickets() {
 
     const [,fetchTicketsForPlayer] = useAtom(fetchTicketsForPlayerAtom);
+    const [,fetchSubscribedTicketsForPlayer] = useAtom(fetchSubscribedTicketsForPlayerAtom);
     const [,fetchAllGames] = useAtom(fetchAllGamesAtom);
     const [gameInstance] = useAtom(allGamesAtom)
     const [myTickets] = useAtom(myTicketsAtom)
+    const [mySubscribedTickets] = useAtom(mySubscribedTicketsAtom)
 
     useEffect(() => {
         fetchTicketsForPlayer();
+        fetchSubscribedTicketsForPlayer();
         fetchAllGames();
     }, [fetchTicketsForPlayer, fetchAllGames]);
 
@@ -35,9 +38,78 @@ export default function MyTickets() {
                     </div>
                 </div>
 
+                {/* Active Subscriptions */}
+                {mySubscribedTickets.length > 0 && (
+                    <div className="bg-green-50 p-6 rounded-xl shadow-md">
+                        <h2 className="text-2xl font-semibold mb-4 flex items-center gap-2">
+                            <span>🔄 Active Subscriptions</span>
+                        </h2>
+                        <div className="overflow-x-auto">
+                            <table className="table table-zebra w-full">
+                                <thead>
+                                    <tr>
+                                        <th>Game</th>
+                                        <th>Numbers</th>
+                                        <th>Price per Draw</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                {mySubscribedTickets.map((sub) => (
+                                    <tr key={sub.gameTemplateId}>
+                                        <td>
+                                            <div>
+                                                <div className="font-semibold">
+                                                    {sub.gameTemplate?.name ?? "Unknown Game"}
+                                                </div>
+                                                <div className="text-sm text-gray-500">
+                                                    Auto-renewing subscription
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div className="flex flex-wrap gap-2">
+                                                {sub.pickedNumbers.map(n => (
+                                                    <div
+                                                        key={`${sub.gameTemplateId}-${n}`}
+                                                        className="w-9 h-9 flex items-center justify-center rounded-full bg-green-600 text-white font-semibold shadow-md"
+                                                    >
+                                                        {n}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </td>
+                                        <td className="font-semibold text-green-600">
+                                            {formatCurrency(sub.price)}
+                                        </td>
+                                        <td>
+                                            <span className={`badge ${sub.isExpired ? 'badge-error' : 'badge-success'} badge-lg`}>
+                                                {sub.isExpired ? 'Expired' : 'Active'}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <button 
+                                                className="btn btn-sm btn-error"
+                                                onClick={() => {
+                                                    // TODO: Add cancel subscription functionality
+                                                    alert('Cancel subscription feature coming soon!');
+                                                }}
+                                            >
+                                                Cancel
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                )}
+
                 {/* Active Tickets */}
                 <div className="bg-amber-50 p-6 rounded-xl shadow-md">
-                    <h2 className="text-2xl font-semibold mb-4">Active Tickets</h2>
+                    <h2 className="text-2xl font-semibold mb-4">My Tickets</h2>
 
                     {sortedTickets.length === 0 ? (
                         <div className="text-center py-8">

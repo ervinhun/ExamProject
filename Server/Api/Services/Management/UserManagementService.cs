@@ -47,7 +47,7 @@ public class UserManagementService(MyDbContext ctx, IEmailService emailService) 
                 Email = user.Email,
                 Roles = user.Roles.Select(r => r.Name).ToList(),
                 PhoneNumber = user.PhoneNumber,
-                CreatedAt = DateTimeHelper.ToCopenhagen(user.CreatedAt),
+                CreatedAt = (DateTime)DateTimeHelper.ToCopenhagen(user.CreatedAt)!,
             };
         }
         catch (DbUpdateException e)
@@ -135,7 +135,7 @@ public class UserManagementService(MyDbContext ctx, IEmailService emailService) 
                 LastName = user.LastName,
                 Email = user.Email,
                 PhoneNumber = user.PhoneNumber,
-                CreatedAt = DateTimeHelper.ToCopenhagen(user.CreatedAt)
+                CreatedAt = (DateTime)DateTimeHelper.ToCopenhagen(user.CreatedAt)!
             });
         }
 
@@ -157,7 +157,7 @@ public class UserManagementService(MyDbContext ctx, IEmailService emailService) 
                 Email = player.Email,
                 IsActive = player.Activated,
                 PhoneNumber = player.PhoneNumber,
-                CreatedAt = DateTimeHelper.ToCopenhagen(player.CreatedAt)
+                CreatedAt = (DateTime)DateTimeHelper.ToCopenhagen(player.CreatedAt)!
             });
         }
 
@@ -301,7 +301,7 @@ public class UserManagementService(MyDbContext ctx, IEmailService emailService) 
                     Dob = a.Player.DateOfBirth,
                     IsActive = a.Player.Activated,
                     PhoneNumber = a.Player.PhoneNumber,
-                    CreatedAt = DateTimeHelper.ToCopenhagen(a.Player.CreatedAt)
+                    CreatedAt = (DateTime)DateTimeHelper.ToCopenhagen(a.Player.CreatedAt)!
                 }
             });
         }
@@ -357,8 +357,8 @@ public class UserManagementService(MyDbContext ctx, IEmailService emailService) 
             LastName = user.LastName,
             Email = user.Email,
             PhoneNumber = user.PhoneNumber,
-            CreatedAt = DateTimeHelper.ToCopenhagen(user.CreatedAt),
-            UpdatedAt = DateTimeHelper.ToCopenhagen(user.UpdatedAt)
+            CreatedAt = (DateTime)DateTimeHelper.ToCopenhagen(user.CreatedAt)!,
+            UpdatedAt = (DateTime)DateTimeHelper.ToCopenhagen(user.UpdatedAt)!
         };
     }
 

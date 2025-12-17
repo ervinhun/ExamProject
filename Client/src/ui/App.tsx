@@ -8,7 +8,7 @@ import Wallet from "./pages/Player/Wallet.tsx";
 import MyBoards from "./pages/Player/Boards/MyBoards.tsx";
 import CreateBoard from "./pages/Player/Boards/CreateBoard.tsx";
 import RepeatingBoards from "./pages/Player/Boards/RepeatingBoards.tsx";
-import GameHistory from "./pages/GameHistory.tsx";
+
 import WinningBoards from "./pages/Player/History/WinningBoards.tsx";
 import Profile from "./pages/Player/Profile.tsx";
 import Dashboard from "./pages/Admin/Dashboard.tsx";
@@ -30,6 +30,7 @@ import Applications from "@ui/pages/Admin/Players/Applications.tsx";
 import MyTickets from "@ui/pages/Player/MyTickets.tsx";
 import Play from "@ui/pages/Games/Play.tsx";
 import GamesDashboard from "@ui/pages/Games/GamesDashboard.tsx";
+import GamesHistory from './pages/Admin/Games/GamesHistory.tsx';
 
 const router = createBrowserRouter([
     {
@@ -57,7 +58,7 @@ const router = createBrowserRouter([
                     {path: "/games", element: <GamesDashboard/>},
                     {path: "/games/play/lotto/:gameId", element: <Play/>},
 
-                    {path: "/history/games", element: <GameHistory/>},
+                    {path: "/history/games", element: <GamesHistory/>},
                     {path: "/history/wins", element: <WinningBoards/>},
 
 
@@ -77,7 +78,7 @@ const router = createBrowserRouter([
                     {path: "/admin/games/overview", element: <GamesOverview/>},
                     {path: "/admin/games/start", element: <StartGame/>},
                     {path: "/admin/games/draw/:gameId", element: <DrawNumbers/>},
-                    {path: "/admin/games/history", element: <GameHistory/>},
+                    {path: "/admin/games/history", element: <GamesHistory/>},
                     {path: "/admin/games/boards", element: <WinningBoardsAdmin/>},
                     {path: "/admin/games/draw/:gameId", element: <DrawNumbers/>},
                     // {path: "/admin/templates", element: <GameTemplatesList/>},

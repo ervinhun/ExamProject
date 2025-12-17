@@ -25,5 +25,13 @@ export const transactionApi = {
                 method: "POST"
             }
         });
+    },
+
+    getAllTransactions: (): Promise<TransactionDto[]> => {
+        return api<TransactionDto[]>(`${endpoint}/get-transactions`, {
+            init: {
+                method: "GET"
+            }
+        });
     }
 }

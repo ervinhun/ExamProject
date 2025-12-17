@@ -36,7 +36,7 @@ export const mapTransactionType = (type: number | string): string => {
             case 0: return "Deposit";
             case 1: return "Withdrawal";
             case 2: return "TicketPurchase";
-            case 3: return "RewardPayout";
+            case 3: return "TicketSubscription";
             case 4: return "Refund";
             case 5: return "SystemAdjustment";
             default: return "Unknown";

@@ -6,50 +6,28 @@ import {mapTransactionStatus, mapTransactionType} from "@core/types/transaction"
 import {AppliedUser} from "@core/types/users.ts";
 import {userApi} from "@core/api/controllers/user.ts";
 import getAge from "@utils/getAge.ts";
+import {activeGamesAtom, fetchActiveGamesAtom} from "@core/atoms/game";
+import {getNextGame, getNextDrawTime, calculateCountdown} from "@utils/countdownUtils";
 
+// Countdown hook
+function useCountdown(targetDate: Date | null) {
+    const [countdown, setCountdown] = useState(() => calculateCountdown(targetDate));
 
-// ---------- UTILS ----------
-function getNextSaturdayAt17() {
-    const now = new Date();
-    const target = new Date();
+    useEffect(() => {
+        if (!targetDate) {
+            setCountdown({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+            return;
+        }
 
-    const day = now.getDay(); // 0=Sun, 6=Sat
-    const daysToSaturday = (6 - day + 7) % 7;
+        const interval = setInterval(() => {
+            setCountdown(calculateCountdown(targetDate));
+        }, 1000);
 
-    target.setDate(now.getDate() + daysToSaturday);
-    target.setHours(17, 0, 0, 0);
+        return () => clearInterval(interval);
+    }, [targetDate]);
 
-    // If it's already Saturday 17:00 or later → next week
-    if (now > target) {
-        target.setDate(target.getDate() + 7);
-    }
-
-    return target;
+    return countdown;
 }
-
-// Main countdown hook
-// function useCountdown() {
-//     const [remaining, setRemaining] = useState(() => {
-//         return getNextSaturdayAt17().getTime() - Date.now();
-//     });
-
-//     useEffect(() => {
-//         const interval = setInterval(() => {
-//             setRemaining(getNextSaturdayAt17().getTime() - Date.now());
-//         }, 1000);
-
-//         return () => clearInterval(interval);
-//     }, []);
-
-//     const totalSeconds = Math.max(0, Math.floor(remaining / 1000));
-
-//     const days = Math.floor(totalSeconds / (3600 * 24));
-//     const hours = Math.floor((totalSeconds % (3600 * 24)) / 3600);
-//     const minutes = Math.floor((totalSeconds % 3600) / 60);
-//     const seconds = totalSeconds % 60;
-
-//     return {days, hours, minutes, seconds};
-// }
 
 // ---------- COMPONENT ----------
 export default function Dashboard() {
@@ -58,7 +36,13 @@ export default function Dashboard() {
     const [, fetchPendingTransactions] = useAtom(fetchPendingTransactionsAtom);
     const [, approveTransaction] = useAtom(approveTransactionAtom);
     const [appliedPlayers, setAppliedPlayers] = useState<AppliedUser[]>([]);
-
+    const [activeGames] = useAtom(activeGamesAtom);
+    const [, fetchActiveGames] = useAtom(fetchActiveGamesAtom);
+    
+    // Get the next game and its countdown
+    const nextGame = getNextGame(activeGames);
+    const nextDrawTime = nextGame ? getNextDrawTime(nextGame) : null;
+    const countdown = useCountdown(nextDrawTime);
 
     const stats = {
         activeGames: 3,
@@ -70,37 +54,23 @@ export default function Dashboard() {
     };
 
     useEffect(() => {
-        if (pendingTransactions.length === 0) {
-            fetchPendingTransactions().catch((err) => {
-                console.error("Error fetching pending transactions:", err);
-            });
-        }
+        fetchPendingTransactions().catch((err) => {
+            console.error("Error fetching pending transactions:", err);
+        });
+        fetchActiveGames().catch((err) => {
+            console.error("Error fetching active games:", err);
+        });
     }, []);
 
     useEffect(() => {
-        if (appliedPlayers.length === 0) {
-            userApi.getAllAppliedUsers().then((data) => {
-                setAppliedPlayers(data);
-            });
-        }
+        userApi.getAllAppliedUsers().then((data) => {
+            setAppliedPlayers(data);
+        });
     }, []);
 
     for (const p of appliedPlayers) {
         p.age = getAge(p.player.dob);
     }
-
-    const confirmTransaction = async (id: number) => {
-        // TODO: Implement actual transaction confirmation API call
-        await approveTransaction(id).then(() => {
-            console.log("Transaction confirmed:", id);
-        }).catch((err) => {
-            console.error("Error confirming transaction:", err);
-        }).finally(() => {
-            fetchPendingTransactions().catch((err) => {
-                console.error("Error fetching pending transactions:", err);
-            });
-        });
-    };
 
     const formatDate = (dateStr: string) => {
         const date = new Date(dateStr);
@@ -112,21 +82,6 @@ export default function Dashboard() {
             minute: "2-digit",
             hour12: false
         });
-    };
-
-    const getStatusColor = (status: string) => {
-        switch (status) {
-            case "Active":
-                return "badge-success";
-            case "Pending Draw":
-                return "badge-warning";
-            case "Pending":
-                return "badge-warning";
-            case "Completed":
-                return "badge-info";
-            default:
-                return "badge-ghost";
-        }
     };
 
     const confirmPlayer = async (userId: string, isApproved: boolean, isActive: boolean) => {
@@ -153,12 +108,11 @@ export default function Dashboard() {
     }
 
     return (
-        <div className="container mx-auto px-4 py-6 my-7">
+        <div className="container mx-auto">
             <div className="space-y-8">
                 {/* Header */}
                 <div className="flex items-center gap-4 pb-4 border-b-2 border-primary">
-
-                    <div>
+                    <div className="flex-1">
                         <h1 className="text-4xl font-bold text-primary">Dashboard</h1>
                         <p className="text-base text-base-content/70 mt-1">Overview of your lottery system</p>
                     </div>
@@ -202,9 +156,21 @@ export default function Dashboard() {
                                           d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
                                 </svg>
                             </div>
-                            <div className="stat-title text-primary-content opacity-80">Next Draw</div>
-                            <div className="stat-value text-primary-content">
-                                {/* {countdown.days}d {countdown.hours}h {countdown.minutes}m */}
+                            <div className="stat-title text-primary-content opacity-80">
+                                Next Draw
+                                {nextGame && <span className="text-xs ml-2">({nextGame.template?.name})</span>}
+                            </div>
+                            <div className="stat-value text-primary-content text-2xl">
+                                {nextGame ? (
+                                    <>
+                                        {countdown.days > 0 && <>{countdown.days}d </>}
+                                        {String(countdown.hours).padStart(2, '0')}:
+                                        {String(countdown.minutes).padStart(2, '0')}:
+                                        {String(countdown.seconds).padStart(2, '0')}
+                                    </>
+                                ) : (
+                                    <span className="text-lg">No active games</span>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -290,20 +256,6 @@ export default function Dashboard() {
                                         pendingTransactions.map(t => {
                                             const statusText = mapTransactionStatus(t.status);
                                             const typeText = mapTransactionType(t.type);
-                                            const getStatusBadge = () => {
-                                                switch (statusText) {
-                                                    case "Approved":
-                                                        return "badge-success";
-                                                    case "Pending":
-                                                        return "badge-warning";
-                                                    case "Rejected":
-                                                        return "badge-error";
-                                                    case "Canceled":
-                                                        return "badge-ghost";
-                                                    default:
-                                                        return "badge-ghost";
-                                                }
-                                            };
 
                                             return (
                                                 <tr key={t.id}>
@@ -319,7 +271,7 @@ export default function Dashboard() {
                                                                 className="badge badge-success badge-sm">Approved</span>
                                                         ) : (
                                                             <button
-                                                                onClick={() => confirmTransaction(t.id)}
+                                                                onClick={() => approveTransaction(t.id)}
                                                                 className="btn btn-xs btn-primary"
                                                             >
                                                                 Confirm

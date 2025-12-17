@@ -55,6 +55,19 @@ export const gameApi = {
                 body: JSON.stringify(drawnNumbers)
             }
         });
-    }
+    },
 
+    createSubscription: async (subscriptionData: {
+        gameInstanceId: string;
+        playerId: string;
+        walletId: string;
+        selectedNumbers: number[];
+    }): Promise<void> => {
+        return await api<void>(`${endpoint}/subscriptions/create`, {
+            init: {
+                method: "POST",
+                body: JSON.stringify(subscriptionData)
+            }
+        });
+    }
 }

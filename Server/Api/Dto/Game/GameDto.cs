@@ -32,6 +32,7 @@ public class GameInstanceDto
     public bool IsAutoRepeatable {get; set;}
     public int Participants { get; set; }
     public int TicketsSold { get; set; }
+    public int TicketsWon { get; set; }
     public double PrizePool { get; set; }
     public GameStatus Status { get; set; }
     public int? DrawDayOfWeek { get; set; }
@@ -39,6 +40,7 @@ public class GameInstanceDto
     public DateTime? DrawDate { get; set; }
     public ICollection<int> WinningNumbers { get; set; } = new HashSet<int>();
     public int Week { get; set; }
+    public int Year { get; set; }
     public bool IsExpired { get; set; }
     public bool IsDrawn { get; set; }
     public DateTime CreatedAt { get; set; }

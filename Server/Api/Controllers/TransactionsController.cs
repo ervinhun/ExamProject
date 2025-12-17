@@ -56,5 +56,20 @@ public class TransactionsController(IWalletTransactionsService walletTransaction
             return BadRequest(new {message = ex.Message});
         }
     }
+
+    [Authorize(Roles = "admin,superadmin")]
+    [HttpGet("get-transactions")]
+    public async Task<IActionResult> GetTransactions()
+    {
+        try
+        {
+            var transactions = await walletTransactionsService.GetAllTransactions();
+            return Ok(transactions);
+        }
+        catch (ServiceException e)
+        {
+            return StatusCode(500, new {message = e.Message});
+        }
+    }
     
 }

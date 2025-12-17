@@ -2,7 +2,7 @@ import {useEffect} from "react";
 import {NavLink} from "react-router-dom";
 import {useAtom} from "jotai";
 import {activeGamesAtom, fetchActiveGamesAtom} from "@core/atoms/game";
-import {formatDate, mapDayOfWeek} from "@utils/dateUtils";
+import {formatDate, formatDateTime, mapDayOfWeek} from "@utils/dateUtils";
 import {getStatusColor, getGameStatus} from "@utils/gameUtils";
 import lott from "@ui/assets/lott.png";
 
@@ -58,7 +58,9 @@ export default function GamesDashboard() {
                             const statusText = getGameStatus(game);
                             const dateText = game.isAutoRepeatable
                                 ? `${mapDayOfWeek(game.drawDayOfWeek)}, ${game.drawTimeOfDay?.substring(0, 5)}`
-                                : formatDate(game.drawDate);
+                                : (game.drawDate ? formatDateTime(game.drawDate) : 'N/A');
+                            const isPendingDraw = statusText === "Pending Draw";
+                            
                             return (
                                 <div key={game.id}
                                      className="card bg-base-200 border border-base-300 rounded-lg shadow-lg hover:shadow-xl transition-shadow overflow-hidden w-120">
@@ -124,17 +126,39 @@ export default function GamesDashboard() {
                                         </div>
 
                                         {/* Action Button */}
-                                        <NavLink
-                                            to={`play/${game.template?.gameType?.toLowerCase()}/${game.id}`}
-                                            className="mt-6 inline-flex items-center text-white bg-primary hover:bg-primary-focus border-0 focus:ring-4 focus:ring-primary/30 shadow-sm font-medium rounded-lg text-sm px-5 py-2.5 transition-colors"
-                                        >
-                                            Play Now
-                                            <svg className="w-4 h-4 ms-1.5 -me-0.5" xmlns="http://www.w3.org/2000/svg"
-                                                 fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
-                                                      d="M19 12H5m14 0-4 4m4-4-4-4"/>
-                                            </svg>
-                                        </NavLink>
+                                        {isPendingDraw ? (
+                                            <div className="mt-6 space-y-3">
+                                                <div className="alert alert-warning shadow-lg">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current flex-shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                                    </svg>
+                                                    <span className="text-sm font-medium">Draw in progress - cannot buy tickets</span>
+                                                </div>
+                                                <button
+                                                    disabled
+                                                    className="w-full inline-flex justify-center items-center text-white bg-warning/60 cursor-not-allowed border-0 font-semibold rounded-lg text-sm px-5 py-3"
+                                                >
+                                                    <svg className="w-5 h-5 mr-2 animate-spin" xmlns="http://www.w3.org/2000/svg"
+                                                         fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
+                                                              d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                                    </svg>
+                                                    Draw Pending
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <NavLink
+                                                to={`play/${game.template?.gameType?.toLowerCase()}/${game.id}`}
+                                                className="mt-6 inline-flex items-center text-white bg-primary hover:bg-primary-focus border-0 focus:ring-4 focus:ring-primary/30 shadow-sm font-medium rounded-lg text-sm px-5 py-2.5 transition-colors"
+                                            >
+                                                Play Now
+                                                <svg className="w-4 h-4 ms-1.5 -me-0.5" xmlns="http://www.w3.org/2000/svg"
+                                                     fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
+                                                          d="M19 12H5m14 0-4 4m4-4-4-4"/>
+                                                </svg>
+                                            </NavLink>
+                                        )}
                                     </div>
                                 </div>
                             );

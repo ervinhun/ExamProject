@@ -42,3 +42,24 @@ public class TicketDto : PurchaseTicketDto
     public bool IsWinning { get; set; }
     public bool IsPaid { get; set; }
 }
+
+public class StartTicketSubscriptionDto
+{
+    public Guid GameTemplateId { get; set; }
+    public Guid PlayerId { get; set; }
+    public Guid WalletId { get; set; }
+    public int[] PickedNumbers { get; set; } = [];
+    public double Price { get; set; }
+}
+
+public class SubscriptionDto
+{
+    public Guid Id { get; set; }
+    public Guid GameTemplateId { get; set; }
+    public Guid PlayerId { get; set; }
+    public int[] PickedNumbers { get; set; } = [];
+    public double Price { get; set; }
+    public bool IsExpired { get; set; }
+    public DateTime BoughtAt { get; set; }
+    public GameTemplateResponseDto? GameTemplate { get; set; }
+}

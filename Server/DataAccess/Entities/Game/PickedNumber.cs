@@ -3,7 +3,8 @@ namespace DataAccess.Entities.Game;
 public class PickedNumber
 {
     public Guid Id { get; set; }
-    public Guid TicketId { get; set; }
+    public Guid? TicketId { get; set; }
+    public Guid? TicketSubscriptionId { get; set; }
     public int Number { get; set; }
     public LotteryTicket? Ticket { get; set; }
 }

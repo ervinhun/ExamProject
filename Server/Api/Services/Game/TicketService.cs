@@ -234,4 +234,196 @@ public class TicketService(MyDbContext ctx, IWalletTransactionsService walletTra
 
         await walletTransactionsService.RegisterTransaction(purchaseTicketDto.PlayerId, transactionDto);
     }
+
+    public async Task StartTicketSubscription(StartTicketSubscriptionDto startTicketSubscriptionDto)
+    {
+        // Validate game template exists
+        var gameTemplate = await ctx.GameTemplates
+            .FirstOrDefaultAsync(gt => gt.Id == startTicketSubscriptionDto.GameTemplateId);
+        
+        if (gameTemplate == null)
+            throw new ServiceException("Game template not found");
+
+        // Validate number of selected numbers
+        var numbersCount = startTicketSubscriptionDto.PickedNumbers.Length;
+        if (numbersCount < gameTemplate.MinNumbersPerTicket ||
+            numbersCount > gameTemplate.MaxNumbersPerTicket)
+            throw new ServiceException(
+                $"Invalid number of selected numbers. Must be between {gameTemplate.MinNumbersPerTicket} and {gameTemplate.MaxNumbersPerTicket}");
+
+        // Calculate expected price: base price * 2^(numbersCount - minNumbers)
+        var basePrice = gameTemplate.BasePrice;
+        var minNumbers = gameTemplate.MinNumbersPerTicket;
+        var expectedPrice = basePrice * Math.Pow(2, numbersCount - minNumbers);
+
+        // Validate the price from DTO
+        var priceDifference = Math.Abs(startTicketSubscriptionDto.Price - expectedPrice);
+        var isValidPrice = priceDifference <= 0.01;
+
+        if (!isValidPrice)
+            throw new ServiceException(
+                $"Invalid subscription price. Expected {expectedPrice} but received {startTicketSubscriptionDto.Price}");
+
+        // Check if player has an active subscription for this game template
+        var existingSubscription = await ctx.TicketSubscriptions
+            .FirstOrDefaultAsync(ts => ts.PlayerId == startTicketSubscriptionDto.PlayerId 
+                                      && ts.GameTemplateId == startTicketSubscriptionDto.GameTemplateId 
+                                      && !ts.IsExpired);
+        
+        if (existingSubscription != null)
+            throw new ServiceException("Player already has an active subscription for this game template");
+
+        // Create the subscription
+        var subscription = new TicketSubscription
+        {
+            PlayerId = startTicketSubscriptionDto.PlayerId,
+            GameTemplateId = startTicketSubscriptionDto.GameTemplateId,
+            Price = startTicketSubscriptionDto.Price,
+            IsExpired = false,
+            BoughtAt = DateTime.UtcNow
+        };
+
+        // Add picked numbers to subscription
+        foreach (var pickedNumber in startTicketSubscriptionDto.PickedNumbers)
+        {
+            subscription.PickedNumbers.Add(new PickedNumber
+            {
+                Number = pickedNumber,
+                TicketSubscriptionId = subscription.Id
+            });
+        }
+
+        await ctx.TicketSubscriptions.AddAsync(subscription);
+        await ctx.SaveChangesAsync();
+
+        // Create transaction for subscription purchase
+        var transactionDto = new TransactionDto
+        {
+            UserId = startTicketSubscriptionDto.PlayerId,
+            Name = "Subscription purchase",
+            WalletId = startTicketSubscriptionDto.WalletId,
+            Amount = startTicketSubscriptionDto.Price,
+            Status = TransactionStatus.Requested,
+            Type = TransactionType.TicketSubscriptionStart,
+            CreatedAt = DateTime.UtcNow,
+        };
+
+        await walletTransactionsService.RegisterTransaction(startTicketSubscriptionDto.PlayerId, transactionDto);
+    }
+
+    public async Task PurchaseTicketsForActiveSubscriptions(Guid gameTemplateId, Guid newGameInstanceId)
+    {
+        try
+        {
+            // Get all active subscriptions for this game template
+            var activeSubscriptions = await ctx.TicketSubscriptions
+                .Include(ts => ts.PickedNumbers)
+                .Where(ts => ts.GameTemplateId == gameTemplateId && !ts.IsExpired)
+                .ToListAsync();
+
+            if (activeSubscriptions.Count == 0)
+            {
+                return; // No subscriptions to process
+            }
+
+            // Get wallets for all players with subscriptions
+            var playerIds = activeSubscriptions.Select(ts => ts.PlayerId).Distinct().ToList();
+            var wallets = await ctx.Wallets
+                .Where(w => playerIds.Contains(w.PlayerId))
+                .ToDictionaryAsync(w => w.PlayerId, w => w);
+
+            // Purchase a ticket for each active subscription
+            foreach (var subscription in activeSubscriptions)
+            {
+                try
+                {
+                    // Check if player has a wallet
+                    if (!wallets.TryGetValue(subscription.PlayerId, out var wallet))
+                    {
+                        Console.WriteLine($"Player {subscription.PlayerId} does not have a wallet. Skipping subscription {subscription.Id}");
+                        continue;
+                    }
+
+                    // Check if player has sufficient balance
+                    if (wallet.Balance < subscription.Price)
+                    {
+                        Console.WriteLine($"Player {subscription.PlayerId} has insufficient balance. Skipping subscription {subscription.Id}");
+                        continue;
+                    }
+
+                    // Create purchase ticket DTO and reuse existing PurchaseTicket method
+                    var purchaseTicketDto = new PurchaseTicketDto
+                    {
+                        GameInstanceId = newGameInstanceId,
+                        PlayerId = subscription.PlayerId,
+                        WalletId = wallet.Id,
+                        PickedNumbers = subscription.PickedNumbers.Select(pn => pn.Number).ToArray(),
+                        FullPrice = subscription.Price
+                    };
+
+                    // Reuse the existing PurchaseTicket method
+                    await PurchaseTicket(purchaseTicketDto);
+                    
+                    Console.WriteLine($"Successfully purchased ticket for subscription {subscription.Id} for player {subscription.PlayerId}");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Failed to purchase ticket for subscription {subscription.Id}: {ex.Message}");
+                    // Continue with other subscriptions even if one fails
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine($"Error purchasing tickets for active subscriptions: {e.Message}");
+            // Don't throw - we don't want to fail the entire draw process if subscription purchases fail
+        }
+    }
+
+    public async Task<List<SubscriptionDto>> GetSubscriptionsForPlayer(Guid playerId)
+    {
+        var subscriptions = await ctx.TicketSubscriptions
+            .Include(ts => ts.PickedNumbers)
+            .Where(ts => ts.PlayerId == playerId)
+            .OrderByDescending(ts => ts.BoughtAt)
+            .ToListAsync();
+
+        var subscriptionDtos = new List<SubscriptionDto>();
+        
+        foreach (var subscription in subscriptions)
+        {
+            // Get game template details
+            var gameTemplate = await ctx.GameTemplates
+                .FirstOrDefaultAsync(gt => gt.Id == subscription.GameTemplateId);
+
+            var gameTemplateDto = gameTemplate != null ? new GameTemplateResponseDto
+            {
+                Id = gameTemplate.Id,
+                Name = gameTemplate.Name,
+                Description = gameTemplate.Description,
+                PoolOfNumbers = gameTemplate.PoolOfNumbers,
+                GameType = gameTemplate.GameType.ToString(),
+                MaxWinningNumbers = gameTemplate.MaxWinningNumbers,
+                BasePrice = gameTemplate.BasePrice,
+                MinNumbersPerTicket = gameTemplate.MinNumbersPerTicket,
+                MaxNumbersPerTicket = gameTemplate.MaxNumbersPerTicket,
+                CreatedAt = gameTemplate.CreatedAt,
+                UpdatedAt = gameTemplate.UpdatedAt
+            } : null;
+
+            subscriptionDtos.Add(new SubscriptionDto
+            {
+                Id = subscription.Id,
+                GameTemplateId = subscription.GameTemplateId,
+                PlayerId = subscription.PlayerId,
+                PickedNumbers = subscription.PickedNumbers.Select(pn => pn.Number).ToArray(),
+                Price = subscription.Price,
+                IsExpired = subscription.IsExpired,
+                BoughtAt = subscription.BoughtAt,
+                GameTemplate = gameTemplateDto
+            });
+        }
+
+        return subscriptionDtos;
+    }
 }

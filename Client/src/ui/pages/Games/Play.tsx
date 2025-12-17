@@ -83,16 +83,16 @@ export default function Play() {
         try {
             setIsSubmitting(true);
             
+            // Purchase the ticket for current game
             const payload: PurchaseTicketDto = {
                 gameInstanceId: gameId!,
                 playerId: authUser.id,
                 walletId: wallet.id,
                 fullPrice: totalPrice,
-                pickedNumbers: picked.map(n => Number(n)) // Ensure numbers
+                pickedNumbers: picked.map(n => Number(n))
             };
 
-            console.log("Submitting payload:", payload);
-
+            console.log("Submitting ticket payload:", payload);
             await ticketApi.purchaseTicket(payload);
 
             // Update wallet balance
@@ -100,7 +100,24 @@ export default function Play() {
                 setWallet({ ...wallet, balance: wallet.balance - totalPrice });
             }
             
-            addNotification({ type: "success", message: "Ticket purchased successfully!" });
+            // If subscription is checked, also create a subscription
+            if (isSubscription) {
+                const subscriptionPayload = {
+                    gameTemplateId: chosenGameTemplate!.template?.id!,
+                    playerId: authUser.id,
+                    walletId: wallet.id,
+                    price: totalPrice,
+                    pickedNumbers: picked.map(n => Number(n))
+                };
+                
+                console.log("Creating subscription:", subscriptionPayload);
+                await ticketApi.startSubscriptionForTicket(subscriptionPayload);
+            }
+            
+            const successMessage = isSubscription 
+                ? "Ticket purchased and subscription created! Your numbers will play in every draw."
+                : "Ticket purchased successfully!";
+            addNotification({ type: "success", message: successMessage });
             
             // Reset form and navigate
             setPicked([]);

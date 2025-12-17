@@ -13,7 +13,7 @@ public record TransactionDto
     public Guid? PurchaseTicketId { get; set; }
     public string? MobilePayTransactionNumber { get; set; }
     public double Amount { get; set; }
-    public ICollection<TransactionHistoryDto>  TransactionHistory { get; set; }
+    public List<TransactionHistory>?  TransactionHistory { get; set; }
     public TransactionStatus Status { get; set; }
     public TransactionType Type { get; set; }
     public Guid? ReviewedBy { get; set; }

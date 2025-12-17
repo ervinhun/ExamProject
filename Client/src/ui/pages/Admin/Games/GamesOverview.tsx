@@ -2,7 +2,7 @@ import { NavLink } from "react-router-dom";
 import { useAtom } from "jotai";
 import { activeGamesAtom, fetchActiveGamesAtom, gameTemplatesAtom, fetchGameTemplatesAtom } from "@core/atoms/game";
 import { formatDateTime, mapDayOfWeek } from "@utils/dateUtils";
-import { getStatusColor, getGameStatus } from "@utils/gameUtils";
+import { getStatusColor, getGameStatus, getWeekBadgeClass } from "@utils/gameUtils";
 import { useEffect } from "react";
 
 export const GamesOverview: React.FC = () => {
@@ -112,6 +112,9 @@ export const GamesOverview: React.FC = () => {
                             <thead>
                                 <tr>
                                     <th>Game Name</th>
+                                    <th>Year</th>
+                                    <th>Week</th>
+                                    <th>Repeatable</th>
                                     <th>Status</th>
                                     <th>Draw Date</th>
                                     <th>Participants</th>
@@ -123,7 +126,7 @@ export const GamesOverview: React.FC = () => {
                             <tbody>
                                 {activeGames.length === 0 ? (
                                     <tr>
-                                        <td colSpan={7} className="text-center py-8 text-base-content/60">
+                                        <td colSpan={10} className="text-center py-8 text-base-content/60">
                                             No active games at the moment
                                         </td>
                                     </tr>
@@ -137,6 +140,15 @@ export const GamesOverview: React.FC = () => {
                                         return (
                                             <tr key={game.id}>
                                                 <td className="font-semibold">{game.template?.name || "Unknown"}</td>
+                                                <td>{game.year}</td>
+                                                <td>Week {game.week}</td>
+                                                <td>
+                                                    {game.isAutoRepeatable ? (
+                                                        <span className="text-success">✓ Yes</span>
+                                                    ) : (
+                                                        <span className="text-base-content/50">✗ No</span>
+                                                    )}
+                                                </td>
                                                 <td>
                                                     <span className={`badge ${getStatusColor(statusText)}`}>
                                                         {statusText}

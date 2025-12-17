@@ -10,8 +10,9 @@ export const StartGame: React.FC = () => {
     const [selectedTemplate, setSelectedTemplate] = useState<string>("");
     const [isAutoRepeatable, setIsAutoRepeatable] = useState(false);
     const [drawDate, setDrawDate] = useState("");
+    const [drawTime, setDrawTime] = useState("17:00"); // For non-repeatable games
     const [drawDayOfWeek, setDrawDayOfWeek] = useState<number>(6); // Saturday by default
-    const [drawTimeOfDay, setDrawTimeOfDay] = useState("17:00");
+    const [drawTimeOfDay, setDrawTimeOfDay] = useState("17:00"); // For auto-repeatable games
 
     const [auth,] = useAtom(authAtom);
     const [,startGameInstance] = useAtom(startGameInstanceAtom);
@@ -29,16 +30,6 @@ export const StartGame: React.FC = () => {
         fetchActiveGames();
     }, []);
 
-    // useEffect(() => {
-    //     console.log("Active Games Updated:", activeGames);
-    //     console.log("Templates Updated:", templates);
-        
-    //     if (activeGames.length > 0 && templates.length > 0) {
-    //         templates.forEach(t => {
-    //             const matches = activeGames.filter(g => g.template?.id === t.id);
-    //         });
-    //     }
-    // }, [activeGames, templates]);
 
     const handleStartGame = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -46,20 +37,21 @@ export const StartGame: React.FC = () => {
             createdById: auth?.id || "",
             templateId: selectedTemplate,
             isAutoRepeatable: isAutoRepeatable,
-            drawDateTime: isAutoRepeatable
+            drawDate: isAutoRepeatable
                 ? null
-                : new Date(`${drawDate}T${drawTimeOfDay}`),
+                : new Date(`${drawDate}T${drawTime}`),
             drawDayOfWeek: isAutoRepeatable ? drawDayOfWeek : null,
             drawTimeOfDay: isAutoRepeatable ? drawTimeOfDay : null,
         };
+
+        console.log("Starting game instance:", gameInstance);
         
         await startGameInstance(gameInstance as Partial<GameInstanceDto>).then(() => {
             // Reset form
             setSelectedTemplate("");
             setIsAutoRepeatable(false);
             setDrawDate("");
-            setDrawTimeOfDay("");
-            setDrawDate("");
+            setDrawTime("17:00");
             setDrawDayOfWeek(6);
             setDrawTimeOfDay("17:00");
 
@@ -88,27 +80,6 @@ export const StartGame: React.FC = () => {
         });
 
     };
-
-    // const formatDate = (dateStr: string) => {
-    //     const date = new Date(dateStr);
-    //     return date.toLocaleDateString("da-DK", { 
-    //         day: "2-digit",
-    //         month: "2-digit",
-    //         year: "numeric",
-    //         hour: "2-digit", 
-    //         minute: "2-digit",
-    //         hour12: false
-    //     });
-    // };
-
-    // const getStatusColor = (status: string) => {
-    //     switch (status) {
-    //         case "Active": return "badge-success";
-    //         case "Pending Draw": return "badge-warning";
-    //         case "Completed": return "badge-info";
-    //         default: return "badge-ghost";
-    //     }
-    // };
 
     const getGameTypeColor = (type: string) => {
         return type === "Lotto" ? "badge-custom-pink" : "badge-custom-light-blue";
@@ -264,19 +235,38 @@ export const StartGame: React.FC = () => {
 
                             {/* Expiration Fields */}
                             {!isAutoRepeatable ? (
-                                // Show only expiration date when NOT auto-repeatable
-                                <div className="form-control">
-                                    <label className="label">
-                                        <span className="label-text font-medium">Draw Date</span>
-                                        <span className="label-text-alt text-error">*</span>
-                                    </label>
-                                    <input 
-                                        type="date"
-                                        className="input input-bordered w-full"
-                                        value={drawDate}
-                                        onChange={(e) => setDrawDate(e.target.value)}
-                                        required
-                                    />
+                                // Show date and time when NOT auto-repeatable
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="form-control">
+                                        <label className="label">
+                                            <span className="label-text font-medium">Draw Date</span>
+                                            <span className="label-text-alt text-error">*</span>
+                                        </label>
+                                        <input 
+                                            type="date"
+                                            className="input input-bordered w-full"
+                                            value={drawDate}
+                                            onChange={(e) => setDrawDate(e.target.value)}
+                                            required
+                                        />
+                                    </div>
+                                    
+                                    <div className="form-control">
+                                        <label className="label">
+                                            <span className="label-text font-medium">Draw Time</span>
+                                            <span className="label-text-alt text-error">*</span>
+                                        </label>
+                                        <input 
+                                            type="time"
+                                            className="input input-bordered w-full"
+                                            value={drawTime}
+                                            onChange={(e) => setDrawTime(e.target.value)}
+                                            required
+                                        />
+                                        <label className="label">
+                                            <span className="label-text-alt">Use 24-hour format (e.g., 17:00 for 5 PM)</span>
+                                        </label>
+                                    </div>
                                 </div>
                             ) : (
                                 // Show day of week and time when auto-repeatable
@@ -325,32 +315,50 @@ export const StartGame: React.FC = () => {
 
                             {/* Selected Template Info */}
                             {selectedTemplate && (
-                                <div className="alert alert-info">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-current shrink-0 w-6 h-6">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    </svg>
-                                    <div className="flex-1">
-                                        {(() => {
-                                            const template = templates.find(t => t.id === selectedTemplate);
-                                            return template ? (
-                                                <div className="space-y-2">
-                                                    <p className="font-bold text-lg">{template.name}</p>
-                                                    <p className="text-base">{template.description}</p>
-                                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mt-2">
-                                                        <div>
-                                                            <span className="font-semibold">Number Pool:</span> 1-{template.poolOfNumbers}
-                                                        </div>
-                                                        <div>
-                                                            <span className="font-semibold">Winning Numbers:</span> {template.maxWinningNumbers}
-                                                        </div>
-                                                        <div>
-                                                            <span className="font-semibold">Ticket Price:</span> {template.basePrice} DKK
-                                                        </div>
+                                <div className="bg-gradient-to-r from-primary/10 to-secondary/10 border-2 border-primary/30 rounded-lg p-6">
+                                    {(() => {
+                                        const template = templates.find(t => t.id === selectedTemplate);
+                                        const currentWeek = Math.ceil(
+                                            (new Date().getTime() - new Date(new Date().getFullYear(), 0, 1).getTime()) / 
+                                            (1000 * 60 * 60 * 24 * 7)
+                                        );
+                                        return template ? (
+                                            <div className="space-y-4">
+                                                <div className="flex items-center gap-3">
+                                                    <h3 className="font-bold text-xl text-primary">{template.name}</h3>
+                                                </div>
+                                                <p className="text-base text-base-content/80">{template.description}</p>
+                                                
+                                                <div className="divider my-2"></div>
+                                                
+                                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                                    <div className="bg-base-100 p-3 rounded-lg">
+                                                        <p className="text-xs text-base-content/60 mb-1">Number Pool</p>
+                                                        <p className="font-bold text-lg">1-{template.poolOfNumbers}</p>
+                                                    </div>
+                                                    <div className="bg-base-100 p-3 rounded-lg">
+                                                        <p className="text-xs text-base-content/60 mb-1">Winning Numbers</p>
+                                                        <p className="font-bold text-lg">{template.maxWinningNumbers}</p>
+                                                    </div>
+                                                    <div className="bg-base-100 p-3 rounded-lg">
+                                                        <p className="text-xs text-base-content/60 mb-1">Pick Range</p>
+                                                        <p className="font-bold text-lg">{template.minNumbersPerTicket}-{template.maxNumbersPerTicket}</p>
+                                                    </div>
+                                                    <div className="bg-base-100 p-3 rounded-lg">
+                                                        <p className="text-xs text-base-content/60 mb-1">Base Price</p>
+                                                        <p className="font-bold text-lg text-success">{template.basePrice} DKK</p>
                                                     </div>
                                                 </div>
-                                            ) : null;
-                                        })()}
-                                    </div>
+                                                
+                                                <div className="flex items-center gap-2 text-sm text-base-content/70 bg-base-100 p-3 rounded-lg">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                    </svg>
+                                                    <span>This game will be created for <strong>Week {currentWeek}</strong> of the current year</span>
+                                                </div>
+                                            </div>
+                                        ) : null;
+                                    })()}
                                 </div>
                             )}
 

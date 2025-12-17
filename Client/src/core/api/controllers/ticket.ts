@@ -1,5 +1,5 @@
 import {api} from "@core/api/Api.ts";
-import { MyTicketDto, PurchaseTicketDto } from "@core/types/ticket.ts";
+import { MyTicketDto, PurchaseTicketDto, TicketSubscriptionDto } from "@core/types/ticket.ts";
 
 const endpoint = "/api/tickets";
 
@@ -20,6 +20,24 @@ export const ticketApi = {
             }
         });
     },
+
+    getMySubscribedTickets: async (): Promise<TicketSubscriptionDto[]> => {
+        return await api<TicketSubscriptionDto[]>(`${endpoint}/my-subscriptions`, {
+            init: {
+                method: "GET"
+            }
+        });
+    },
+
+    startSubscriptionForTicket: async (startSubscriptionDto: TicketSubscriptionDto): Promise<void> => {
+        await api<void>(`${endpoint}/start-subscription`, {
+            init: {
+                method: "POST",
+                body: JSON.stringify(startSubscriptionDto)
+            }
+        });
+    },
+
 
     // getAllActiveTickets: async (): Promise<MyTicket.MyTicketDto[]> => {
     //     return await api<MyTicket.MyTicketDto[]>(`${endpoint}/all-my-tickets`, {

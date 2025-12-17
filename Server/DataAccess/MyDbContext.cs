@@ -45,6 +45,7 @@ public class MyDbContext(DbContextOptions<MyDbContext> options) : DbContext(opti
     public DbSet<GameInstance> GameInstances => Set<GameInstance>();
     public DbSet<GameTemplate> GameTemplates => Set<GameTemplate>();
     public DbSet<WinningNumber> WinningNumbers => Set<WinningNumber>();
+    public DbSet<TicketSubscription> TicketSubscriptions => Set<TicketSubscription>();
     public DbSet<LotteryTicket> LotteryTickets => Set<LotteryTicket>();
     public DbSet<PickedNumber> PickedNumbers => Set<PickedNumber>();
     public DbSet<UserConfirmationEntity> UserConfirmations => Set<UserConfirmationEntity>();
@@ -154,6 +155,18 @@ public class MyDbContext(DbContextOptions<MyDbContext> options) : DbContext(opti
                 .HasMany(lt => lt.PickedNumbers)
                 .WithOne(pn => pn.Ticket)
                 .HasForeignKey(pn=>pn.TicketId)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<TicketSubscription>(ticketSubscriptionEntity =>
+        {
+            // TicketSubscription -> PickedNumbers : One-to-Many (unidirectional)
+            ticketSubscriptionEntity
+                .HasMany(ts => ts.PickedNumbers)
+                .WithOne()
+                .HasForeignKey(pn => pn.TicketSubscriptionId)
+                .IsRequired(false)
                 .OnDelete(DeleteBehavior.Restrict);
         });
 
@@ -180,7 +193,7 @@ public class MyDbContext(DbContextOptions<MyDbContext> options) : DbContext(opti
                 .OnDelete(DeleteBehavior.Restrict);
         });
 
-
+        
         base.OnModelCreating(modelBuilder);
     }
 }

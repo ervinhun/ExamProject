@@ -1,12 +1,14 @@
 /**
  * Format a number to Danish Kroner currency format
+ * @param amount - The amount to format
+ * @param decimals - Number of decimal places (default: 0)
  */
-export const formatCurrency = (amount: number): string => {
+export const formatCurrency = (amount: number, decimals: number = 0): string => {
     return new Intl.NumberFormat('da-DK', {
         style: 'currency',
         currency: 'DKK',
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 0
+        minimumFractionDigits: decimals,
+        maximumFractionDigits: decimals
     }).format(amount);
 };
 

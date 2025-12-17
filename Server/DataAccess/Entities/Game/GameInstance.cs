@@ -20,7 +20,8 @@ public class GameInstance
     public required Guid CreatedById { get; set; }
     public ICollection<WinningNumber> WinningNumbers { get; set; } = new HashSet<WinningNumber>();
     [Range(1,52)]
-    public int Week { get; set; }
+    public int? Week { get; set; }
+    public int? Year { get; set; }
     public bool IsExpired { get; set; }
     public bool IsDrawn { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

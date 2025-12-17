@@ -1,8 +1,10 @@
 import { transactionApi } from "@core/api/controllers/transactions";
 import { TransactionDto } from "@core/types/transaction";
 import { atom } from "jotai";
+import { set } from "zod";
 
 export const pendingTransactionsAtom = atom<TransactionDto[]>([]);
+export const allTransactionsAtom = atom<TransactionDto[]>([]);
 
 export const fetchPendingTransactionsAtom = atom(null,
     async (_, set) => {
@@ -22,6 +24,16 @@ export const approveTransactionAtom = atom(null,
                 const updatedTransactions = get(pendingTransactionsAtom).filter(t => t.id !== transactionId);
                 set(pendingTransactionsAtom, updatedTransactions);
             })
+            .catch((err) => {
+                throw err;
+            });
+    }
+);
+
+export const fetchAllTransactionsAtom = atom(null,
+    async (_, set) => {
+        await transactionApi.getAllTransactions()
+            .then((res) => set(allTransactionsAtom, res))
             .catch((err) => {
                 throw err;
             });

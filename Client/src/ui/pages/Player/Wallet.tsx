@@ -5,6 +5,9 @@ import { useAtom, useSetAtom } from "jotai";
 import { useEffect, useState } from "react";
 import { getWalletForPlayerIdAtom, requestDepositAtom, walletAtom } from "@core/atoms/wallet";
 import { addNotificationAtom } from "@core/atoms/error";
+import { formatDateTime } from "@utils/dateUtils";
+import { formatCurrency } from "@utils/priceUtils";
+import { getStatusColor } from "@utils/gameUtils";
 
 export default function Wallet() {
     const [wallet,] = useAtom(walletAtom);
@@ -45,36 +48,6 @@ export default function Wallet() {
         // TODO: Implement withdraw logic
         console.log("Withdraw:", withdrawAmount);
         setWithdrawAmount("");
-    };
-
-    const formatCurrency = (amount: number) => {
-        return new Intl.NumberFormat('da-DK', { 
-            style: 'currency', 
-            currency: 'DKK' 
-        }).format(amount);
-    };
-
-    const formatDate = (dateStr: string) => {
-        const date = new Date(dateStr);
-        return date.toLocaleDateString("da-DK", { 
-            day: "2-digit",
-            month: "2-digit",
-            year: "numeric",
-            hour: "2-digit", 
-            minute: "2-digit",
-            hour12: false
-        });
-    };
-
-    const getStatusColor = (status: number | string): string => {
-        const statusText = typeof status === "number" ? mapTransactionStatus(status) : status;
-        switch (statusText) {
-            case "Approved": return "badge-success";
-            case "Pending": return "badge-warning";
-            case "Rejected": return "badge-error";
-            case "Canceled": return "badge-ghost";
-            default: return "badge-ghost";
-        }
     };
 
     const getTypeIcon = (type: number | string) => {
@@ -244,7 +217,7 @@ export default function Wallet() {
                                             const statusText = mapTransactionStatus(transaction.status);
                                             return (
                                                 <tr key={transaction.id}>
-                                                    <td>{formatDate(transaction.createdAt)}</td>
+                                                    <td>{formatDateTime(transaction.createdAt)}</td>
                                                     <td>
                                                         <span className="flex items-center gap-2">
                                                             {getTypeIcon(transaction.type)}
@@ -269,7 +242,7 @@ export default function Wallet() {
                                                         {formatCurrency(Math.abs(transaction.amount))}
                                                     </td>
                                                     <td>
-                                                        <span className={`badge badge-sm ${getStatusColor(transaction.status)}`}>
+                                                        <span className={`badge badge-sm ${getStatusColor(statusText)}`}>
                                                             {statusText}
                                                         </span>
                                                     </td>

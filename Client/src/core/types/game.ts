@@ -41,9 +41,11 @@ export interface GameInstanceDto {
     drawDayOfWeek?: number; // 0 (Sunday) to 6 (Saturday) for weekly repeats
     drawTimeOfDay?: string; // "HH:MM" format for daily repeats
     week: number;
+    year: number;
     isDrawn: boolean;
     participants: number;
     ticketsSold: number;
+    ticketsWon: number;
     prizePool: number;
     isExpired: boolean;
     winningNumbers: number[];

@@ -1,4 +1,5 @@
 import {z} from "zod";
+import { GameTemplateDto } from "./game";
 
 export const MyTicketSchema = z.object({
     id: z.string(),
@@ -20,3 +21,11 @@ export interface PurchaseTicketDto {
     pickedNumbers: number[];
 }
 
+export interface TicketSubscriptionDto {
+    gameTemplateId: string;
+    playerId: string;
+    pickedNumbers: number[];
+    isExpired?: boolean;
+    price: number;
+    gameTemplate?: GameTemplateDto;
+}

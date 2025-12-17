@@ -1,15 +1,17 @@
 using System.Globalization;
 using Api.Dto.Game;
+using Api.Services.Game;
 using DataAccess;
 using DataAccess.Entities.Game;
 using DataAccess.Enums;
+using Humanizer;
 using Microsoft.EntityFrameworkCore;
 using Utils;
 using Utils.Exceptions;
 
 namespace Api.Services.Management;
 
-public class GameManagementService(MyDbContext ctx) : IGameManagementService
+public class GameManagementService(MyDbContext ctx, ITicketService ticketService) : IGameManagementService
 {
     public async Task CreateGameTemplate(CreateGameTemplateRequestDto gameTemplateDto)
     {
@@ -121,12 +123,13 @@ public class GameManagementService(MyDbContext ctx) : IGameManagementService
                     CreatedById = game.CreatedById,
                     Template = gameTemplateDto,
                     Status = game.Status,
-                    Week = game.Week,
+                    Week = game.Week!.Value,
+                    Year = game.Year!.Value,
                     Participants = participants,
                     TicketsSold = ticketsSold,
                     PrizePool = prizePool,
                     IsAutoRepeatable = game.IsAutoRepeatable,
-                    DrawDate = game.DrawDate,
+                    DrawDate = DateTimeHelper.ToCopenhagen(game.DrawDate),
                     DrawDayOfWeek = game.DrawDayOfWeek,
                     DrawTimeOfDay = game.DrawTimeOfDay,
                     IsDrawn = game.IsDrawn,
@@ -165,9 +168,29 @@ public class GameManagementService(MyDbContext ctx) : IGameManagementService
     {
         try
         {
-            if (gameInstanceDto.DrawDate < DateTime.Now) throw new ServiceException("Draw date cannot be in the past");
+            // Only validate draw date for non-auto-repeatable games
+            if (!gameInstanceDto.IsAutoRepeatable && gameInstanceDto.DrawDate.HasValue && gameInstanceDto.DrawDate < DateTime.Now)
+            {
+                throw new ServiceException("Draw date cannot be in the past");
+            }
 
-            var currentWeek = ISOWeek.GetWeekOfYear(DateTime.Now);
+            // For auto-repeatable games, use the week from DTO (for next week calculation)
+            // For manual games, calculate current week if not provided
+            var weekNumber = gameInstanceDto.IsAutoRepeatable && gameInstanceDto.Week > 0 
+                ? gameInstanceDto.Week 
+                : ISOWeek.GetWeekOfYear(DateTime.Now);
+            
+            var year = gameInstanceDto.Year > 0 ? gameInstanceDto.Year : ISOWeek.GetYear(DateTime.Now);
+
+            // Convert DrawDate to UTC if it has Unspecified kind
+            DateTime? drawDateUtc = null;
+            if (!gameInstanceDto.IsAutoRepeatable && gameInstanceDto.DrawDate.HasValue)
+            {
+                var drawDate = gameInstanceDto.DrawDate.Value;
+                drawDateUtc = drawDate.Kind == DateTimeKind.Unspecified 
+                    ? DateTime.SpecifyKind(drawDate, DateTimeKind.Utc) 
+                    : drawDate.ToUniversalTime();
+            }
 
             var gameInstance = new GameInstance
             {
@@ -175,7 +198,8 @@ public class GameManagementService(MyDbContext ctx) : IGameManagementService
                 IsAutoRepeatable = gameInstanceDto.IsAutoRepeatable,
                 Status = GameStatus.Active,
                 CreatedById = gameInstanceDto.CreatedById,
-                Week = currentWeek,
+                Week = weekNumber,
+                Year = year,
                 IsExpired = false,
                 IsDrawn = false,
                 CreatedAt = DateTime.UtcNow,
@@ -191,7 +215,7 @@ public class GameManagementService(MyDbContext ctx) : IGameManagementService
             {
                 gameInstance.DrawDayOfWeek = null;
                 gameInstance.DrawTimeOfDay = null;
-                gameInstance.DrawDate = gameInstance.DrawDate;
+                gameInstance.DrawDate = drawDateUtc;
             }
 
             await ctx.GameInstances.AddAsync(gameInstance);
@@ -213,26 +237,52 @@ public class GameManagementService(MyDbContext ctx) : IGameManagementService
             if (game.IsExpired) throw new ServiceException("Game expired");
             if (game.IsDrawn) throw new ServiceException("Game drawn");
             
-            // Validate draw date/day
-            var today = DateTime.UtcNow.Date;
-            var todayDayOfWeek = (int)DateTime.UtcNow.DayOfWeek;
+            // Validate draw timing
+            var now = DateTime.UtcNow;
             
             if (game.IsAutoRepeatable)
             {
-                // For auto-repeatable games, check if draw day of week matches today
-                if (game.DrawDayOfWeek.HasValue && game.DrawDayOfWeek.Value != todayDayOfWeek)
+                // For auto-repeatable games, validate week, year, day of week and time
+                if (game.Week.HasValue && game.Year.HasValue && game.DrawDayOfWeek.HasValue)
                 {
-                    var scheduledDay = (DayOfWeek)game.DrawDayOfWeek.Value;
-                    var currentDay = DateTime.UtcNow.DayOfWeek;
-                    throw new ServiceException($"Cannot draw winning numbers. Game draw is scheduled for {scheduledDay} but today is {currentDay}");
+                    var currentWeek = ISOWeek.GetWeekOfYear(now);
+                    var currentYear = ISOWeek.GetYear(now);
+                    var currentDayOfWeek = (int)now.DayOfWeek;
+                    var currentTimeOfDay = TimeOnly.FromDateTime(now);
+                    
+                    // Check if current week/year is before scheduled week/year
+                    var isBeforeScheduledWeek = currentYear < game.Year.Value || 
+                                                  (currentYear == game.Year.Value && currentWeek < game.Week.Value);
+                    
+                    if (isBeforeScheduledWeek)
+                    {
+                        throw new ServiceException($"Cannot draw winning numbers yet. Game is scheduled for {game.Year.Value}-W{game.Week.Value:D2} but current week is {currentYear}-W{currentWeek:D2}.");
+                    }
+                    
+                    // If we're in the correct week, check day and time
+                    if (currentYear == game.Year.Value && currentWeek == game.Week.Value)
+                    {
+                        if (currentDayOfWeek < game.DrawDayOfWeek.Value)
+                        {
+                            throw new ServiceException($"Cannot draw winning numbers yet. Game is scheduled for {(DayOfWeek)game.DrawDayOfWeek.Value} but today is {(DayOfWeek)currentDayOfWeek}.");
+                        }
+                        
+                        if (currentDayOfWeek == game.DrawDayOfWeek.Value && game.DrawTimeOfDay.HasValue)
+                        {
+                            if (currentTimeOfDay < game.DrawTimeOfDay.Value)
+                            {
+                                throw new ServiceException($"Cannot draw winning numbers yet. Game is scheduled for {game.DrawTimeOfDay.Value:HH:mm} but current time is {currentTimeOfDay:HH:mm}.");
+                            }
+                        }
+                    }
                 }
             }
             else
             {
-                // For one-time games, check if draw date is today
-                if (game.DrawDate.HasValue && game.DrawDate.Value.Date != today)
+                // For one-time games, check if draw date/time is in the future
+                if (game.DrawDate.HasValue && game.DrawDate.Value > now)
                 {
-                    throw new ServiceException($"Cannot draw winning numbers. Game is scheduled for {game.DrawDate.Value.Date:yyyy-MM-dd} but today is {today:yyyy-MM-dd}");
+                    throw new ServiceException($"Cannot draw winning numbers yet. Game is scheduled for {game.DrawDate.Value:yyyy-MM-dd HH:mm} UTC but current time is {now:yyyy-MM-dd HH:mm} UTC.");
                 }
             }
             
@@ -272,20 +322,23 @@ public class GameManagementService(MyDbContext ctx) : IGameManagementService
             
             if (game.IsAutoRepeatable)
             {
-                var nextWeek = game.Week + 1;
+                var nextWeek = game.Week!.Value + 1;
                 var maxWeeksInYear = ISOWeek.GetWeeksInYear(DateTime.UtcNow.Year);
+                var nextYear = game.Year!.Value;
                 
                 if (nextWeek > maxWeeksInYear)
                 {
                     nextWeek = 1;
+                    nextYear = game.Year!.Value + 1;
                 }
                 
-                await StartGameInstance(new GameInstanceDto
+                var newGameInstanceDto = new GameInstanceDto
                 {
                     TemplateId = game.GameTemplateId,
                     IsAutoRepeatable = true,
                     Status = GameStatus.Active,
                     Week = nextWeek,
+                    Year = nextYear,
                     DrawDayOfWeek = game.DrawDayOfWeek,
                     DrawTimeOfDay = game.DrawTimeOfDay,
                     DrawDate = game.DrawDate,
@@ -293,13 +346,24 @@ public class GameManagementService(MyDbContext ctx) : IGameManagementService
                     IsExpired = false,
                     IsDrawn = false,
                     CreatedAt = DateTime.UtcNow,
-                });
+                };
+                
+                await StartGameInstance(newGameInstanceDto);
+                
+                // Get the newly created game instance
+                var newGameInstance = await ctx.GameInstances
+                    .FirstOrDefaultAsync(gi => gi.GameTemplateId == game.GameTemplateId && gi.Status == GameStatus.Active);
+                
+                if (newGameInstance != null)
+                {
+                    // Purchase tickets for all active subscriptions using ticket service
+                    await ticketService.PurchaseTicketsForActiveSubscriptions(game.GameTemplateId, newGameInstance.Id);
+                }
             }
         }
         catch (Exception e)
         {
-            Console.WriteLine(e);
-            throw;
+            throw new ServiceException(e.Message, e);
         }
     }
 
@@ -307,7 +371,11 @@ public class GameManagementService(MyDbContext ctx) : IGameManagementService
     {
         try
         {
-            var games = await ctx.GameInstances.Include(gi => gi.GameTemplate).AsNoTracking().ToListAsync();
+            var games = await ctx.GameInstances
+                .Include(gi => gi.GameTemplate)
+                .Include(gi => gi.WinningNumbers)
+                .AsNoTracking()
+                .ToListAsync();
             var activeGamesDtos = new List<GameInstanceDto>();
             foreach (var game in games)
             {
@@ -325,6 +393,11 @@ public class GameManagementService(MyDbContext ctx) : IGameManagementService
                     CreatedAt = game.GameTemplate.CreatedAt,
                     UpdatedAt = game.GameTemplate.CreatedAt,
                 };
+
+                // Calculate winning tickets count
+                var ticketsWon = await ctx.LotteryTickets
+                    .Where(lt => lt.GameInstanceId == game.Id && lt.IsWinning)
+                    .CountAsync();
                 
                 activeGamesDtos.Add(new GameInstanceDto
                 {
@@ -332,12 +405,15 @@ public class GameManagementService(MyDbContext ctx) : IGameManagementService
                     CreatedById = game.CreatedById,
                     Template = gameTemplateDto,
                     Status = game.Status,
-                    Week = game.Week,
+                    Week = (int)game.Week!,
+                    Year = (int)game.Year!,
                     IsAutoRepeatable = game.IsAutoRepeatable,
-                    DrawDate = game.DrawDate,
+                    DrawDate = DateTimeHelper.ToCopenhagen(game.DrawDate),
                     DrawDayOfWeek = game.DrawDayOfWeek,
                     DrawTimeOfDay = game.DrawTimeOfDay,
                     IsDrawn = game.IsDrawn,
+                    TicketsWon = ticketsWon,
+                    WinningNumbers = game.WinningNumbers.Select(wn => wn.Number).ToList(),
                     CreatedAt = game.CreatedAt,
                     UpdatedAt = game.UpdatedAt,
                 });

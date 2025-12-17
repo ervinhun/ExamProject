@@ -17,6 +17,7 @@ using Api.Services.Game;
 using Api.Services.Management;
 using DotNetEnv;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Api.Services.Background;
 
 namespace Api;
 
@@ -109,6 +110,9 @@ public static class Program
         services.AddScoped<IWalletTransactionsService, WalletTransactionsService>();
         services.AddScoped<IEmailService, EmailService>();
         services.AddScoped<ITicketService, TicketService>();
+
+        // Add background/hosted services
+        services.AddHostedService<HourlyTaskService>();
 
         // Configure JWT Authentication
         services

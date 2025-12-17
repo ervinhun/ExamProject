@@ -57,6 +57,38 @@ public class TicketController(ITicketService ticketService) : ControllerBase
         }
     }
     
+    [Authorize(Roles = "player")]
+    [HttpPost("start-subscription")]
+    public async Task<IActionResult> StartSubscription([FromBody] StartTicketSubscriptionDto subscriptionDto)
+    {
+        try
+        {
+            if(Guid.Parse(GetActiveUserId()) != subscriptionDto.PlayerId) return BadRequest();
+            await ticketService.StartTicketSubscription(subscriptionDto);
+            return Ok(new { message = "Subscription started successfully" });
+        }
+        catch (ServiceException e)
+        {
+            return StatusCode(500, new { message = e.Message });
+        }
+    }
+    
+    [Authorize(Roles = "player")]
+    [HttpGet("my-subscriptions")]
+    public async Task<IActionResult> GetMySubscriptions()
+    {
+        try
+        {
+            var userId = Guid.Parse(GetActiveUserId());
+            var subscriptions = await ticketService.GetSubscriptionsForPlayer(userId);
+            return Ok(subscriptions);
+        }
+        catch (ServiceException e)
+        {
+            return StatusCode(500, new { message = e.Message });
+        }
+    }
+    
     private string GetActiveUserId() => User.FindFirst(ClaimTypes.NameIdentifier)?.Value ??
                                         throw new UnauthorizedAccessException("User Id not found");
 }

@@ -72,8 +72,8 @@ public class WalletTransactionsService(MyDbContext ctx) : IWalletTransactionsSer
                 Amount = transaction.Amount,
                 Status = transaction.Status,
                 Type = transaction.Type,
-                CreatedAt = DateTimeHelper.ToCopenhagen(transaction.CreatedAt),
-                UpdatedAt = DateTimeHelper.ToCopenhagen(transaction.UpdatedAt)
+                CreatedAt = (DateTime)DateTimeHelper.ToCopenhagen(transaction.CreatedAt)!,
+                UpdatedAt = (DateTime)DateTimeHelper.ToCopenhagen(transaction.UpdatedAt)!
             });
         }
 
@@ -173,6 +173,38 @@ public class WalletTransactionsService(MyDbContext ctx) : IWalletTransactionsSer
             
             ctx.TransactionHistories.Add(transactionHistory);
             await ctx.SaveChangesAsync();
+        }
+        catch (Exception e)
+        {
+            throw new ServiceException(e.Message, e);
+        }
+    }
+
+    public async Task<List<TransactionDto>> GetAllTransactions()
+    {
+        try
+        {
+            var transactions = await ctx.Transactions.Include(t => t.TransactionHistory).ToListAsync();
+
+            var transactionsDto =  new List<TransactionDto>();
+            
+            foreach (var transaction in transactions)
+            {
+                transactionsDto.Add(new TransactionDto
+                {
+                    UserId = transaction.UserId,
+                    Name = transaction.Name,
+                    WalletId = transaction.WalletId,
+                    PurchaseTicketId = transaction.PurchaseTicketId,
+                    MobilePayTransactionNumber = transaction.MobilePayTransactionNumber,
+                    Amount = transaction.Amount,
+                    Status = transaction.Status,
+                    Type = transaction.Type,
+                    CreatedAt = transaction.CreatedAt,
+                    UpdatedAt = transaction.UpdatedAt,
+                });    
+            }
+            return transactionsDto;
         }
         catch (Exception e)
         {
