@@ -1,7 +1,8 @@
 import { NavLink } from "react-router-dom";
 import { useAtom } from "jotai";
 import { activeGamesAtom, fetchActiveGamesAtom, gameTemplatesAtom, fetchGameTemplatesAtom } from "@core/atoms/game";
-import { mapGameStatus } from "@core/types/game";
+import { formatDateTime, mapDayOfWeek } from "@utils/dateUtils";
+import { getStatusColor, getGameStatus } from "@utils/gameUtils";
 import { useEffect } from "react";
 
 export const GamesOverview: React.FC = () => {
@@ -11,9 +12,7 @@ export const GamesOverview: React.FC = () => {
     const [, fetchGameTemplates] = useAtom(fetchGameTemplatesAtom);
 
     useEffect(() => {
-        if(activeGames.length === 0) {
-            fetchActiveGames();
-        }
+        fetchActiveGames();
         if(templates.length === 0) {
             fetchGameTemplates();
         }
@@ -23,7 +22,7 @@ export const GamesOverview: React.FC = () => {
         activeGames: activeGames.length,
         totalPlayers: 0, // Placeholder - needs real participant data
         totalRevenue: activeGames.reduce((sum, game) => sum + (game.template?.basePrice || 0) * 10, 0), // Placeholder calculation
-        pendingDraws: activeGames.filter(game => mapGameStatus(game.status) === "Pending Draw" && !game.isDrawn).length
+        pendingDraws: activeGames.filter(game => getGameStatus(game) === "Pending Draw" && !game.isDrawn).length
     };
 
     // Get template usage stats
@@ -32,28 +31,6 @@ export const GamesOverview: React.FC = () => {
         name: template.name,
         gamesCreated: activeGames.filter(game => game.template?.id === template.id).length
     })).sort((a, b) => b.gamesCreated - a.gamesCreated).slice(0, 3);
-
-    const formatDate = (dateStr: string | Date | undefined) => {
-        if (!dateStr) return "N/A";
-        const date = new Date(dateStr);
-        return date.toLocaleDateString("da-DK", { 
-            day: "2-digit",
-            month: "2-digit",
-            year: "numeric",
-            hour: "2-digit", 
-            minute: "2-digit",
-            hour12: false
-        });
-    };
-
-    const getStatusColor = (status: string) => {
-        switch (status) {
-            case "Active": return "badge-success";
-            case "Pending Draw": return "badge-warning";
-            case "Completed": return "badge-info";
-            default: return "badge-ghost";
-        }
-    };
 
     return (
         <div className="container mx-auto">
@@ -152,7 +129,11 @@ export const GamesOverview: React.FC = () => {
                                     </tr>
                                 ) : (
                                     activeGames.slice(0, 5).map((game) => {
-                                        const statusText = mapGameStatus(game.status);
+                                        const statusText = getGameStatus(game);
+                                        const drawDateText = game.isAutoRepeatable
+                                            ? `${mapDayOfWeek(game.drawDayOfWeek)}, ${game.drawTimeOfDay?.substring(0, 5) || 'N/A'}`
+                                            : formatDateTime(game.drawDate);
+                                        
                                         return (
                                             <tr key={game.id}>
                                                 <td className="font-semibold">{game.template?.name || "Unknown"}</td>
@@ -161,10 +142,10 @@ export const GamesOverview: React.FC = () => {
                                                         {statusText}
                                                     </span>
                                                 </td>
-                                                <td>{formatDate(game.drawDate)}</td>
-                                                <td>-</td>
-                                                <td>-</td>
-                                                <td className="font-mono">{game.template?.basePrice || 0} DKK</td>
+                                                <td>{drawDateText}</td>
+                                                <td>{game.participants || 0}</td>
+                                                <td>{game.ticketsSold || 0}</td>
+                                                <td className="font-mono">{game.prizePool || 0} DKK</td>
                                                 <td>
                                                     <div className="flex gap-2">
                                                         <button className="btn btn-xs btn-info">View</button>

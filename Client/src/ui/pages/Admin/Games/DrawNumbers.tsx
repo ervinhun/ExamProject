@@ -1,21 +1,22 @@
 import { useState } from "react";
-import { useAtom } from "jotai";
+import { useAtom, useSetAtom } from "jotai";
 import { useParams, useNavigate } from "react-router-dom";
 import { activeGamesAtom } from "@core/atoms/game.ts";
 import { gameApi } from "@core/api/controllers/game.ts";
+import { addNotificationAtom } from "@core/atoms/error";
 
 export default function DrawNumbers() {
     const { gameId } = useParams<{ gameId: string }>();
     const navigate = useNavigate();
     const [activeGames] = useAtom(activeGamesAtom);
-    
+    const addNotification = useSetAtom(addNotificationAtom);
     const [drawnNumbers, setDrawnNumbers] = useState<number[]>([]);
     const [isDrawing, setIsDrawing] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const selectedGame = activeGames.find(g => g.id === gameId);
     const poolSize = selectedGame?.template?.poolOfNumbers ?? 0;
-    const numbersToDrawCount = selectedGame?.template?.minNumbersPerTicket ?? 7; // Default to 7 if not specified
+    const numbersToDrawCount = selectedGame?.template?.maxWinningNumbers!;
 
     const handleRandomDraw = () => {
         if (!selectedGame) return;
@@ -65,18 +66,21 @@ export default function DrawNumbers() {
         try {
             setIsSubmitting(true);
             
-            // TODO: Call API to save drawn numbers
-            // await gameApi.drawNumbers(gameId!, drawnNumbers);
-            console.log("Drawing numbers:", { gameId, drawnNumbers });
+            console.log("Attempting to draw numbers:", { 
+                gameId, 
+                drawnNumbers,
+                count: drawnNumbers.length,
+                expectedCount: numbersToDrawCount
+            });
             
-            alert("Numbers drawn successfully!");
-            
+            await gameApi.drawNumbersForGame(gameId!, drawnNumbers);
+            addNotification({ type: 'success', message: 'Numbers drawn successfully!' });
             // Navigate back
             navigate('/admin/games/overview');
             
         } catch (err: any) {
             console.error("Draw numbers error:", err);
-            alert(err?.message || "Failed to draw numbers");
+            addNotification({ type: 'error', message: err?.message || err?.toString() || "Failed to draw numbers" });
         } finally {
             setIsSubmitting(false);
         }

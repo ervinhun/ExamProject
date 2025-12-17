@@ -33,7 +33,7 @@ export const gameApi = {
     },
 
     getAllGameInstances: async (): Promise<GameInstanceDto[]> => {
-        return await api<GameInstanceDto[]>(`${endpoint}/all-instances`, {
+        return await api<GameInstanceDto[]>(`${endpoint}/all-games`, {
             init: {
                 method: "GET"
             }
@@ -48,5 +48,13 @@ export const gameApi = {
         });
     },
 
+    drawNumbersForGame: async (gameId: string, drawnNumbers: number[]): Promise<void> => {
+        return await api<void>(`${endpoint}/draw-numbers/${gameId}`, {
+            init: {
+                method: "POST",
+                body: JSON.stringify(drawnNumbers)
+            }
+        });
+    }
 
 }

@@ -16,7 +16,15 @@ public class GameController(IGameManagementService gameManagementService) : Cont
     [HttpGet("all-games")]
     public async Task<ActionResult<List<GameInstanceDto>>> GetAllGamesAsync()
     {
-        return null;
+        try
+        {
+            var games = await gameManagementService.GetAllGames();
+            return Ok(games);
+        }
+        catch (ServiceException e)
+        {
+            return Conflict(new { message = e.Message });
+        }
     }
 
     [HttpGet("active-games")]
@@ -103,6 +111,25 @@ public class GameController(IGameManagementService gameManagementService) : Cont
     {
         return null;
         
+    }
+
+    [Authorize(Roles = "admin,superadmin")]
+    [HttpPost("draw-numbers/{gameId:guid}")]
+    public async Task<IActionResult> DrawNumbersAsync(Guid gameId, [FromBody] int[] numbers)
+    {
+        try
+        {
+            await gameManagementService.DrawWinningNumbersForGameInstance(new DrawWinningNumbersDto
+            {
+                GameInstanceId = gameId,
+                WinningNumbers = numbers
+            });
+            return Ok(200);
+        }
+        catch (ServiceException ex)
+        {
+            return Conflict(new { message = ex.Message });
+        }
     }
 
     

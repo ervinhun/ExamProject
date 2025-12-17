@@ -14,5 +14,7 @@ public interface IGameManagementService
     Task DeleteGameTemplateById(Guid templateId);
     
     Task StartGameInstance(GameInstanceDto gameInstanceDto);
+    Task DrawWinningNumbersForGameInstance(DrawWinningNumbersDto  drawWinningNumbersDto);
+    Task<List<GameInstanceDto>> GetAllGames();
     Task StopGameInstanceById(Guid gameInstanceId);
 }

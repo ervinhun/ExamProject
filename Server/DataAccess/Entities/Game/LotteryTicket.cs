@@ -15,5 +15,7 @@ public class LotteryTicket
     public bool IsWinning { get; set; }
     public int Repeatings { get; set; }
     public bool IsPaid { get; set; }
+    
+    public bool IsExpired { get; set; }
     public DateTime BoughtAt { get; set; }
 }
