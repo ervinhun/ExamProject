@@ -3,7 +3,7 @@ import {useAtom, useSetAtom} from "jotai";
 import {useEffect} from "react";
 import {NavLink} from "react-router-dom";
 import {addNotificationAtom} from "@core/atoms/error";
-import formatDate from "@ui/helpers/FormatDate.ts";
+import {formatDate} from "@utils/dateUtils";
 
 export default function AllPlayers() {
     const [players,] = useAtom(playersAtom);

@@ -350,10 +350,6 @@ namespace DataAccess.Migrations
                     b.Property<int>("PoolOfNumbers")
                         .HasColumnType("integer");
 
-                    b.Property<string>("PriceGrowthRule")
-                        .HasMaxLength(512)
-                        .HasColumnType("character varying(512)");
-
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
 

@@ -24,7 +24,6 @@ namespace DataAccess.Migrations
                     MaxNumbersPerTicket = table.Column<int>(type: "integer", nullable: false),
                     MinNumbersPerTicket = table.Column<int>(type: "integer", nullable: false),
                     BasePrice = table.Column<double>(type: "double precision", nullable: false),
-                    PriceGrowthRule = table.Column<string>(type: "character varying(512)", maxLength: 512, nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
@@ -186,10 +185,10 @@ namespace DataAccess.Migrations
                     GameInstanceId = table.Column<Guid>(type: "uuid", nullable: false),
                     PlayerId = table.Column<Guid>(type: "uuid", nullable: false),
                     GameTemplateId = table.Column<Guid>(type: "uuid", nullable: false),
-                    Repeatings = table.Column<int>(type: "integer", nullable: true),
                     FullPrice = table.Column<double>(type: "double precision", nullable: false),
                     IsWinning = table.Column<bool>(type: "boolean", nullable: false),
                     IsPaid = table.Column<bool>(type: "boolean", nullable: false),
+                    IsExpired = table.Column<bool>(type: "boolean", nullable: false),
                     BoughtAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
@@ -300,6 +299,7 @@ namespace DataAccess.Migrations
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     UserId = table.Column<Guid>(type: "uuid", nullable: false),
                     WalletId = table.Column<Guid>(type: "uuid", nullable: false),
+                    PurchaseTicketId = table.Column<Guid>(type: "uuid", nullable: true),
                     Name = table.Column<string>(type: "text", nullable: true),
                     MobilePayTransactionNumber = table.Column<string>(type: "text", nullable: true),
                     Status = table.Column<int>(type: "integer", nullable: false),

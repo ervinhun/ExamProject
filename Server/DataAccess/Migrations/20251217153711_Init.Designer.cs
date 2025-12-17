@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace DataAccess.Migrations
 {
     [DbContext(typeof(MyDbContext))]
-    [Migration("20251217102146_IsExpired")]
-    partial class IsExpired
+    [Migration("20251217153711_Init")]
+    partial class Init
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -352,10 +352,6 @@ namespace DataAccess.Migrations
 
                     b.Property<int>("PoolOfNumbers")
                         .HasColumnType("integer");
-
-                    b.Property<string>("PriceGrowthRule")
-                        .HasMaxLength(512)
-                        .HasColumnType("character varying(512)");
 
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
