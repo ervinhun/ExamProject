@@ -6,7 +6,7 @@ Instead of hard-coding one game configuration, the app is built around game temp
 
 Admins can create multiple templates with different number variations and rules. A game is always started using one specific template, and if the game is marked as repeatable, the next game is automatically created for the following week using the same template after the draw is completed. This makes the system flexible and scalable as the game grows or changes.
 
-Example Game Rules:
+Example Game Rules: \br
 The Draw: 3 numbers are drawn weekly from a physical hat (1-16).
 The Tickets: Players choose between 5 and 8 numbers per ticket.
 Winning: A win occurs if the 3 winning numbers appear anywhere within the player's chosen sequence (order does not matter).
