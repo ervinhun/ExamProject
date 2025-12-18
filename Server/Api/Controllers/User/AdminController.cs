@@ -14,7 +14,7 @@ public class AdminController(IUserManagementService userManagementService) : Con
 {
 
     [HttpPost("register")]
-    public async Task<ActionResult> CreateAdmin([FromBody] CreateAdminDto createAdminDto)
+    public async Task<IActionResult> CreateAdmin([FromBody] CreateAdminDto createAdminDto)
     {
         try
         {
