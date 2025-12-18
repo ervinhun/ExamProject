@@ -12,9 +12,10 @@ public static class DateTimeHelper
     /// <summary>
     /// Converts a UTC DateTime to Copenhagen timezone
     /// </summary>
-    public static DateTime ToCopenhagen(DateTime utcDateTime)
+    public static DateTime? ToCopenhagen(DateTime? utcDateTime)
     {
-        return TimeZoneInfo.ConvertTimeFromUtc(utcDateTime, CopenhagenTimeZone);
+        if (utcDateTime == null) return null;
+        return TimeZoneInfo.ConvertTimeFromUtc((DateTime)utcDateTime!, CopenhagenTimeZone);
     }
     
     /// <summary>
