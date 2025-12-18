@@ -1,22 +1,26 @@
-# Project Overview
-The "Dead Pigeons" game involves players choosing a sequence of numbers (1-16) to match a weekly winning sequence of 3 numbers drawn by an administrator. This platform handles the digital side of the game, tracking balances, ticket purchases, and winning boards while co-existing with physical participants.
+Dead Pigeons – Game Platform
 
-Key Game Rules:
+Dead Pigeons is a web app that digitizes a weekly number game that’s normally run partly on paper and partly in person. The goal of the app is to make the game easier to manage without locking it into a single, non-scalable setup.
+
+Instead of hard-coding one game configuration, the app is built around game templates.
+
+Admins can create multiple templates with different number variations and rules. A game is always started using one specific template, and if the game is marked as repeatable, the next game is automatically created for the following week using the same template after the draw is completed. This makes the system flexible and scalable as the game grows or changes.
+
+Example Game Rules:
 The Draw: 3 numbers are drawn weekly from a physical hat (1-16).
-The Boards: Players choose between 5 and 8 numbers per board.
+The Tickets: Players choose between 5 and 8 numbers per ticket.
 Winning: A win occurs if the 3 winning numbers appear anywhere within the player's chosen sequence (order does not matter).
 Revenue: 70% goes to the prize pool (managed manually by admins); 30% goes to the sports facility.
 
 Roles and Permissions
 - **Player**: Request membership, deposit funds (MobilePay), purchase/repeat boards, view winning history.
 - **Admin**: Full Player CRUD, approve registrations, verify transactions, start games, and enter winning numbers.
-- **Super Admin**: All Admin permissions + the ability to create and manage other Admin accounts.
 
 Financial Logic (The Balance System)
 To ensure financial security, the app utilizes a pre-paid balance system:
 Deposit: Players deposit money and provide a MobilePay transaction number.
 Verification: The transaction remains Pending until an Admin manually verifies it against MobilePay records.
-Purchase: Once approved, players use their balance to buy boards based on the unique game templates.
+Purchase: Once approved, players use their balance to buy tickets for active games.
 
 Note: Prize money is handled separately by administrators and is not added to the digital balance.
 
@@ -25,14 +29,14 @@ Note: Prize money is handled separately by administrators and is not added to th
 For Players
 MyTickets: View active and past tickets. Winning tickets are clearly highlighted.
 Wallet: Manage balance, view transaction history, and submit deposit requests.
-Auto-Play: Option to repeat boards for $X$ number of weeks.
+Auto-Play: Option to purchase ticket subscription for a game, works until its cancelled or there is no more funds to cover the next ticket purchase.
 Membership Request: New users can sign up and wait for Admin activation.
 
 For Administrators
 Dashboard: Centralized view of pending players and transactions for quick approval.
-Game Management: Create "Game Templates" for quick setup and start new weekly rounds.
-Deadline Enforcement: The system prevents entries after Saturday 5:00 PM (Danish Local Time).
-Winner Overview: A clear, timestamped history of all games and winning boards to assist with manual prize payouts.
+Game Management: Create "Game Templates" for quick setup and starting new game.
+Deadline Enforcement: The system prevents drawing numbers before the actual draw date.
+Winner Overview: A clear, timestamped history of all games and winning tickets to assist with manual prize payouts.
 
 ⚠️ Known Bugs & Limitations
 Email System: Automated emails for password recovery or new account credentials are not currently implemented.
