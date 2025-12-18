@@ -46,14 +46,30 @@ public class Seeder(MyDbContext context) : ISeeder
         if (await context.Users.AnyAsync())
             return;
 
-        // ROLES
-        var adminRole = await context.Roles.FirstOrDefaultAsync(r => r.Name == UserRole.Admin)
-                        ?? new Role { Id = AdminRoleId, Name = UserRole.Admin };
+        // ROLES - ensure they exist first
+        var adminRole = await context.Roles.FirstOrDefaultAsync(r => r.Name == UserRole.Admin);
+        if (adminRole == null)
+        {
+            adminRole = new Role { Id = AdminRoleId, Name = UserRole.Admin };
+            await context.Roles.AddAsync(adminRole);
+            await context.SaveChangesAsync();
+        }
 
-        var playerRole = await context.Roles.FirstOrDefaultAsync(r => r.Name == UserRole.Player)
-                         ?? new Role { Id = PlayerRoleId, Name = UserRole.Player };
-
-        context.Roles.AddRange(adminRole, playerRole);
+        var playerRole = await context.Roles.FirstOrDefaultAsync(r => r.Name == UserRole.Player);
+        if (playerRole == null)
+        {
+            playerRole = new Role { Id = PlayerRoleId, Name = UserRole.Player };
+            await context.Roles.AddAsync(playerRole);
+            await context.SaveChangesAsync();
+        }
+        
+        // Detach roles to avoid tracking issues when assigning to users
+        context.Entry(adminRole).State = EntityState.Detached;
+        context.Entry(playerRole).State = EntityState.Detached;
+        
+        // Re-fetch roles to ensure they're properly tracked
+        adminRole = await context.Roles.FindAsync(AdminRoleId) ?? throw new Exception("Admin role not found after save");
+        playerRole = await context.Roles.FindAsync(PlayerRoleId) ?? throw new Exception("Player role not found after save");
 
         // USERS
         HashUtils.CreatePasswordHash("admin", out var adminHash, out var adminSalt);
@@ -70,9 +86,9 @@ public class Seeder(MyDbContext context) : ISeeder
             LastName = "Adminsson",
             PasswordHash = adminHash,
             PasswordSalt = adminSalt,
-            DateOfBirth = new DateTime(1990, 1, 1, 0, 0, 0, DateTimeKind.Utc),
-            Roles = new List<Role> { adminRole }
+            DateOfBirth = new DateTime(1990, 1, 1, 0, 0, 0, DateTimeKind.Utc)
         };
+        admin.Roles.Add(adminRole);
 
         var player1 = new Player
         {
@@ -83,9 +99,9 @@ public class Seeder(MyDbContext context) : ISeeder
             PasswordHash = p1Hash,
             PasswordSalt = p1Salt,
             DateOfBirth = new DateTime(2000, 1, 1, 0, 0, 0, DateTimeKind.Utc),
-            Roles = new List<Role> { playerRole },
             Activated = true
         };
+        player1.Roles.Add(playerRole);
 
         var player2 = new Player
         {
@@ -95,9 +111,9 @@ public class Seeder(MyDbContext context) : ISeeder
             LastName = "Two",
             PasswordHash = p2Hash,
             PasswordSalt = p2Salt,
-            DateOfBirth = new DateTime(2000, 1, 1, 0, 0, 0, DateTimeKind.Utc),
-            Roles = new List<Role> { playerRole }
+            DateOfBirth = new DateTime(2000, 1, 1, 0, 0, 0, DateTimeKind.Utc)
         };
+        player2.Roles.Add(playerRole);
 
         var unconfirmed = new Player
         {
@@ -108,9 +124,9 @@ public class Seeder(MyDbContext context) : ISeeder
             PasswordHash = uHash,
             PasswordSalt = uSalt,
             DateOfBirth = new DateTime(2000, 1, 1, 0, 0, 0, DateTimeKind.Utc),
-            Activated = false,
-            Roles = new List<Role> { playerRole }
+            Activated = false
         };
+        unconfirmed.Roles.Add(playerRole);
 
         var noWalletUser = new User
         {
@@ -120,11 +136,18 @@ public class Seeder(MyDbContext context) : ISeeder
             LastName = "Wallet",
             PasswordHash = nwHash,
             PasswordSalt = nwSalt,
-            DateOfBirth = new DateTime(2000, 1, 1, 0, 0, 0, DateTimeKind.Utc),
-            Roles = new List<Role>()
+            DateOfBirth = new DateTime(2000, 1, 1, 0, 0, 0, DateTimeKind.Utc)
         };
 
-        context.Users.AddRange(admin, player1, player2, unconfirmed, noWalletUser);
+        // Add users WITH roles - EF should handle the join table
+        await context.Users.AddAsync(admin);
+        await context.Users.AddAsync(player1);
+        await context.Users.AddAsync(player2);
+        await context.Users.AddAsync(unconfirmed);
+        await context.Users.AddAsync(noWalletUser);
+        
+        // Save users with their role relationships
+        await context.SaveChangesAsync();
 
         // WALLETS
         context.Wallets.AddRange(

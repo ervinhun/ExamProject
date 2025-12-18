@@ -25,12 +25,24 @@ public class UserManagementService(MyDbContext ctx, IEmailService emailService) 
         }
 
         HashUtils.CreatePasswordHash("user", out var hash, out var salt);
+        
+        // Parse birth date
+        DateTime dateOfBirth = DateTime.MinValue;
+        if (!string.IsNullOrEmpty(createUserDto.BirthDate))
+        {
+            if (DateTime.TryParse(createUserDto.BirthDate, out var parsedDate))
+            {
+                dateOfBirth = DateTime.SpecifyKind(parsedDate, DateTimeKind.Utc);
+            }
+        }
+        
         var user = new User
         {
             FirstName = createUserDto.FirstName,
             LastName = createUserDto.LastName,
             Email = createUserDto.Email,
             PhoneNumber = createUserDto.PhoneNumber,
+            DateOfBirth = dateOfBirth,
             PasswordHash = hash,
             PasswordSalt = salt,
         };
@@ -45,6 +57,7 @@ public class UserManagementService(MyDbContext ctx, IEmailService emailService) 
                 FirstName = user.FirstName,
                 LastName = user.LastName,
                 Email = user.Email,
+                Dob = user.DateOfBirth,
                 Roles = user.Roles.Select(r => r.Name).ToList(),
                 PhoneNumber = user.PhoneNumber,
                 CreatedAt = (DateTime)DateTimeHelper.ToCopenhagen(user.CreatedAt)!,
@@ -75,12 +88,23 @@ public class UserManagementService(MyDbContext ctx, IEmailService emailService) 
             throw new ServiceException("Player role not found in database", new InvalidOperationException());
         }
 
+        // Parse birth date
+        DateTime dateOfBirth = DateTime.MinValue;
+        if (!string.IsNullOrEmpty(createPlayerDto.BirthDate))
+        {
+            if (DateTime.TryParse(createPlayerDto.BirthDate, out var parsedDate))
+            {
+                dateOfBirth = DateTime.SpecifyKind(parsedDate, DateTimeKind.Utc);
+            }
+        }
+
         var player = new Player
         {
             FirstName = createPlayerDto.FirstName,
             LastName = createPlayerDto.LastName,
             Email = createPlayerDto.Email,
             PhoneNumber = createPlayerDto.PhoneNumber,
+            DateOfBirth = dateOfBirth,
             PasswordHash = hash,
             PasswordSalt = salt,
             Activated = false
@@ -102,18 +126,26 @@ public class UserManagementService(MyDbContext ctx, IEmailService emailService) 
         {
             await ctx.Players.AddAsync(player);
             await ctx.SaveChangesAsync();
+            
+            // Reload player with roles to ensure they're included
+            var savedPlayer = await ctx.Players
+                .Include(p => p.Roles)
+                .FirstOrDefaultAsync(p => p.Id == player.Id);
+            
             return new PlayerDto
             {
-                Id = player.Id,
-                FirstName = player.FirstName,
-                LastName = player.LastName,
-                Email = player.Email,
-                PhoneNumber = player.PhoneNumber,
-                CreatedAt = player.CreatedAt,
-                ExpireDate = player.ExpireDate,
-                UpdatedAt = player.UpdatedAt,
-                IsDeleted = player.IsDeleted,
-                IsActive = player.Activated
+                Id = savedPlayer!.Id,
+                FirstName = savedPlayer.FirstName,
+                LastName = savedPlayer.LastName,
+                Email = savedPlayer.Email,
+                Dob = savedPlayer.DateOfBirth,
+                Roles = savedPlayer.Roles.Select(r => r.Name).ToList(),
+                PhoneNumber = savedPlayer.PhoneNumber,
+                CreatedAt = savedPlayer.CreatedAt,
+                ExpireDate = savedPlayer.ExpireDate,
+                UpdatedAt = savedPlayer.UpdatedAt,
+                IsDeleted = savedPlayer.IsDeleted,
+                IsActive = savedPlayer.Activated
             };
         }
         catch (DbUpdateException e)
@@ -184,7 +216,8 @@ public class UserManagementService(MyDbContext ctx, IEmailService emailService) 
     {
         try
         {
-            var player = await ctx.Players.SingleOrDefaultAsync(u => u.Id == id);
+            // First get the player
+            var player = await ctx.Players.Include(user => user.Roles).SingleOrDefaultAsync(u => u.Id == id);
             if (player == null) throw new ServiceException("Player not found", new InvalidOperationException());
 
             return new PlayerDto
@@ -193,7 +226,9 @@ public class UserManagementService(MyDbContext ctx, IEmailService emailService) 
                 FirstName = player.FirstName,
                 LastName = player.LastName,
                 Email = player.Email,
+                Dob = player.DateOfBirth,
                 PhoneNumber = player.PhoneNumber,
+                Roles = player.Roles.Select(r => r.Name).ToList(),
                 CreatedAt = player.CreatedAt,
                 UpdatedAt = player.UpdatedAt,
                 IsDeleted = player.IsDeleted,
@@ -225,7 +260,7 @@ public class UserManagementService(MyDbContext ctx, IEmailService emailService) 
             throw new ServiceException("Player not found");
 
         //If the player is under 18, the system declines the membership
-        if (player.DateOfBirth < DateTime.UtcNow.AddYears(-18))
+        if (player.DateOfBirth > DateTime.UtcNow.AddYears(-18))
         {
             player.Activated = false;
             player.UpdatedAt = DateTime.UtcNow;

@@ -114,7 +114,7 @@ public class AuthTest
     [Fact]
     public async Task RegisterWhenUserAlreadyExistsThrowsException()
     {
-        await Assert.ThrowsAsync<DuplicateNameException>(() => _authService.Register(
+        await Assert.ThrowsAsync<AuthenticationException>(() => _authService.Register(
             new RegisterRequestDto
             {
                 Email = "admin@admin.com",
