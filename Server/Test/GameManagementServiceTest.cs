@@ -1,4 +1,5 @@
 ﻿using Api.Dto.Game;
+using Api.Services.Game;
 using Api.Services.Management;
 using DataAccess;
 using DataAccess.Enums;
@@ -13,6 +14,7 @@ public class GameManagementServiceTest
 {
     private readonly MyDbContext _ctx;
     private readonly GameManagementService _gameService;
+    private readonly TicketService _ticketService;
     private readonly DatabaseFixture _fixture;
     private readonly Seeder _seeder;
 
@@ -25,11 +27,10 @@ public class GameManagementServiceTest
             .Options;
 
         _ctx = new MyDbContext(options);
-
         //var seeder = new Seeder(_ctx);
         _seeder = new Seeder(_ctx);
         _seeder.Seed().GetAwaiter().GetResult();
-        _gameService = new GameManagementService(_ctx);
+        _gameService = new GameManagementService(_ctx, new TicketService(_ctx, new WalletTransactionsService(_ctx)));
     }
 
     [Fact]
