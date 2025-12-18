@@ -1,8 +1,8 @@
 import { NavLink } from "react-router-dom";
 import { useState } from "react";
-import { useAtom } from "jotai";
-import { authAtom } from "@core/atoms/auth";
-import { envConfig } from "@core/config/EnvConfig";
+// import { useAtom } from "jotai";
+// import { authAtom } from "@core/atoms/auth";
+// import { envConfig } from "@core/config/EnvConfig";
 import dashboardIcon from "@ui/assets/layout-dashboard.svg?url";
 import userIcon from "@ui/assets/user.svg?url";
 import dicesIcon from "@ui/assets/dices.svg?url";
@@ -13,9 +13,9 @@ export default function DockAdmin() {
     const [openUsers, setOpenUsers] = useState(false);
     const [openGames, setOpenGames] = useState(false);
     const [openTransactions, setOpenTransactions] = useState(false);
-    const [authUser] = useAtom(authAtom);
+    // const [authUser] = useAtom(authAtom);
     
-    const isSuperAdmin = authUser?.roles.includes(Number(envConfig.SUPERADMIN_ROLE));
+    // const isSuperAdmin = authUser?.roles.includes(Number(envConfig.SUPERADMIN_ROLE));
 
     return (
         <div id="dock" className="flex gap-10 items-center">
@@ -69,7 +69,7 @@ export default function DockAdmin() {
                     <li>
                         <NavLink to="/admin/players/applications">Player Applications </NavLink>
                     </li>
-                    {isSuperAdmin && (
+                    {/* {isSuperAdmin && (
                         <>
                             <li>
                                 <NavLink to="/admin/register-admin">Register Admin</NavLink>
@@ -78,7 +78,7 @@ export default function DockAdmin() {
                                 <NavLink to="/admin/list-admins">All Admins</NavLink>
                             </li>
                         </>
-                    )}
+                    )} */}
                 </ul>
             </div>
 

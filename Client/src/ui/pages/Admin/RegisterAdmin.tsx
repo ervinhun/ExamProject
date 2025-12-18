@@ -1,4 +1,4 @@
-import { useAtom, useSetAtom } from "jotai";
+import { useSetAtom } from "jotai";
 import { useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { addNotificationAtom } from "@core/atoms/error";
@@ -38,9 +38,10 @@ export default function RegisterAdmin() {
                 message: `Admin ${firstName} ${lastName} registered successfully!`,
                 type: "success",
             });
-        } catch (err: any) {
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
             addNotification({
-                message: `Failed to register admin. ${err?.message || err}`,
+                message: `Failed to register admin. ${errorMessage}`,
                 type: "error",
             });
         }

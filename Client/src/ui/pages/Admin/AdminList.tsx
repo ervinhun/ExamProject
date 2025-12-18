@@ -18,7 +18,7 @@ export default function AdminList() {
                 setAdmins(data);
                 setLoading(false);
             })
-            .catch((err) => {
+            .catch(() => {
                 setError("Failed to fetch admins");
                 setLoading(false);
                 addNotification({
