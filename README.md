@@ -42,6 +42,5 @@ Prize Calculation: The system does not calculate the specific DKK payout per per
 🔑 Test Credentials
 | Role        | Username / Email | Password         |
 | ----------- | ---------------- | ---------------- |
-| Super Admin | [Insert Email]   | [Insert Password]|
-| Admin       | [Insert Email]   | [Insert Password]|
-| Player      | [Insert Email]   | [Insert Password]|
+| Admin       | admin@admin.com  | test_admin       |
+| Player      | player@test.com  | test_player      |
