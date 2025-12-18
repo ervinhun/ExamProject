@@ -1,3 +1,5 @@
+import {NavLink} from "react-router-dom";
+
 export default function Footer() {
     return (
         <footer className="bg-base-300 border-t border-base-content/10">
@@ -65,13 +67,29 @@ export default function Footer() {
                         <h3 className="font-bold text-lg text-primary">Quick Links</h3>
                         <ul className="space-y-2 text-sm text-base-content/70">
                             <li>
-                                <a href="#" className="hover:text-primary transition-colors">Terms & Conditions</a>
+                                <NavLink
+                                    to="/terms_conditions"
+                                    className={({ isActive }) =>
+                                        `dock-button ${isActive ? "dock-active" : ""} flex items-center gap-2`
+                                    }
+                                >Terms & Conditions</NavLink>
                             </li>
                             <li>
-                                <a href="#" className="hover:text-primary transition-colors">Privacy Policy</a>
+                                <NavLink
+                                    to="/privacy"
+                                    className={({ isActive }) =>
+                                        `dock-button ${isActive ? "dock-active" : ""} flex items-center gap-2`
+                                    }
+                                >Privacy Policy
+                                </NavLink>
                             </li>
                             <li>
-                                <a href="#" className="hover:text-primary transition-colors">Help & Support</a>
+                                <a
+                                    href="https://jerneif.dk/cms/visbestyr.aspx"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="dock-button flex items-center gap-2"
+                                >Help & Support</a>
                             </li>
                         </ul>
                     </div>

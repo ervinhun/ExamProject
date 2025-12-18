@@ -8,7 +8,6 @@ import Wallet from "./pages/Player/Wallet.tsx";
 import MyBoards from "./pages/Player/Boards/MyBoards.tsx";
 import CreateBoard from "./pages/Player/Boards/CreateBoard.tsx";
 import RepeatingBoards from "./pages/Player/Boards/RepeatingBoards.tsx";
-
 import WinningBoards from "./pages/Player/History/WinningBoards.tsx";
 import Profile from "./pages/Player/Profile.tsx";
 import Dashboard from "./pages/Admin/Dashboard.tsx";
@@ -41,6 +40,8 @@ const router = createBrowserRouter([
             {path: "/", element: <Home/>},
             {path: "/login", element: <Login/>},
             {path: "/register", element: <Register/>},
+            {path: "/privacy", element: <Privacy/>},
+            {path: "/terms_conditions", element: <Terms/>},
 
             //Error page
             {path: "/403", element: <Forbidden403/>},
