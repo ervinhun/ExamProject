@@ -31,6 +31,8 @@ import Play from "@ui/pages/Games/Play.tsx";
 import GamesDashboard from "@ui/pages/Games/GamesDashboard.tsx";
 import GamesHistory from './pages/Admin/Games/GamesHistory.tsx';
 import ActiveGames from './pages/Admin/Games/ActiveGames.tsx';
+import Privacy from './pages/Privacy.tsx';
+import Terms from './pages/Terms.tsx';
 
 const router = createBrowserRouter([
     {
