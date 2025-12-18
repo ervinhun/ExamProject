@@ -1,4 +1,4 @@
-Project Overview
+# Project Overview
 The "Dead Pigeons" game involves players choosing a sequence of numbers (1-16) to match a weekly winning sequence of 3 numbers drawn by an administrator. This platform handles the digital side of the game, tracking balances, ticket purchases, and winning boards while co-existing with physical participants.
 
 Key Game Rules:
@@ -7,10 +7,10 @@ The Boards: Players choose between 5 and 8 numbers per board.
 Winning: A win occurs if the 3 winning numbers appear anywhere within the player's chosen sequence (order does not matter).
 Revenue: 70% goes to the prize pool (managed manually by admins); 30% goes to the sports facility.
 
-Role, Permissions
-Player: "Request membership, deposit funds (MobilePay), purchase/repeat boards, view winning history."
-Admin: "Full Player CRUD, approve registrations, verify transactions, start games, and enter winning numbers."
-Super Admin: All Admin permissions + the ability to create and manage other Admin accounts.
+Roles and Permissions
+- **Player**: Request membership, deposit funds (MobilePay), purchase/repeat boards, view winning history.
+- **Admin**: Full Player CRUD, approve registrations, verify transactions, start games, and enter winning numbers.
+- **Super Admin**: All Admin permissions + the ability to create and manage other Admin accounts.
 
 Financial Logic (The Balance System)
 To ensure financial security, the app utilizes a pre-paid balance system:
@@ -40,7 +40,8 @@ Withdrawals: The "Withdraw Funds" interface is visible but non-functional, as it
 Prize Calculation: The system does not calculate the specific DKK payout per person, as it must be calculated alongside physical game participants.
 
 🔑 Test Credentials
-Role,Username / Email,Password
-Super Admin,[Insert Email],[Insert Password]
-Admin,[Insert Email],[Insert Password]
-Player,[Insert Email],[Insert Password]
+| Role        | Username / Email | Password         |
+| ----------- | ---------------- | ---------------- |
+| Super Admin | [Insert Email]   | [Insert Password]|
+| Admin       | [Insert Email]   | [Insert Password]|
+| Player      | [Insert Email]   | [Insert Password]|
