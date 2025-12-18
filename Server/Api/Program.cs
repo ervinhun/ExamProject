@@ -304,14 +304,14 @@ public static class Program
             app.MapControllers();
 
             // Apply pending migrations automatically
-            /*using (var scope = app.Services.CreateScope())
+            using (var scope = app.Services.CreateScope())
             {
                 var dbContext = scope.ServiceProvider.GetRequiredService<MyDbContext>();
                 var pendingMigrations = await dbContext.Database.GetPendingMigrationsAsync();
                 var migrations = pendingMigrations as string[] ?? pendingMigrations.ToArray();
-                if (migrations.Any())
+                if (migrations.Length != 0)
                 {
-                    Console.WriteLine($"[DB] Applying {migrations.Count()} pending migration(s)...");
+                    Console.WriteLine($"[DB] Applying {migrations.Length} pending migration(s)...");
                     await dbContext.Database.MigrateAsync();
                     Console.WriteLine("[DB] ✓ Migrations applied successfully");
                 }
@@ -319,7 +319,7 @@ public static class Program
                 {
                     Console.WriteLine("[DB] ✓ Database schema is up to date");
                 }
-            }*/
+            }
 
             // Initialize database
             await EnsureRolesAreCreatedAsync(app.Services);

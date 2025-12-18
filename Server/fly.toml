@@ -1,9 +1,9 @@
-# fly.toml app configuration file generated for server-black-sunset-7604 on 2025-11-13T10:39:22+01:00
+# fly.toml app configuration file generated for server-quiet-shape-9076 on 2025-12-18T17:20:55+01:00
 #
 # See https://fly.io/docs/reference/configuration/ for information about how to use this file.
 #
 
-app = 'server-black-sunset-7604'
+app = 'server-quiet-shape-9076'
 primary_region = 'arn'
 
 [build]
