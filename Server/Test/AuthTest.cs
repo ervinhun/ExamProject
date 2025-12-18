@@ -1,8 +1,6 @@
-﻿using System.Data;
-using Api.Configuration;
+﻿using Api.Configuration;
 using Api.Dto.Auth.Request;
 using Api.Dto.User;
-using api.Services.Auth;
 using Api.Services.Auth;
 using DataAccess;
 using Microsoft.EntityFrameworkCore;

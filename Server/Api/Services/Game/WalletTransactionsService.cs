@@ -58,6 +58,7 @@ public class WalletTransactionsService(MyDbContext ctx) : IWalletTransactionsSer
     {
         var transactions = await ctx.Transactions
             .Where(t=>t.Status == TransactionStatus.Requested)
+            .Where(t=>t.Type == TransactionType.Deposit)
             .ToListAsync();
         var transactionsDtos = new List<TransactionDto>();
         foreach (var transaction in transactions)

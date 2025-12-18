@@ -1,12 +1,10 @@
-using Api.Dto.Auth;
 using Api.Dto.Auth.Request;
 using Api.Dto.Auth.Response;
 using Api.Dto.User;
 using DataAccess.Entities.Auth;
 using Microsoft.AspNetCore.Identity.Data;
-using Microsoft.AspNetCore.Mvc;
 
-namespace api.Services;
+namespace Api.Services.Auth;
 
 public interface IMyAuthenticationService
 {

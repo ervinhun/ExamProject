@@ -1,15 +1,14 @@
-import { useAtom, useSetAtom } from "jotai";
+import { useSetAtom } from "jotai";
 import { useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
-import ErrorPopUp from "../../Errors/ErrorPopUp";
-import { createPlayerAtom } from "@core/atoms/players";
 import { addNotificationAtom } from "@core/atoms/error";
+import ErrorPopUp from "../Errors/ErrorPopUp";
+import { adminApi } from "@core/api/controllers/admin";
 
-export default function AddPlayer() {    
-    const [,createPlayer] = useAtom(createPlayerAtom)
+export default function RegisterAdmin() {
     const addNotification = useSetAtom(addNotificationAtom);
     const navigate = useNavigate();
-    
+
     // Form state
     const [firstName, setFirstName] = useState("");
     const [lastName, setLastName] = useState("");
@@ -17,65 +16,55 @@ export default function AddPlayer() {
     const [birthDate, setBirthDate] = useState("");
     const [gender, setGender] = useState("");
     const [email, setEmail] = useState("");
-    
-    async function handleSubmit(e:React.FormEvent<HTMLFormElement>){
+
+    async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
         e.preventDefault();
-        await createPlayer({
-            firstName,
-            lastName,
-            email,
-            birthDate: new Date(birthDate),
-            phoneNumber, 
-        }).then(()=>{
-        // Clear form
+        try {
+            await adminApi.registerAdmin({
+                firstName,
+                lastName,
+                email,
+                phoneNumber,
+                birthDate: new Date(birthDate),
+            });
             setFirstName("");
             setLastName("");
             setPhoneNumber("");
             setBirthDate("");
             setGender("");
             setEmail("");
-            
-            navigate('/admin/players');
-        
+            navigate("/");
             addNotification({
-                message: `Player ${firstName} ${lastName} created successfully!`,
-                type: 'success'
+                message: `Admin ${firstName} ${lastName} registered successfully!`,
+                type: "success",
             });
-        })
-        .catch((err)=>{
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
             addNotification({
-                message: `Failed to create player. ${err.message}`,
-                type: 'error'
+                message: `Failed to register admin. ${errorMessage}`,
+                type: "error",
             });
-            return;
-        }).finally(()=>{
-
-        });
-
-
+        }
     }
 
     return (
         <div className="container mx-auto ">
             <ErrorPopUp />
-            
             <div className="space-y-8">
                 {/* Header */}
                 <div className="flex items-center gap-4 pb-4 border-b-2 border-primary">
                     <div className="flex-1">
-                        <h1 className="text-4xl font-bold text-primary">Register Player</h1>
-                        <p className="text-base text-base-content/70 mt-1">Add a new player to the system</p>
+                        <h1 className="text-4xl font-bold text-primary">Register Admin</h1>
+                        <p className="text-base text-base-content/70 mt-1">Add a new admin to the system</p>
                     </div>
-                    <NavLink to="/admin/players" className="btn btn-ghost">
-                        ← Back to Players
+                    <NavLink to="/admin" className="btn btn-ghost">
+                        ← Back to Admin
                     </NavLink>
                 </div>
-
                 {/* Form Card */}
                 <div className="card bg-base-200 shadow-lg max-w-4xl mx-auto">
                     <div className="card-body">
                         <form onSubmit={handleSubmit} className="space-y-6">
-                            {/* All Fields Combined */}
                             <div className="space-y-4">
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     {/* First Name */}
@@ -84,87 +73,82 @@ export default function AddPlayer() {
                                             <span className="label-text font-medium">First Name</span>
                                             <span className="label-text-alt text-error">*</span>
                                         </label>
-                                        <input 
-                                            type="text" 
-                                            className="input input-bordered w-full" 
+                                        <input
+                                            type="text"
+                                            className="input input-bordered w-full"
                                             placeholder="Enter first name"
                                             value={firstName}
                                             onChange={(e) => setFirstName(e.target.value)}
-                                            required 
+                                            required
                                         />
                                     </div>
-
                                     {/* Last Name */}
                                     <div className="form-control">
                                         <label className="label">
                                             <span className="label-text font-medium">Last Name</span>
                                             <span className="label-text-alt text-error">*</span>
                                         </label>
-                                        <input 
-                                            type="text" 
-                                            className="input input-bordered w-full" 
+                                        <input
+                                            type="text"
+                                            className="input input-bordered w-full"
                                             placeholder="Enter last name"
                                             value={lastName}
                                             onChange={(e) => setLastName(e.target.value)}
-                                            required 
+                                            required
                                         />
                                     </div>
-
                                     {/* Email */}
                                     <div className="form-control">
                                         <label className="label">
                                             <span className="label-text font-medium">Email</span>
                                             <span className="label-text-alt text-error">*</span>
                                         </label>
-                                        <input 
-                                            type="email" 
-                                            className="input input-bordered w-full" 
-                                            placeholder="player@example.com"
+                                        <input
+                                            type="email"
+                                            className="input input-bordered w-full"
+                                            placeholder="admin@example.com"
                                             value={email}
                                             onChange={(e) => setEmail(e.target.value)}
-                                            required 
+                                            required
                                         />
                                     </div>
-
                                     {/* Phone Number */}
                                     <div className="form-control">
                                         <label className="label">
                                             <span className="label-text font-medium">Mobile Phone</span>
                                             <span className="label-text-alt text-error">*</span>
                                         </label>
-                                        <input 
-                                            type="tel" 
-                                            className="input input-bordered w-full" 
+                                        <input
+                                            type="tel"
+                                            className="input input-bordered w-full"
                                             placeholder="+45 12 34 56 78"
                                             value={phoneNumber}
                                             onChange={(e) => setPhoneNumber(e.target.value)}
-                                            required 
+                                            required
                                         />
                                     </div>
-
                                     {/* Birthdate */}
                                     <div className="form-control">
                                         <label className="label">
                                             <span className="label-text font-medium">Date of Birth</span>
                                             <span className="label-text-alt text-error">*</span>
                                         </label>
-                                        <input 
-                                            type="date" 
-                                            className="input input-bordered w-full" 
+                                        <input
+                                            type="date"
+                                            className="input input-bordered w-full"
                                             value={birthDate}
                                             onChange={(e) => setBirthDate(e.target.value)}
-                                            required 
+                                            required
                                         />
                                     </div>
-
                                     {/* Gender */}
                                     <div className="form-control">
                                         <label className="label">
                                             <span className="label-text font-medium">Gender</span>
                                             <span className="label-text-alt text-error">*</span>
                                         </label>
-                                        <select 
-                                            className="select select-bordered w-full" 
+                                        <select
+                                            className="select select-bordered w-full"
                                             value={gender}
                                             onChange={(e) => setGender(e.target.value)}
                                             required
@@ -177,11 +161,10 @@ export default function AddPlayer() {
                                     </div>
                                 </div>
                             </div>
-
                             {/* Submit Button */}
                             <div className="flex gap-2 justify-end pt-4">
                                 <button className="btn btn-primary" type="submit">
-                                    Register Player
+                                    Register Admin
                                 </button>
                             </div>
                         </form>
@@ -191,4 +174,3 @@ export default function AddPlayer() {
         </div>
     );
 }
-

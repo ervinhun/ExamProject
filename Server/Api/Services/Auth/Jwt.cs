@@ -1,16 +1,13 @@
 using System.Globalization;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-using System.Security.Cryptography;
 using System.Text;
 using Api.Configuration;
 using Api.Dto.Auth.Request;
 using Api.Dto.Auth.Response;
 using DataAccess;
 using DataAccess.Entities.Auth;
-using DataAccess.Enums;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Utils.Exceptions;
 using Utils;
