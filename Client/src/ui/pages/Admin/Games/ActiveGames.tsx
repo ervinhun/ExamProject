@@ -1,12 +1,11 @@
 // filepath: /Users/kamil/easv/fullstack/ExamProject/Client/src/ui/pages/Admin/Games/ActiveGames.tsx
 import { useEffect, useState } from "react";
-import { useAtom, useSetAtom } from "jotai";
+import { useAtom } from "jotai";
 import { NavLink } from "react-router-dom";
 import { activeGamesAtom, fetchActiveGamesAtom } from "@core/atoms/game";
 import { formatDateTime, mapDayOfWeek } from "@utils/dateUtils";
 import { getStatusColor, getGameStatus } from "@utils/gameUtils";
 import type { GameInstanceDto } from "@core/types/game";
-import { addNotificationAtom } from "@core/atoms/error";
 
 export default function ActiveGames() {
     const [activeGames] = useAtom(activeGamesAtom);

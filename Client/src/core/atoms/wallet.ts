@@ -59,8 +59,9 @@ export const requestDepositAtom = atom(null,
                 });
 
             return response;
-        } catch (error: Error | any) {
-            const errorMessage = error.response?.data?.message || error.message;
+        } catch (error) {
+            const errorMessage = (error as any)?.response?.data?.message || 
+                                 (error instanceof Error ? error.message : String(error));
             set(errorAtom, errorMessage);
             console.error("Deposit failed:", error);
             throw error;
