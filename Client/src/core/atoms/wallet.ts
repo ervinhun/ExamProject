@@ -59,7 +59,7 @@ export const requestDepositAtom = atom(null,
                 });
 
             return response;
-        } catch (error: any) {
+        } catch (error: Error | any) {
             const errorMessage = error.response?.data?.message || error.message;
             set(errorAtom, errorMessage);
             console.error("Deposit failed:", error);

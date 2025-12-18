@@ -1,15 +1,12 @@
 import { useState, useEffect } from "react";
-import { useAtom, useSetAtom } from "jotai";
+import { useSetAtom } from "jotai";
 import { addNotificationAtom } from "@core/atoms/error";
 import { authApi } from "@core/api/controllers/auth";
-import { authAtom } from "@core/atoms/auth";
 import type { User } from "@core/types/users";
-import { formatDateTime } from "@utils/dateUtils";
 import getAge from "@utils/getAge";
 
 export default function Profile() {
     const addNotification = useSetAtom(addNotificationAtom);
-    const [authUser] = useAtom(authAtom);
     
     // User profile state
     const [userDetails, setUserDetails] = useState<User | null>(null);
@@ -27,10 +24,11 @@ export default function Profile() {
             try {
                 const profile = await authApi.profile();
                 setUserDetails(profile);
-            } catch (error: any) {
+            } catch (error) {
+                const errorMessage = error instanceof Error ? error.message : String(error);
                 addNotification({
                     type: "error",
-                    message: error?.message || "Failed to load profile"
+                    message: errorMessage || "Failed to load profile"
                 });
             } finally {
                 setIsLoadingProfile(false);
@@ -81,10 +79,11 @@ export default function Profile() {
             setCurrentPassword("");
             setNewPassword("");
             setConfirmPassword("");
-        } catch (error: any) {
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : String(error);
             addNotification({
                 type: "error",
-                message: error?.message || "Failed to change password"
+                message: errorMessage || "Failed to change password"
             });
         } finally {
             setIsChangingPassword(false);

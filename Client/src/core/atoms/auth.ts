@@ -1,11 +1,10 @@
 import { authApi } from '../api/controllers/auth';
-import { atom, useAtom } from 'jotai'
+import { atom } from 'jotai'
 import type { User } from '../types/users';
 import { atomWithStorage } from 'jotai/utils';
 import { errorAtom } from './error';
 import type { AuthUser } from '@core/types/auth';
 import { getDefaultStore } from 'jotai/vanilla';
-import { getWalletForPlayerIdAtom } from './wallet';
 import { walletAtom } from './wallet';
 import { walletApi } from '@core/api/controllers/wallet';
 

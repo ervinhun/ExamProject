@@ -16,7 +16,7 @@ export default function DrawNumbers() {
 
     const selectedGame = activeGames.find(g => g.id === gameId);
     const poolSize = selectedGame?.template?.poolOfNumbers ?? 0;
-    const numbersToDrawCount = selectedGame?.template?.maxWinningNumbers!;
+    const numbersToDrawCount = selectedGame?.template?.maxWinningNumbers ?? 0;
 
     const handleRandomDraw = () => {
         if (!selectedGame) return;
@@ -73,14 +73,18 @@ export default function DrawNumbers() {
                 expectedCount: numbersToDrawCount
             });
             
-            await gameApi.drawNumbersForGame(gameId!, drawnNumbers);
+            if (!gameId) {
+                throw new Error("Game ID is required");
+            }
+            await gameApi.drawNumbersForGame(gameId, drawnNumbers);
             addNotification({ type: 'success', message: 'Numbers drawn successfully!' });
             // Navigate back
             navigate('/admin/games/overview');
             
-        } catch (err: any) {
+        } catch (err) {
             console.error("Draw numbers error:", err);
-            addNotification({ type: 'error', message: err?.message || err?.toString() || "Failed to draw numbers" });
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            addNotification({ type: 'error', message: errorMessage || "Failed to draw numbers" });
         } finally {
             setIsSubmitting(false);
         }

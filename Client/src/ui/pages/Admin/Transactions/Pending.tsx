@@ -34,17 +34,16 @@ export default function Pending() {
             });
             // Refresh the list
             await fetchPendingTransactions();
-        } catch (error: any) {
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : String(error);
             addNotification({
                 type: "error",
-                message: error?.message || "Failed to approve transaction"
+                message: errorMessage || "Failed to approve transaction"
             });
         } finally {
             setIsApproving(null);
         }
     };
-
-    const totalAmount = filteredTransactions.reduce((sum, t) => sum + t.amount, 0);
 
     return (
         <div className="container mx-auto">

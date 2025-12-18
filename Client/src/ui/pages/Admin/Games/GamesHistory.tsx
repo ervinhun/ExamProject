@@ -40,10 +40,11 @@ export default function GamesHistory() {
         try {
             const tickets = await ticketApi.getAllWinningTicketsForGameId(game.id);
             setWinningTickets(tickets);
-        } catch (error: any) {
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : String(error);
             addNotification({
                 type: "error",
-                message: error?.message || "Failed to load winning tickets"
+                message: errorMessage || "Failed to load winning tickets"
             });
         } finally {
             setIsLoadingTickets(false);

@@ -19,7 +19,6 @@ export default function Play() {
     const [authUser] = useAtom(authAtom);
     
     const [picked, setPicked] = useState<number[]>([]);
-    const [repeat, setRepeat] = useState(0);
     const [isSubscription, setIsSubscription] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -84,8 +83,12 @@ export default function Play() {
             setIsSubmitting(true);
             
             // Purchase the ticket for current game
+            if (!gameId) {
+                throw new Error("Game ID is required");
+            }
+            
             const payload: PurchaseTicketDto = {
-                gameInstanceId: gameId!,
+                gameInstanceId: gameId,
                 playerId: authUser.id,
                 walletId: wallet.id,
                 fullPrice: totalPrice,
@@ -102,8 +105,12 @@ export default function Play() {
             
             // If subscription is checked, also create a subscription
             if (isSubscription) {
+                if (!chosenGameTemplate?.template?.id) {
+                    throw new Error("Game template ID is required for subscription");
+                }
+                
                 const subscriptionPayload = {
-                    gameTemplateId: chosenGameTemplate!.template?.id!,
+                    gameTemplateId: chosenGameTemplate.template.id,
                     playerId: authUser.id,
                     walletId: wallet.id,
                     price: totalPrice,
@@ -121,14 +128,13 @@ export default function Play() {
             
             // Reset form and navigate
             setPicked([]);
-            setRepeat(0);
             setIsSubscription(false);
             
             setTimeout(() => navigate('/tickets'), 1000);
-        } catch (ex: any) {
+        } catch (ex) {
             console.error("Purchase error:", ex);
-            const errorMsg = ex?.message || ex?.toString() || "Failed to purchase ticket";
-            addNotification({ type: "error", message: errorMsg });
+            const errorMsg = ex instanceof Error ? ex.message : String(ex);
+            addNotification({ type: "error", message: errorMsg || "Failed to purchase ticket" });
         } finally {
             setIsSubmitting(false);
         }

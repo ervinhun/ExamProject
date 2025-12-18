@@ -11,7 +11,6 @@ import { addNotificationAtom } from "@core/atoms/error";
 export default function ActiveGames() {
     const [activeGames] = useAtom(activeGamesAtom);
     const [, fetchActiveGames] = useAtom(fetchActiveGamesAtom);
-    const addNotification = useSetAtom(addNotificationAtom);
 
     // Filter and sort states
     const [filterStatus, setFilterStatus] = useState<string>("all");

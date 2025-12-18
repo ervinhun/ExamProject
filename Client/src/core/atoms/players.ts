@@ -1,8 +1,7 @@
-import { atom, useSetAtom } from 'jotai';
+import { atom } from 'jotai';
 import type { Player } from '../types/users';
 import { playerApi } from '@core/api/controllers/player';
 import { errorAtom } from './error';
-import { addNotificationAtom } from './error';
 import { userApi } from '@core/api/controllers/user';
 
 

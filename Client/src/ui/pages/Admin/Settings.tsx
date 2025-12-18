@@ -53,10 +53,11 @@ export default function Settings() {
             setCurrentPassword("");
             setNewPassword("");
             setConfirmPassword("");
-        } catch (error: any) {
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : String(error);
             addNotification({
                 type: "error",
-                message: error?.message || "Failed to change password"
+                message: errorMessage || "Failed to change password"
             });
         } finally {
             setIsChangingPassword(false);

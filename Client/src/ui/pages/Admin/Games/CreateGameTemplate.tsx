@@ -5,7 +5,6 @@ import type { GameTemplateDto } from "@core/types/game";
 import { useAtom, useSetAtom } from "jotai";
 import { createGameTemplateAtom } from "@core/atoms/game";
 import { addNotificationAtom } from "@core/atoms/error";
-import { set } from "zod";
 
 export const CreateGameTemplate: React.FC = () => {
     const navigate = useNavigate();

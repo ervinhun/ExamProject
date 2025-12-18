@@ -1,4 +1,3 @@
-import { playerApi } from "@core/api/controllers/player"
 import { authAtom } from "@core/atoms/auth";
 import { mapTransactionStatus, mapTransactionType } from "@core/types/transaction";
 import { useAtom, useSetAtom } from "jotai";
@@ -22,15 +21,21 @@ export default function Wallet() {
 
     useEffect(() => {
         if(authUser?.id){
-            getWalletForPlayerId(authUser?.id!);
+            getWalletForPlayerId(authUser.id);
         }
     }, []);
 
     const handleDeposit = async (e: React.FormEvent) => {
         e.preventDefault();
+        
+        if (!authUser?.id || !wallet?.id) {
+            addNotification({type: "error", message: "User or wallet not found"});
+            return;
+        }
+        
         await requestDeposit({
-            playerId: authUser?.id!,
-            walletId: wallet?.id!,
+            playerId: authUser.id,
+            walletId: wallet.id,
             amount: parseFloat(depositAmount),
             mobilePayTransactionNumber: mobilePayTransactionNumber
         }).then(() => {
@@ -39,7 +44,8 @@ export default function Wallet() {
             addNotification({type: "success", message: "Deposit request submitted successfully"});
         }).catch((err) => {
             console.error("Deposit failed:", err);
-            addNotification({type: "error", message: `Deposit failed: ${err.message}`});
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            addNotification({type: "error", message: `Deposit failed: ${errorMessage}`});
         });
     };
 

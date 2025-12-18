@@ -2,7 +2,7 @@ import { NavLink } from "react-router-dom";
 import { useAtom } from "jotai";
 import { activeGamesAtom, fetchActiveGamesAtom, gameTemplatesAtom, fetchGameTemplatesAtom } from "@core/atoms/game";
 import { formatDateTime, mapDayOfWeek } from "@utils/dateUtils";
-import { getStatusColor, getGameStatus, getWeekBadgeClass } from "@utils/gameUtils";
+import { getStatusColor, getGameStatus } from "@utils/gameUtils";
 import { useEffect, useState } from "react";
 import type { GameInstanceDto } from "@core/types/game";
 

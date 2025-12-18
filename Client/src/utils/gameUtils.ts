@@ -71,8 +71,8 @@ export const getGameStatus = (game: GameInstanceDto): string => {
     // If game is completed, return Completed
     if (game.status === 1) {
         return "Completed";
-    }else if(game.status === 2){
-        return "Pending Draw"
+    } else if (game.status === 2) {
+        return "Pending Draw";
     }
 
     const now = new Date();

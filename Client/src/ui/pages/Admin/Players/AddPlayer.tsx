@@ -30,7 +30,7 @@ export default function AddPlayer() {
             email,
             birthDate: new Date(birthDate),
             phoneNumber, 
-        }).then((res)=>{
+        }).then(()=>{
         // Clear form
             setFirstName("");
             setLastName("");
