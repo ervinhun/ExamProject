@@ -9,10 +9,10 @@ public class UserDto
     public string FirstName { get; set; } = null!;
     public string LastName { get; set; } = null!;
     public string Email { get; set; } = null!;
-    public DateTime Dob { get; set; }
+    public DateTime? Dob { get; set; }
     public string? PhoneNumber { get; set; }
-    public List<UserRole> Roles {get; set;}
-    public DateTime CreatedAt { get; set; }
+    public List<UserRole>? Roles {get; set;}
+    public DateTime? CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
     public bool? IsDeleted { get; set; }
 }
@@ -28,9 +28,10 @@ public class CreateUserDto
 
 public class UpdateUserDetailsDto
 {
-    public string? FullName { get; set; }
+    public string? FirstName { get; set; }
+    public string? LastName { get; set; }
     public string? Email { get; set; }
-    public string? PhoneNo { get; set; }
+    public string? PhoneNumber { get; set; }
 }
 
 public class UpdatePasswordDto

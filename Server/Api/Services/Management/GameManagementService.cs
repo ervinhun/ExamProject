@@ -84,7 +84,7 @@ public class GameManagementService(MyDbContext ctx, ITicketService ticketService
         {
             var activeGames = ctx.GameInstances
                 .Include(g => g.GameTemplate)
-                .Where(g => g.Status == GameStatus.Active)
+                .Where(g => g.Status == GameStatus.Active || g.Status == GameStatus.PendingDraw)
                 .ToList();
             var activeGamesDtos = new List<GameInstanceDto>();
             foreach (var game in activeGames)
@@ -280,7 +280,7 @@ public class GameManagementService(MyDbContext ctx, ITicketService ticketService
             else
             {
                 // For one-time games, check if draw date/time is in the future
-                if (game.DrawDate.HasValue && game.DrawDate.Value > now)
+                if (game.DrawDate.HasValue && game.DrawDate.Value > DateTimeHelper.ToCopenhagen(now))
                 {
                     throw new ServiceException($"Cannot draw winning numbers yet. Game is scheduled for {game.DrawDate.Value:yyyy-MM-dd HH:mm} UTC but current time is {now:yyyy-MM-dd HH:mm} UTC.");
                 }

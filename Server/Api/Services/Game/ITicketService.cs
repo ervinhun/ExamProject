@@ -1,6 +1,7 @@
 using Api.Dto.Transaction;
 
 using Api.Dto.Game;
+using Api.Dto.test;
 
 namespace Api.Services.Game;
 
@@ -14,4 +15,5 @@ public interface ITicketService
     Task StartTicketSubscription(StartTicketSubscriptionDto startTicketSubscriptionDto);
     Task PurchaseTicketsForActiveSubscriptions(Guid gameTemplateId, Guid newGameInstanceId);
     Task<List<SubscriptionDto>> GetSubscriptionsForPlayer(Guid playerId);
+    Task<List<TicketDto>> GetAllWinningTicketsForGameId(Guid gameInstanceId);
 }

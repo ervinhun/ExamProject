@@ -18,7 +18,7 @@ public interface IUserManagementService
     
     Task<PlayerDto> GetPlayerByIdAsync(Guid id);
     
-    Task<UserDto> UpdateUser(UpdateUserDetailsDto updateUserDto);
+    Task UpdateUserById(Guid id, UpdateUserDetailsDto updateUserDto);
     Task DeleteUser(Guid userId);
     Task<ICollection<PlayerDto>> GetAllPlayersAsync();
 

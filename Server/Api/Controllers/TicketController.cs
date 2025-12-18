@@ -11,6 +11,7 @@ namespace Api.Controllers;
 [Route("api/tickets")]
 public class TicketController(ITicketService ticketService) : ControllerBase
 {
+    [Authorize(Roles = "player")]
     [HttpGet("all-my-tickets")]
     public async Task<IActionResult> GetAllMyTickets()
     {
@@ -88,6 +89,22 @@ public class TicketController(ITicketService ticketService) : ControllerBase
             return StatusCode(500, new { message = e.Message });
         }
     }
+
+    [Authorize(Roles = "admin,superadmin")]
+    [HttpGet("winning-tickets/{gameInstanceId:guid}")]
+    public async Task<IActionResult> GetWinningTicketsForGameId(Guid gameInstanceId)
+    {
+        try
+        {
+            var tickets = await ticketService.GetAllWinningTicketsForGameId(gameInstanceId);
+            return Ok(tickets);
+        }
+        catch (ServiceException e)
+        {
+            return StatusCode(500, new { message = e.Message });
+        }
+    }
+    
     
     private string GetActiveUserId() => User.FindFirst(ClaimTypes.NameIdentifier)?.Value ??
                                         throw new UnauthorizedAccessException("User Id not found");

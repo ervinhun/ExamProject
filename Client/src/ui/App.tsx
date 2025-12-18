@@ -31,6 +31,7 @@ import MyTickets from "@ui/pages/Player/MyTickets.tsx";
 import Play from "@ui/pages/Games/Play.tsx";
 import GamesDashboard from "@ui/pages/Games/GamesDashboard.tsx";
 import GamesHistory from './pages/Admin/Games/GamesHistory.tsx';
+import ActiveGames from './pages/Admin/Games/ActiveGames.tsx';
 
 const router = createBrowserRouter([
     {
@@ -76,6 +77,7 @@ const router = createBrowserRouter([
                     {path: "/admin/players/register", element: <AddPlayer/>},
                     {path: "/admin/players/applications", element: <Applications/>},
                     {path: "/admin/games/overview", element: <GamesOverview/>},
+                    {path: "/admin/games/active", element: <ActiveGames/>},
                     {path: "/admin/games/start", element: <StartGame/>},
                     {path: "/admin/games/draw/:gameId", element: <DrawNumbers/>},
                     {path: "/admin/games/history", element: <GamesHistory/>},

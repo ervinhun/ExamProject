@@ -38,6 +38,13 @@ export const ticketApi = {
         });
     },
 
+    getAllWinningTicketsForGameId: async (gameId: string): Promise<MyTicketDto[]> => {
+        return await api<MyTicketDto[]>(`${endpoint}/winning-tickets/${gameId}`, {
+            init: {
+                method: "GET"
+            }
+        });
+    },
 
     // getAllActiveTickets: async (): Promise<MyTicket.MyTicketDto[]> => {
     //     return await api<MyTicket.MyTicketDto[]>(`${endpoint}/all-my-tickets`, {

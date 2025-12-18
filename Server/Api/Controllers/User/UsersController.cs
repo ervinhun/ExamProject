@@ -48,13 +48,7 @@ public class UsersController(IUserManagementService userManagementService) : Con
         var user = await userManagementService.GetAllUsersAsync();
         return Ok(user);
     }
-
-    [HttpPut("update-user/{userId:guid}")]
-    public async Task<ActionResult<UserDto>> UpdateUserDetailsByIdAsync(Guid userId,
-        [FromBody] UpdateUserDetailsDto updateUserDetailsDto)
-    {
-        return await Task.FromResult<ActionResult<UserDto>>(Ok(200));
-    }
+    
 
     [HttpGet("get-user/{userId:guid}")]
     public async Task<ActionResult<UserDto>> GetUserByIdAsync(Guid userId)
@@ -89,13 +83,18 @@ public class UsersController(IUserManagementService userManagementService) : Con
 
         return Ok(new { success = true });
     }
-
-
-    [Authorize]
-    [HttpPost("update-password/{id:guid}")]
-    public async Task<IActionResult> UpdatePasswordByIdAsync(Guid id,
-        [FromBody] UpdatePasswordDto updatePasswordDto)
+    
+    [HttpPut("update-user/{userId:guid}")]
+    public async Task<IActionResult> UpdateUser(Guid userId, UpdateUserDetailsDto updateUserDetailsDto)
     {
-        return await Task.FromResult(Ok(id));
+        try
+        {
+            await userManagementService.UpdateUserById(userId, updateUserDetailsDto);
+            return Ok(200);
+        }
+        catch (ServiceException e)
+        {
+            return Conflict(new { message = e.Message });
+        }
     }
 }

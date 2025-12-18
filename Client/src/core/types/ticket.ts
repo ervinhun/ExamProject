@@ -6,6 +6,12 @@ export const MyTicketSchema = z.object({
     gameInstanceId: z.string(),
     playerId: z.string(),
     fullPrice: z.number(),
+    player: z.object({
+        id: z.string(),
+        firstName: z.string(),
+        lastName: z.string(),
+        email: z.email(),
+    }).optional(),
     pickedNumbers: z.array(z.number()),
     isWinning: z.boolean().nullable(),
     boughtAt: z.string(),

@@ -1,4 +1,5 @@
 using Api.Dto.Game;
+using Api.Dto.test;
 using Api.Dto.Transaction;
 using DataAccess;
 using DataAccess.Entities.Game;
@@ -425,5 +426,38 @@ public class TicketService(MyDbContext ctx, IWalletTransactionsService walletTra
         }
 
         return subscriptionDtos;
+    }
+
+    public async Task<List<TicketDto>> GetAllWinningTicketsForGameId(Guid gameInstanceId)
+    {
+        var tickets = await ctx.LotteryTickets
+            .Include(lt => lt.Player)
+            .Include(lotteryTicket => lotteryTicket.PickedNumbers)
+            .Where(lt=>lt.GameInstanceId == gameInstanceId && lt.IsWinning == true)
+            .ToListAsync();
+        var ticketDtos = new List<TicketDto>();
+        
+        foreach (var ticket in tickets)
+        {
+            ticketDtos.Add(new TicketDto
+            {
+                GameInstanceId = ticket.GameInstanceId,
+                PlayerId = ticket.PlayerId,
+                PickedNumbers = ticket.PickedNumbers.Select(pn => pn.Number).ToArray(),
+                FullPrice = ticket.FullPrice,
+                Id = ticket.Id,
+                Player = new PlayerDto
+                {
+                    FirstName = ticket.Player!.FirstName,
+                    LastName = ticket.Player!.LastName,
+                    Email = ticket.Player!.Email,
+                    PhoneNumber = ticket.Player!.PhoneNumber,
+                },
+                BoughtAt = ticket.BoughtAt,
+                IsWinning = ticket.IsWinning,
+            });            
+        }
+
+        return ticketDtos;
     }
 }

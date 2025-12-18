@@ -46,3 +46,10 @@ export const PlayerSchema = z.object({
 
 
 export type Player = z.infer<typeof PlayerSchema>;
+
+export interface UpdateUserDetailsDto{
+    firstName?: string;
+    lastName?: string;
+    email?: string;
+    phoneNumber?: string;
+}

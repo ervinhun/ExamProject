@@ -45,5 +45,14 @@ export const authApi = {
                     body: JSON.stringify(user)
                 }
         })
-    }
+    },
+
+    changePassword: async (oldPassword: string, newPassword: string): Promise<void> => {
+        return await api<void>(`${endpoint}/change-password`, {
+            init: {
+                method: "POST",
+                body: JSON.stringify({ oldPassword, newPassword })
+            }
+        }).catch((err) => { throw new Error(err.message); });
+    },
 };

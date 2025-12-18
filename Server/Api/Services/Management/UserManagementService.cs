@@ -315,9 +315,18 @@ public class UserManagementService(MyDbContext ctx, IEmailService emailService) 
         throw new NotImplementedException();
     }
 
-    public Task<UserDto> UpdateUser(UpdateUserDetailsDto updateUserDto)
+    public async Task UpdateUserById(Guid id, UpdateUserDetailsDto updateUserDto)
     {
-        throw new NotImplementedException();
+        var user = await ctx.Users.SingleOrDefaultAsync(u => u.Id == id);
+        if (user == null)
+            throw new ServiceException("User not found", new InvalidOperationException());
+        
+        user.FirstName = updateUserDto.FirstName ?? user.FirstName;
+        user.LastName = updateUserDto.LastName ?? user.LastName;
+        user.Email = updateUserDto.Email ?? user.Email;
+        user.PhoneNumber = updateUserDto.PhoneNumber ?? user.PhoneNumber;
+        user.UpdatedAt = DateTime.UtcNow;
+        await ctx.SaveChangesAsync();
     }
 
     public Task DeleteUser(Guid userId)

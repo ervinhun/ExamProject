@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using Api.Dto.test;
 
 namespace Api.Dto.Game;
 
@@ -38,6 +39,7 @@ public class PurchaseTicketDto
 public class TicketDto : PurchaseTicketDto
 {
     public Guid Id { get; set; }
+    public PlayerDto? Player { get; set; }
     public DateTime BoughtAt { get; set; }
     public bool IsWinning { get; set; }
     public bool IsPaid { get; set; }

@@ -14,6 +14,8 @@ public interface IMyAuthenticationService
     Task<User> Register(RegisterRequestDto dto);
     Task<bool> ResetPassword(string resetToken, ResetPasswordRequest request);
     Task<string> RequestPasswordReset(string email);
+    Task ChangePasswordForUserId(Guid id, ChangePasswordDto dto);
+    Task<UserDto> GetProfileForId(Guid id);
     Task<bool> RequestMembership(RequestRegistrationDto requestRegistrationDto);
     
 }

@@ -1,15 +1,25 @@
 import {fetchPlayersAtom, playersAtom, togglePlayerStatusAtom} from "@core/atoms/players";
 import {useAtom, useSetAtom} from "jotai";
-import {useEffect} from "react";
+import {useEffect, useState} from "react";
 import {NavLink} from "react-router-dom";
 import {addNotificationAtom} from "@core/atoms/error";
 import {formatDate} from "@utils/dateUtils";
+import {Player} from "@core/types/users";
+import { userApi } from "@core/api/controllers/user";
 
 export default function AllPlayers() {
     const [players,] = useAtom(playersAtom);
     const [, fetchPlayers] = useAtom(fetchPlayersAtom);
     const togglePlayerStatus = useSetAtom(togglePlayerStatusAtom);
     const addNotification = useSetAtom(addNotificationAtom);
+    
+    const [editingPlayer, setEditingPlayer] = useState<Player | null>(null);
+    const [editForm, setEditForm] = useState({
+        firstName: "",
+        lastName: "",
+        email: "",
+        phoneNumber: ""
+    });
 
     useEffect(() => {
         if (players.length === 0) {
@@ -19,7 +29,6 @@ export default function AllPlayers() {
 
     const handleToggleStatus = async (userId: string, currentStatus: boolean, playerName: string) => {
         try {
-            // await userApi.toggleStatus(userId);
             await togglePlayerStatus(userId);
             addNotification({
                 message: `${playerName} has been ${currentStatus ? 'deactivated' : 'activated'} successfully`,
@@ -32,7 +41,54 @@ export default function AllPlayers() {
                 type: 'error'
             });
         }
-    }
+    };
+
+    const handleEditClick = (player: Player) => {
+        setEditingPlayer(player);
+        setEditForm({
+            firstName: player.firstName || "",
+            lastName: player.lastName || "",
+            email: player.email || "",
+            phoneNumber: player.phoneNumber || ""
+        });
+    };
+
+    const handleEditSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        
+        try {
+            await userApi.updateUser(editingPlayer!.id!, {
+                firstName: editForm.firstName,
+                lastName: editForm.lastName,
+                email: editForm.email,
+                phoneNumber: editForm.phoneNumber
+            });
+            
+            addNotification({
+                message: 'Player updated successfully',
+                type: 'success'
+            });
+            
+            setEditingPlayer(null);
+            fetchPlayers(); // Refresh the list
+        } catch (error) {
+            console.error('Failed to update player:', error);
+            addNotification({
+                message: 'Failed to update player. Please try again.',
+                type: 'error'
+            });
+        }
+    };
+
+    const handleCloseModal = () => {
+        setEditingPlayer(null);
+        setEditForm({
+            firstName: "",
+            lastName: "",
+            email: "",
+            phoneNumber: ""
+        });
+    };
 
     return (
         <div className="container mx-auto">
@@ -91,8 +147,12 @@ export default function AllPlayers() {
                                             <td>{player.createdAt ? formatDate(player.createdAt) : "N/A"}</td>
                                             <td>
                                                 <div className="flex gap-2">
-                                                    <button className="btn btn-xs btn-info">View</button>
-                                                    <button className="btn btn-xs btn-ghost">Edit</button>
+                                                    <button 
+                                                        className="btn btn-xs btn-info"
+                                                        onClick={() => handleEditClick(player)}
+                                                    >
+                                                        Edit
+                                                    </button>
                                                     <button
                                                         className={`btn btn-xs ${player.isActive ? 'btn-warning' : 'btn-success'}`}
                                                         onClick={() => handleToggleStatus(
@@ -114,6 +174,101 @@ export default function AllPlayers() {
                     </div>
                 </div>
             </div>
+
+            {/* Edit Player Modal */}
+            {editingPlayer && (
+                <div className="modal modal-open">
+                    <div className="modal-box max-w-2xl">
+                        <h3 className="font-bold text-2xl mb-6 flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                            </svg>
+                            Edit Player
+                        </h3>
+                        
+                        <form onSubmit={handleEditSubmit} className="space-y-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="form-control">
+                                    <label className="label">
+                                        <span className="label-text font-semibold">First Name</span>
+                                    </label>
+                                    <input
+                                        type="text"
+                                        placeholder="First name"
+                                        className="input input-bordered w-full"
+                                        value={editForm.firstName}
+                                        onChange={(e) => setEditForm({...editForm, firstName: e.target.value})}
+                                        required
+                                    />
+                                </div>
+
+                                <div className="form-control">
+                                    <label className="label">
+                                        <span className="label-text font-semibold">Last Name</span>
+                                    </label>
+                                    <input
+                                        type="text"
+                                        placeholder="Last name"
+                                        className="input input-bordered w-full"
+                                        value={editForm.lastName}
+                                        onChange={(e) => setEditForm({...editForm, lastName: e.target.value})}
+                                        required
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="form-control">
+                                <label className="label">
+                                    <span className="label-text font-semibold">Email</span>
+                                </label>
+                                <input
+                                    type="email"
+                                    placeholder="Email address"
+                                    className="input input-bordered w-full"
+                                    value={editForm.email}
+                                    onChange={(e) => setEditForm({...editForm, email: e.target.value})}
+                                    required
+                                />
+                            </div>
+
+                            <div className="form-control">
+                                <label className="label">
+                                    <span className="label-text font-semibold">Phone Number</span>
+                                </label>
+                                <input
+                                    type="tel"
+                                    placeholder="Phone number"
+                                    className="input input-bordered w-full"
+                                    value={editForm.phoneNumber}
+                                    onChange={(e) => setEditForm({...editForm, phoneNumber: e.target.value})}
+                                    required
+                                />
+                            </div>
+
+                            <div className="alert alert-info">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-current shrink-0 w-6 h-6">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                <span className="text-sm">Changes will be saved to the database</span>
+                            </div>
+
+                            <div className="modal-action">
+                                <button 
+                                    type="button" 
+                                    className="btn btn-ghost"
+                                    onClick={handleCloseModal}
+                                >
+                                    Cancel
+                                </button>
+                                <button type="submit" className="btn btn-primary">
+                                    Save Changes
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                    <div className="modal-backdrop" onClick={handleCloseModal}></div>
+                </div>
+            )}
         </div>
     );
 }

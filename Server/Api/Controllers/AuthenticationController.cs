@@ -7,6 +7,7 @@ using Api.Helpers;
 using api.Services;
 using Api.Services.Auth;
 using DataAccess.Enums;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc;
 using Utils.Exceptions;
@@ -18,6 +19,7 @@ namespace Api.Controllers;
 public class AuthenticationController(IMyAuthenticationService authenticationService, IJwt jwt, AppSettings appSettings)
     : ControllerBase
 {
+    [Authorize]
     [HttpPost("logout")]
     public IActionResult Logout()
     {
@@ -68,7 +70,7 @@ public class AuthenticationController(IMyAuthenticationService authenticationSer
     {
         return NoContent();
     }
-
+    
     [HttpPost("refresh-token")]
     public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenRequestDto request)
     {
@@ -96,44 +98,15 @@ public class AuthenticationController(IMyAuthenticationService authenticationSer
         }
     }
 
+    [Authorize]
     [HttpGet("profile")]
-    public IActionResult Profile()
+    public async Task<IActionResult> Profile()
     {
-        if (User.Identity is not { IsAuthenticated: true })
-        {
-            return Unauthorized(new { message = "User is not authenticated" });
-        }
-
         try
         {
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value
-                         ?? User.FindFirst("sub")?.Value;
-            var email = User.FindFirst(ClaimTypes.Email)?.Value;
-            var firstName = User.FindFirst(ClaimTypes.Name)?.Value;
-            var lastName = User.FindFirst(ClaimTypes.Surname)?.Value;
-
-            if (string.IsNullOrEmpty(userId))
-            {
-                return BadRequest(new { message = "User ID claim not found in token" });
-            }
-
-            if (string.IsNullOrEmpty(email))
-            {
-                return BadRequest(new { message = "Email claim not found in token" });
-            }
-
-            var roles = User.FindAll(ClaimTypes.Role)
-                .Select(c => Enum.Parse<UserRole>(c.Value, ignoreCase: true))
-                .ToList();
-
-            return Ok(new UserDto
-            {
-                Id = Guid.Parse(userId),
-                FirstName = firstName ?? "",
-                LastName = lastName ?? "",
-                Email = email,
-                Roles = roles
-            });
+            var profile = await authenticationService.GetProfileForId(Guid.Parse(GetActiveUserId()));
+            
+            return Ok(profile);
         }
         catch (Exception e)
         {
@@ -141,6 +114,7 @@ public class AuthenticationController(IMyAuthenticationService authenticationSer
         }
     }
 
+    [Authorize]
     [HttpPost("reset-password")]
     public async Task<IActionResult> RequestPasswordReset([FromBody] string email)
     {
@@ -154,6 +128,7 @@ public class AuthenticationController(IMyAuthenticationService authenticationSer
         return Ok("Password reset email sent.");
     }
 
+    [Authorize]
     [HttpPost("reset-password/{resetToken}")]
     public async Task<IActionResult> ResetPassword(
         [FromRoute] string resetToken,
@@ -186,4 +161,23 @@ public class AuthenticationController(IMyAuthenticationService authenticationSer
         // TODO: Implement the feature - https://easv365-team-bokczyi7.atlassian.net/browse/SEM-60
         throw new NotImplementedException();
     }
+
+    [Authorize]
+    [HttpPost("change-password")]
+    public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordDto  request)
+    {
+        try
+        {
+            await authenticationService.ChangePasswordForUserId(Guid.Parse(GetActiveUserId()),request);
+            return Ok(new { message = "Password changed successfully" });
+        }
+        catch (ServiceException exception)
+        {
+            return BadRequest(new { message = exception.Message });
+        }
+    }
+    
+    
+    private string GetActiveUserId() => User.FindFirst(ClaimTypes.NameIdentifier)?.Value ??
+                                        throw new UnauthorizedAccessException("User Id not found");
 }

@@ -69,6 +69,43 @@ public class MyAuthenticationService(MyDbContext ctx, IJwt jwt) : IMyAuthenticat
         return passwordResetToken;
     }
 
+    public async Task ChangePasswordForUserId(Guid id, ChangePasswordDto dto)
+    {
+        try
+        {
+            var user = await ctx.Users.FirstOrDefaultAsync(u => u.Id == id);
+            if (user == null) throw new ServiceException("User not found", new InvalidOperationException());
+            if (!HashUtils.VerifyPasswordHash(dto.OldPassword, user.PasswordHash, user.PasswordSalt))
+                throw new ServiceException("Old password is incorrect");
+            HashUtils.CreatePasswordHash(dto.NewPassword, out var hash, out var salt);
+            user.PasswordHash = hash;
+            user.PasswordSalt = salt;
+            await ctx.SaveChangesAsync();
+        }
+        catch (Exception e)
+        {
+            throw new ServiceException(e.Message, e);
+        }
+    }
+
+    public async Task<UserDto> GetProfileForId(Guid id)
+    {
+        var user = await ctx.Users.Include(user => user.Roles).SingleOrDefaultAsync(u=>u.Id == id);
+        if(user == null) throw new ServiceException("User not found", new InvalidOperationException());
+        return new UserDto
+        {
+            Id = user.Id,
+            FirstName = user.FirstName,
+            LastName = user.LastName,
+            Email = user.Email,
+            Dob = user.DateOfBirth,
+            PhoneNumber = user.PhoneNumber,
+            Roles = user.Roles.Select(r => r.Name).ToList(),
+            CreatedAt = user.CreatedAt,
+            UpdatedAt = user.UpdatedAt,
+        };
+    }
+
     public async Task<bool> ResetPassword(string resetToken, ResetPasswordRequest request)
     {
         var user = await ctx.Users.FirstOrDefaultAsync(u => u.Email == request.Email);

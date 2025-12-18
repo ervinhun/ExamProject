@@ -3,7 +3,8 @@ import { useAtom } from "jotai";
 import { activeGamesAtom, fetchActiveGamesAtom, gameTemplatesAtom, fetchGameTemplatesAtom } from "@core/atoms/game";
 import { formatDateTime, mapDayOfWeek } from "@utils/dateUtils";
 import { getStatusColor, getGameStatus, getWeekBadgeClass } from "@utils/gameUtils";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import type { GameInstanceDto } from "@core/types/game";
 
 export const GamesOverview: React.FC = () => {
     const [activeGames] = useAtom(activeGamesAtom);
@@ -11,12 +12,22 @@ export const GamesOverview: React.FC = () => {
     const [templates] = useAtom(gameTemplatesAtom);
     const [, fetchGameTemplates] = useAtom(fetchGameTemplatesAtom);
 
+    const [selectedGame, setSelectedGame] = useState<GameInstanceDto | null>(null);
+
     useEffect(() => {
         fetchActiveGames();
         if(templates.length === 0) {
             fetchGameTemplates();
         }
     }, []);
+
+    const handleViewGame = (game: GameInstanceDto) => {
+        setSelectedGame(game);
+    };
+
+    const handleCloseModal = () => {
+        setSelectedGame(null);
+    };
 
     const stats = {
         activeGames: activeGames.length,
@@ -74,18 +85,6 @@ export const GamesOverview: React.FC = () => {
 
                 <div className="stats shadow bg-base-200">
                     <div className="stat">
-                        <div className="stat-figure text-accent">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="inline-block w-8 h-8 stroke-current">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                        </div>
-                        <div className="stat-title">Total Revenue</div>
-                        <div className="stat-value text-base-content">{stats.totalRevenue.toLocaleString()} DKK</div>
-                    </div>
-                </div>
-
-                <div className="stats shadow bg-base-200">
-                    <div className="stat">
                         <div className="stat-figure text-warning">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="inline-block w-8 h-8 stroke-current">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -131,7 +130,20 @@ export const GamesOverview: React.FC = () => {
                                         </td>
                                     </tr>
                                 ) : (
-                                    activeGames.slice(0, 5).map((game) => {
+                                    activeGames
+                                        .sort((a, b) => {
+                                            // Priority: Pending Draw (status 2) games first
+                                            const statusA = getGameStatus(a);
+                                            const statusB = getGameStatus(b);
+                                            
+                                            if (statusA === "Pending Draw" && statusB !== "Pending Draw") return -1;
+                                            if (statusA !== "Pending Draw" && statusB === "Pending Draw") return 1;
+                                            
+                                            // Secondary sort by week (newest first)
+                                            return b.week - a.week;
+                                        })
+                                        .slice(0, 5)
+                                        .map((game) => {
                                         const statusText = getGameStatus(game);
                                         const drawDateText = game.isAutoRepeatable
                                             ? `${mapDayOfWeek(game.drawDayOfWeek)}, ${game.drawTimeOfDay?.substring(0, 5) || 'N/A'}`
@@ -160,8 +172,13 @@ export const GamesOverview: React.FC = () => {
                                                 <td className="font-mono">{game.prizePool || 0} DKK</td>
                                                 <td>
                                                     <div className="flex gap-2">
-                                                        <button className="btn btn-xs btn-info">View</button>
-                                                        {!game.isDrawn && (
+                                                        <button 
+                                                            className="btn btn-xs btn-info"
+                                                            onClick={() => handleViewGame(game)}
+                                                        >
+                                                            View
+                                                        </button>
+                                                        {statusText === "Pending Draw" && !game.isDrawn && (
                                                             <NavLink 
                                                                 to={`/admin/games/draw/${game.id}`}
                                                                 className="btn btn-xs btn-warning"
@@ -181,6 +198,166 @@ export const GamesOverview: React.FC = () => {
                 </div>
             </div>
 
+            {/* Game Details Modal */}
+            {selectedGame && (
+                <div className="modal modal-open">
+                    <div className="modal-box max-w-3xl">
+                        <div className="flex items-center justify-between mb-6">
+                            <h3 className="text-2xl font-bold flex items-center gap-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                </svg>
+                                Game Details
+                            </h3>
+                            <button
+                                className="btn btn-sm btn-circle btn-ghost"
+                                onClick={handleCloseModal}
+                            >
+                                ✕
+                            </button>
+                        </div>
+
+                        <div className="space-y-6">
+                            {/* Game Info Section */}
+                            <div className="bg-base-300 p-4 rounded-lg">
+                                <h4 className="font-bold text-lg mb-3 text-primary">Game Information</h4>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <p className="text-sm text-base-content/70">Game Name</p>
+                                        <p className="font-semibold text-lg">{selectedGame.template?.name || "Unknown"}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-sm text-base-content/70">Status</p>
+                                        <span className={`badge ${getStatusColor(getGameStatus(selectedGame))}`}>
+                                            {getGameStatus(selectedGame)}
+                                        </span>
+                                    </div>
+                                    <div>
+                                        <p className="text-sm text-base-content/70">Year</p>
+                                        <p className="font-semibold">{selectedGame.year}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-sm text-base-content/70">Week</p>
+                                        <p className="font-semibold">Week {selectedGame.week}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-sm text-base-content/70">Type</p>
+                                        <p className="font-semibold">
+                                            {selectedGame.isAutoRepeatable ? (
+                                                <span className="text-success">✓ Repeatable</span>
+                                            ) : (
+                                                <span>One-time</span>
+                                            )}
+                                        </p>
+                                    </div>
+                                    <div>
+                                        <p className="text-sm text-base-content/70">Draw Schedule</p>
+                                        <p className="font-semibold">
+                                            {selectedGame.isAutoRepeatable && selectedGame.drawDayOfWeek !== undefined && selectedGame.drawTimeOfDay
+                                                ? `${mapDayOfWeek(selectedGame.drawDayOfWeek)}, ${selectedGame.drawTimeOfDay.substring(0, 5)}`
+                                                : selectedGame.drawDate ? formatDateTime(selectedGame.drawDate) : 'N/A'}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Statistics Section */}
+                            <div className="bg-base-300 p-4 rounded-lg">
+                                <h4 className="font-bold text-lg mb-3 text-primary">Statistics</h4>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <p className="text-sm text-base-content/70">Participants</p>
+                                        <p className="font-semibold text-lg">{selectedGame.participants || 0}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-sm text-base-content/70">Tickets Sold</p>
+                                        <p className="font-semibold text-lg">{selectedGame.ticketsSold || 0}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-sm text-base-content/70">Tickets Won</p>
+                                        <p className="font-semibold text-lg">{selectedGame.ticketsWon || 0}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-sm text-base-content/70">Prize Pool</p>
+                                        <p className="font-semibold text-lg font-mono">{(selectedGame.prizePool || 0).toLocaleString()} DKK</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Template Details Section */}
+                            {selectedGame.template && (
+                                <div className="bg-base-300 p-4 rounded-lg">
+                                    <h4 className="font-bold text-lg mb-3 text-primary">Template Details</h4>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <p className="text-sm text-base-content/70">Game Type</p>
+                                            <p className="font-semibold">{selectedGame.template.gameType}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-sm text-base-content/70">Base Price</p>
+                                            <p className="font-semibold font-mono">{selectedGame.template.basePrice} DKK</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-sm text-base-content/70">Pool of Numbers</p>
+                                            <p className="font-semibold">1 - {selectedGame.template.poolOfNumbers}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-sm text-base-content/70">Winning Numbers</p>
+                                            <p className="font-semibold">{selectedGame.template.maxWinningNumbers} numbers</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-sm text-base-content/70">Numbers Per Ticket</p>
+                                            <p className="font-semibold">
+                                                {selectedGame.template.minNumbersPerTicket} - {selectedGame.template.maxNumbersPerTicket}
+                                            </p>
+                                        </div>
+                                        <div className="col-span-2">
+                                            <p className="text-sm text-base-content/70">Description</p>
+                                            <p className="font-semibold">{selectedGame.template.description}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Winning Numbers Section */}
+                            {selectedGame.winningNumbers && selectedGame.winningNumbers.length > 0 && (
+                                <div className="bg-base-300 p-4 rounded-lg">
+                                    <h4 className="font-bold text-lg mb-3 text-primary">Winning Numbers</h4>
+                                    <div className="flex flex-wrap gap-3">
+                                        {selectedGame.winningNumbers.map((num, idx) => (
+                                            <div
+                                                key={idx}
+                                                className="w-12 h-12 flex items-center justify-center rounded-full bg-success text-white font-bold shadow-lg text-lg"
+                                            >
+                                                {num}
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="modal-action">
+                            {getGameStatus(selectedGame) === "Pending Draw" && !selectedGame.isDrawn && (
+                                <NavLink
+                                    to={`/admin/games/draw/${selectedGame.id}`}
+                                    className="btn btn-warning"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14" />
+                                    </svg>
+                                    Draw Numbers
+                                </NavLink>
+                            )}
+                            <button className="btn btn-primary" onClick={handleCloseModal}>
+                                Close
+                            </button>
+                        </div>
+                    </div>
+                    <div className="modal-backdrop" onClick={handleCloseModal}></div>
+                </div>
+            )}
+
             {/* Quick Actions & Templates */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Quick Actions */}
@@ -196,16 +373,6 @@ export const GamesOverview: React.FC = () => {
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
                                 </svg>
                                 Start New Game
-                            </NavLink>
-                            
-                            <NavLink 
-                                to="/admin/games/templates" 
-                                className="btn btn-block btn-secondary justify-start text-base"
-                            >
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                </svg>
-                                Manage Templates
                             </NavLink>
                             
                             <NavLink 

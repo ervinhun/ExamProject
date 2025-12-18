@@ -1,5 +1,5 @@
 import { api } from "../Api";
-import {AppliedUser, type CreateUserDto, type User} from "../../types/users";
+import {AppliedUser, UpdateUserDetailsDto, type CreateUserDto, type User} from "../../types/users";
 
 const endpoint = "/api/users";
 
@@ -50,6 +50,15 @@ export const userApi ={
                     method: "PUT"
                 }
             });
+    },
+
+    updateUser : async (userId: string, updatedUser: UpdateUserDetailsDto): Promise<void> => {
+        return await api<void>(`${endpoint}/update-user/${userId}`, {
+            init: {
+                method: "PUT",
+                body: JSON.stringify(updatedUser)
+            }
+        });
     }
 
 }
