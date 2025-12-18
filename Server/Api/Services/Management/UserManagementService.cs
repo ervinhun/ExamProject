@@ -2,7 +2,6 @@ using System.Security.Cryptography;
 using Api.Dto.test;
 using Api.Dto.User;
 using Api.Services.Email;
-using Api.Services.Management;
 using DataAccess;
 using DataAccess.Entities.Auth;
 using DataAccess.Entities.Finance;
@@ -11,9 +10,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Utils;
 using Utils.Exceptions;
-using static Api.Services.Management.UserConverter;
 
-namespace Api.Services.Admin;
+namespace Api.Services.Management;
 
 public class UserManagementService(MyDbContext ctx, IEmailService emailService) : IUserManagementService
 {
@@ -25,7 +23,7 @@ public class UserManagementService(MyDbContext ctx, IEmailService emailService) 
         }
 
         HashUtils.CreatePasswordHash("user", out var hash, out var salt);
-        
+
         // Parse birth date
         DateTime dateOfBirth = DateTime.MinValue;
         if (!string.IsNullOrEmpty(createUserDto.BirthDate))
@@ -35,7 +33,7 @@ public class UserManagementService(MyDbContext ctx, IEmailService emailService) 
                 dateOfBirth = DateTime.SpecifyKind(parsedDate, DateTimeKind.Utc);
             }
         }
-        
+
         var user = new User
         {
             FirstName = createUserDto.FirstName,
@@ -111,7 +109,8 @@ public class UserManagementService(MyDbContext ctx, IEmailService emailService) 
         };
 
         // Assign player role, and a wallet
-        var role = ctx.Roles.SingleOrDefaultAsync(r => r.Name == UserRole.Player).Result ?? throw new Exception("Player role not found");
+        var role = ctx.Roles.SingleOrDefaultAsync(r => r.Name == UserRole.Player).Result ??
+                   throw new Exception("Player role not found");
         player.Roles.Add(role);
 
         var wallet = new Wallet
@@ -121,17 +120,17 @@ public class UserManagementService(MyDbContext ctx, IEmailService emailService) 
             CreatedAt = DateTime.UtcNow,
         };
         player.Wallet = wallet;
-        
+
         try
         {
             await ctx.Players.AddAsync(player);
             await ctx.SaveChangesAsync();
-            
+
             // Reload player with roles to ensure they're included
             var savedPlayer = await ctx.Players
                 .Include(p => p.Roles)
                 .FirstOrDefaultAsync(p => p.Id == player.Id);
-            
+
             return new PlayerDto
             {
                 Id = savedPlayer!.Id,
@@ -196,6 +195,25 @@ public class UserManagementService(MyDbContext ctx, IEmailService emailService) 
         return playerDtos;
     }
 
+    public async Task<List<AdminDto>> GetAllAdmins()
+    {
+        var  admins = await ctx.Admins.ToListAsync();
+        var adminDtos = new List<AdminDto>();
+        foreach (var admin in admins)
+        {
+            adminDtos.Add(new AdminDto
+            {
+                Id = admin.Id,
+                FirstName = admin.FirstName,
+                LastName = admin.LastName,
+                Email = admin.Email,
+                PhoneNumber = admin.PhoneNumber,
+                CreatedAt = admin.CreatedAt,
+            });
+        }
+        return adminDtos;
+    }
+
     public async Task ToggleStatus(Guid userId)
     {
         try
@@ -251,7 +269,7 @@ public class UserManagementService(MyDbContext ctx, IEmailService emailService) 
 
     public async Task<bool> ConfirmMembership(Guid userId, bool isConfirmed, bool isActive, Guid adminId)
     {
-        
+
         var player = await ctx.Players
             .Include(p => p.Roles)
             .FirstOrDefaultAsync(p => p.Id == userId);
@@ -270,12 +288,13 @@ public class UserManagementService(MyDbContext ctx, IEmailService emailService) 
         }
 
         // Assign role
-        var role = ctx.Roles.SingleOrDefaultAsync(r => r.Name == UserRole.Player).Result ?? throw new Exception("Player role not found");
-            player.Roles.Add(role);
+        var role = ctx.Roles.SingleOrDefaultAsync(r => r.Name == UserRole.Player).Result ??
+                   throw new Exception("Player role not found");
+        player.Roles.Add(role);
 
         player.UpdatedAt = DateTime.UtcNow;
         player.Activated = isActive;
-        
+
         if (isConfirmed)
         {
             var wallet = new Wallet
@@ -345,12 +364,30 @@ public class UserManagementService(MyDbContext ctx, IEmailService emailService) 
     }
 
 
-    public Task<AdminDto> RegisterAdmin(CreateAdminDto createAdminDto)
+    public async Task RegisterAdmin(CreateAdminDto createAdminDto)
     {
-        throw new NotImplementedException();
+        var adminRole = await ctx.Roles.SingleOrDefaultAsync(r => r.Name == UserRole.Admin);
+        if(adminRole == null) throw new ServiceException("Admin role not found");
+        
+        HashUtils.CreatePasswordHash("admin", out var hash, out var salt);
+        var admin = new Admin
+        {
+            FirstName = createAdminDto.FirstName,
+            LastName = createAdminDto.LastName,
+            PhoneNumber = createAdminDto.PhoneNumber,
+            DateOfBirth = Convert.ToDateTime(createAdminDto.BirthDate),
+            Email = createAdminDto.Email,
+            PasswordHash = hash,
+            PasswordSalt = salt,
+            Activated = true,
+            CreatedAt = DateTime.UtcNow,
+        };
+        admin.Roles.Add(adminRole);
+        ctx.Admins.Add(admin);
+        await ctx.SaveChangesAsync();
     }
 
-    public async Task UpdateUserById(Guid id, UpdateUserDetailsDto updateUserDto)
+public async Task UpdateUserById(Guid id, UpdateUserDetailsDto updateUserDto)
     {
         var user = await ctx.Users.SingleOrDefaultAsync(u => u.Id == id);
         if (user == null)

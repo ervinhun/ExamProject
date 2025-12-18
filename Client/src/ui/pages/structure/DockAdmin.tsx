@@ -70,9 +70,14 @@ export default function DockAdmin() {
                         <NavLink to="/admin/players/applications">Player Applications </NavLink>
                     </li>
                     {isSuperAdmin && (
-                        <li>
-                            <NavLink to="/admin/create-admin">Create Admin</NavLink>
-                        </li>
+                        <>
+                            <li>
+                                <NavLink to="/admin/register-admin">Register Admin</NavLink>
+                            </li>
+                            <li>
+                                <NavLink to="/admin/list-admins">All Admins</NavLink>
+                            </li>
+                        </>
                     )}
                 </ul>
             </div>

@@ -12,7 +12,7 @@ public interface IUserManagementService
     
     Task<PlayerDto> RegisterPlayer(CreatePlayerDto createPlayerDto);
     
-    Task<AdminDto> RegisterAdmin(CreateAdminDto createAdminDto);
+    Task RegisterAdmin(CreateAdminDto createAdminDto);
     
     Task<ICollection<UserDto>> GetAllUsersAsync();
     
@@ -26,6 +26,8 @@ public interface IUserManagementService
     Task<bool> ConfirmMembership(Guid userId, bool isConfirmed, bool isActive, Guid adminId);
 
     Task<List<PlayerWhoAppliedDto>> GetAppliedUsers();
+    
+    Task<List<AdminDto>> GetAllAdmins();
     
     Task ToggleStatus(Guid userId);
     

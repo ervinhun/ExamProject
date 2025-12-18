@@ -2,7 +2,6 @@ using System.Security.Cryptography;
 using Api.Dto.Auth.Request;
 using Api.Dto.Auth.Response;
 using Api.Dto.User;
-using Api.Services.Auth;
 using DataAccess;
 using DataAccess.Entities.Auth;
 using DataAccess.Enums;
@@ -11,7 +10,7 @@ using Microsoft.EntityFrameworkCore;
 using Utils;
 using Utils.Exceptions;
 
-namespace api.Services.Auth;
+namespace Api.Services.Auth;
 
 public class MyAuthenticationService(MyDbContext ctx, IJwt jwt) : IMyAuthenticationService
 {

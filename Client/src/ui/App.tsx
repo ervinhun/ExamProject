@@ -33,6 +33,8 @@ import GamesHistory from './pages/Admin/Games/GamesHistory.tsx';
 import ActiveGames from './pages/Admin/Games/ActiveGames.tsx';
 import Privacy from './pages/Privacy.tsx';
 import Terms from './pages/Terms.tsx';
+import RegisterAdmin from './pages/Admin/RegisterAdmin.tsx';
+import AdminList from './pages/Admin/AdminList.tsx';
 
 const router = createBrowserRouter([
     {
@@ -84,6 +86,8 @@ const router = createBrowserRouter([
                     {path: "/admin/games/start", element: <StartGame/>},
                     {path: "/admin/games/draw/:gameId", element: <DrawNumbers/>},
                     {path: "/admin/games/history", element: <GamesHistory/>},
+                    {path: "/admin/register-admin", element: <RegisterAdmin/>},
+                    {path: "/admin/list-admins", element: <AdminList/>},
                     {path: "/admin/games/boards", element: <WinningBoardsAdmin/>},
                     {path: "/admin/games/draw/:gameId", element: <DrawNumbers/>},
                     // {path: "/admin/templates", element: <GameTemplatesList/>},

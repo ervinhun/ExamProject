@@ -17,7 +17,7 @@ export interface CreateUserDto {
     firstName: string,
     lastName: string,
     email: string,
-    DOB: Date,
+    birthDate: Date,
     phoneNumber: string,
 }
 
