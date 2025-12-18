@@ -42,6 +42,7 @@ Winner Overview: A clear, timestamped history of all games and winning tickets t
 Email System: Automated emails for password recovery or new account credentials are not currently implemented.
 Withdrawals: The "Withdraw Funds" interface is visible but non-functional, as it was not a requirement for the current version.
 Prize Calculation: The system does not calculate the specific DKK payout per person, as it must be calculated alongside physical game participants.
+Canceling subscription feature. (pick your numbers wisely)
 
 🔑 Test Credentials
 | Role        | Username / Email | Password         |
