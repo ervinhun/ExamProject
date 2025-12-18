@@ -1,4 +1,4 @@
-import { TransactionDto } from "@core/types/transaction";
+import type { TransactionDto } from "@core/types/transaction";
 import { api } from "../Api";
 
 const endpoint = "/api/transactions";

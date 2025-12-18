@@ -3,11 +3,11 @@ import { useState } from "react";
 import { useAtom } from "jotai";
 import { authAtom } from "@core/atoms/auth";
 import { envConfig } from "@core/config/EnvConfig";
-import dashboardIcon from "@ui/assets/layout-dashboard.svg";
-import userIcon from "@ui/assets/user.svg";
-import dicesIcon from "@ui/assets/dices.svg";
-import transactionIcon from "@ui/assets/arrow-left-right.svg";
-import settingsIcon from "@ui/assets/cog.svg";
+import dashboardIcon from "@ui/assets/layout-dashboard.svg?url";
+import userIcon from "@ui/assets/user.svg?url";
+import dicesIcon from "@ui/assets/dices.svg?url";
+import transactionIcon from "@ui/assets/arrow-left-right.svg?url";
+import settingsIcon from "@ui/assets/cog.svg?url";
 
 export default function DockAdmin() {
     const [openUsers, setOpenUsers] = useState(false);

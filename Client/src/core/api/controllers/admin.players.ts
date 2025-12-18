@@ -1,4 +1,4 @@
-import {AppliedUser} from "@core/types/users.ts";
+import type {AppliedUser} from "@core/types/users.ts";
 
 const endpoint = "/api/users";
 

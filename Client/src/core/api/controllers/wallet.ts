@@ -1,6 +1,6 @@
-import { WalletDto } from "@core/types/wallet";
+import type { WalletDto } from "@core/types/wallet";
 import { api } from "../Api";
-import { DepositRequestDto, TransactionDto } from "@core/types/transaction";
+import type { DepositRequestDto, TransactionDto } from "@core/types/transaction";
 
 export const walletApi = {
     getWalletForPlayerId: async (playerId: string): Promise<WalletDto> => {

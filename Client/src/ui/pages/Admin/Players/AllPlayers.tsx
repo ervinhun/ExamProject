@@ -4,7 +4,7 @@ import {useEffect, useState} from "react";
 import {NavLink} from "react-router-dom";
 import {addNotificationAtom} from "@core/atoms/error";
 import {formatDate} from "@utils/dateUtils";
-import {Player} from "@core/types/users";
+import type {Player} from "@core/types/users";
 import { userApi } from "@core/api/controllers/user";
 
 export default function AllPlayers() {

@@ -1,8 +1,8 @@
 import { walletApi } from "@core/api/controllers/wallet";
-import { WalletDto } from "@core/types/wallet";
+import type { WalletDto } from "@core/types/wallet";
 import { errorAtom } from "./error";
 import { atom } from "jotai";
-import { DepositRequestDto } from "@core/types/transaction";
+import type { DepositRequestDto } from "@core/types/transaction";
 import { authAtom } from "./auth";
 
 export const walletAtom = atom<WalletDto | null>(null);

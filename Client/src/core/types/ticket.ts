@@ -1,5 +1,5 @@
 import {z} from "zod";
-import { GameTemplateDto } from "./game";
+import type { GameTemplateDto } from "./game";
 
 export const MyTicketSchema = z.object({
     id: z.string(),

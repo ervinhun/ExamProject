@@ -1,5 +1,5 @@
 import { api } from "../Api";
-import {AppliedUser, UpdateUserDetailsDto, type CreateUserDto, type User} from "../../types/users";
+import type {AppliedUser, UpdateUserDetailsDto, CreateUserDto, User} from "../../types/users";
 
 const endpoint = "/api/users";
 

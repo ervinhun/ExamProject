@@ -1,10 +1,10 @@
 import { NavLink } from "react-router-dom";
 import { useState } from "react";
-import dicesIcon from "@ui/assets/dices.svg";
-import walletIcon from "@ui/assets/wallet.svg";
-import ticketsIcon from "@ui/assets/tickets.svg";
-import historyIcon from "@ui/assets/history.svg";
-import userIcon from "@ui/assets/circle-user-round.svg";
+import dicesIcon from "@ui/assets/dices.svg?url";
+import walletIcon from "@ui/assets/wallet.svg?url";
+import ticketsIcon from "@ui/assets/tickets.svg?url";
+import historyIcon from "@ui/assets/history.svg?url";
+import userIcon from "@ui/assets/circle-user-round.svg?url";
 
 export default function DockPlayer() {
     const [openHistory, setOpenHistory] = useState(false);

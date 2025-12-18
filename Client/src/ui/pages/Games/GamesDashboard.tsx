@@ -4,7 +4,7 @@ import {useAtom} from "jotai";
 import {activeGamesAtom, fetchActiveGamesAtom} from "@core/atoms/game";
 import {formatDateTime, mapDayOfWeek} from "@utils/dateUtils";
 import {getStatusColor, getGameStatus} from "@utils/gameUtils";
-import lott from "@ui/assets/lott.png";
+import lott from "@ui/assets/lott.png?url";
 
 export default function GamesDashboard() {
     const [activeGames,] = useAtom(activeGamesAtom);

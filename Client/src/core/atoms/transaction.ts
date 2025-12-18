@@ -1,5 +1,5 @@
 import { transactionApi } from "@core/api/controllers/transactions";
-import { TransactionDto } from "@core/types/transaction";
+import type { TransactionDto } from "@core/types/transaction";
 import { atom } from "jotai";
 
 export const pendingTransactionsAtom = atom<TransactionDto[]>([]);

@@ -1,5 +1,5 @@
 import {api} from "@core/api/Api.ts";
-import { MyTicketDto, PurchaseTicketDto, TicketSubscriptionDto } from "@core/types/ticket.ts";
+import type { MyTicketDto, PurchaseTicketDto, TicketSubscriptionDto } from "@core/types/ticket.ts";
 
 const endpoint = "/api/tickets";
 

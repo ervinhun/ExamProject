@@ -4,7 +4,7 @@ import { activeGamesAtom } from "@core/atoms/game.ts";
 import { walletAtom } from "@core/atoms/wallet.ts";
 import { addNotificationAtom } from "@core/atoms/error.ts";
 import { authAtom } from "@core/atoms/auth.ts";
-import { PurchaseTicketDto } from "@core/types/ticket.ts";
+import type { PurchaseTicketDto } from "@core/types/ticket.ts";
 import { ticketApi } from "@core/api/controllers/ticket.ts";
 import { useParams, useNavigate } from "react-router-dom";
 import { calculateExponentialPrice } from "@utils/priceUtils.ts";

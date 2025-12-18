@@ -3,7 +3,7 @@ import {NavLink} from "react-router-dom";
 import {useAtom} from "jotai";
 import {approveTransactionAtom, fetchPendingTransactionsAtom, pendingTransactionsAtom} from "@core/atoms/transaction";
 import {mapTransactionStatus, mapTransactionType} from "@core/types/transaction";
-import {AppliedUser} from "@core/types/users.ts";
+import type {AppliedUser} from "@core/types/users.ts";
 import {userApi} from "@core/api/controllers/user.ts";
 import getAge from "@utils/getAge.ts";
 import {activeGamesAtom, fetchActiveGamesAtom} from "@core/atoms/game";

@@ -1,5 +1,5 @@
 import { ticketApi } from "@core/api/controllers/ticket";
-import {MyTicketDto, TicketSubscriptionDto} from "@core/types/ticket.ts";
+import type {MyTicketDto, TicketSubscriptionDto} from "@core/types/ticket.ts";
 import {atom} from "jotai";
 
 
@@ -11,7 +11,7 @@ mySubscribedTicketsAtom.debugLabel = "My Subscribed Tickets";
 
 export const fetchTicketsForPlayerAtom = atom(
     null,
-    async (get, set) => {
+    async (_get, set) => {
         // Fetch tickets for the player
         const tickets = await ticketApi.fetchAllMyTickets();
         set(myTicketsAtom, tickets);
@@ -21,7 +21,7 @@ fetchTicketsForPlayerAtom.debugLabel = "Fetch Tickets For Player";
 
 export const fetchSubscribedTicketsForPlayerAtom = atom(
     null,
-    async (get, set) => {
+    async (_get, set) => {
         const subscriptions = await ticketApi.getMySubscribedTickets();
         set(mySubscribedTicketsAtom, subscriptions);
     }

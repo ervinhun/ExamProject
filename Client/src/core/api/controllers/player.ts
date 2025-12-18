@@ -1,7 +1,7 @@
 import { api } from '../Api';
 import type { WalletDto } from '../../types/wallet';
 import { PlayerSchema, type Player } from '../../types/users';
-import { DepositRequestDto } from '@core/types/transaction';
+import type { DepositRequestDto } from '@core/types/transaction';
 
 const endpoint = '/api/players';
 export const playerApi = {

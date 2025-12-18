@@ -59,7 +59,7 @@ export const togglePlayerStatusAtom = atom(null,
     });
 
     export const getAllAppliedUsers = atom(null,
-        async (get,set)=> {
+        async (_get,set)=> {
             await playerApi.getAllAppliedPlayer()
                 .then((res) => set(playersAtom, res))
                 .catch((err) => {

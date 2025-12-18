@@ -3,7 +3,7 @@ import {fetchPlayersAtom, playersAtom, togglePlayerStatusAtom} from "@core/atoms
 import {addNotificationAtom} from "@core/atoms/error.ts";
 import {useEffect, useState} from "react";
 import {userApi} from "@core/api/controllers/user.ts";
-import {AppliedUser} from "@core/types/users.ts";
+import type {AppliedUser} from "@core/types/users.ts";
 import getAge from "@utils/getAge.ts";
 
 export default function Applications() {
