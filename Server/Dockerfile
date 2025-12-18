@@ -4,7 +4,7 @@ WORKDIR /src
 # Copy solution and project files first for layer caching
 COPY ["Server.sln", "./"]
 COPY ["Api/Api.csproj", "Api/"]
-COPY ["Dataaccess/", "DataAccess/"]
+COPY ["DataAccess/", "DataAccess/"]
 COPY ["Utils/Utils.csproj", "Utils/"]
 COPY ["Test/Test.csproj", "Test/"]
 
