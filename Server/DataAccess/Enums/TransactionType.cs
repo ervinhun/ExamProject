@@ -2,7 +2,11 @@ namespace DataAccess.Enums;
 
 public enum TransactionType
 {
-    TopUp,
+    Deposit,
+    Withdrawal,
     TicketPurchase,
-    PayOut
+    TicketSubscriptionStart,
+    RewardPayout,
+    Refund,
+    SystemAdjustment
 }

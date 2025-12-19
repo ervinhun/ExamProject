@@ -9,12 +9,21 @@ public record LoginRequestDto
 
 public record RefreshTokenRequestDto
 {
-    public Guid UserId { get; set; }
-    public required string RefreshToken { get; set; }
+    public required string UserId { get; set; }
+    public string RefreshToken { get; set; } = string.Empty;
 }
 
 public record RegisterRequestDto
 {
+    public required string FirstName { get; set; } = null;
+    public required string LastName { get; set; } = null;
+    public DateTime Dob { get; set; }
     public required string Email { get; set; }
     public required string Password { get; set; }
+}
+
+public class ChangePasswordDto
+{
+    public required string OldPassword { get; set; }
+    public required string NewPassword { get; set; }
 }

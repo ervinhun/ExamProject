@@ -1,0 +1,381 @@
+import { useEffect, useState } from "react";
+import { NavLink, useNavigate } from "react-router-dom";
+import type { GameInstanceDto } from "@core/types/game";
+import { useAtom, useSetAtom } from "jotai";
+import { activeGamesAtom, gameTemplatesAtom, fetchActiveGamesAtom, fetchGameTemplatesAtom, startGameInstanceAtom } from "@core/atoms/game";
+import { authAtom } from "@core/atoms/auth";
+import { addNotificationAtom } from "@core/atoms/error";
+
+export const StartGame: React.FC = () => {
+    const [selectedTemplate, setSelectedTemplate] = useState<string>("");
+    const [isAutoRepeatable, setIsAutoRepeatable] = useState(false);
+    const [drawDate, setDrawDate] = useState("");
+    const [drawTime, setDrawTime] = useState("17:00"); // For non-repeatable games
+    const [drawDayOfWeek, setDrawDayOfWeek] = useState<number>(6); // Saturday by default
+    const [drawTimeOfDay, setDrawTimeOfDay] = useState("17:00"); // For auto-repeatable games
+
+    const [auth,] = useAtom(authAtom);
+    const [,startGameInstance] = useAtom(startGameInstanceAtom);
+    const [,fetchActiveGames] = useAtom(fetchActiveGamesAtom);
+    const [,fetchGameTemplates] = useAtom(fetchGameTemplatesAtom);
+    const [templates,] = useAtom(gameTemplatesAtom);
+    const [activeGames,] = useAtom(activeGamesAtom);
+    const addNotification = useSetAtom(addNotificationAtom);
+
+    const navigate = useNavigate();
+
+
+    useEffect(() => {
+        fetchGameTemplates();
+        fetchActiveGames();
+    }, []);
+
+
+    const handleStartGame = async (e: React.FormEvent) => {
+        e.preventDefault();
+        const gameInstance = {
+            createdById: auth?.id || "",
+            templateId: selectedTemplate,
+            isAutoRepeatable: isAutoRepeatable,
+            drawDate: isAutoRepeatable
+                ? null
+                : new Date(`${drawDate}T${drawTime}`),
+            drawDayOfWeek: isAutoRepeatable ? drawDayOfWeek : null,
+            drawTimeOfDay: isAutoRepeatable ? drawTimeOfDay : null,
+        };
+
+        console.log("Starting game instance:", gameInstance);
+        
+        await startGameInstance(gameInstance as Partial<GameInstanceDto>).then(() => {
+            // Reset form
+            setSelectedTemplate("");
+            setIsAutoRepeatable(false);
+            setDrawDate("");
+            setDrawTime("17:00");
+            setDrawDayOfWeek(6);
+            setDrawTimeOfDay("17:00");
+
+            addNotification({
+                message: "Game instance started successfully",
+                type: "success"
+            });
+            // Refresh active games list
+            navigate('/admin/games/overview');
+            fetchActiveGames();
+        }).catch((error) => {
+            console.error('Error starting game instance:', error);
+            
+            // Extract error message from various possible error formats
+            let errorMessage = 'Unknown error occurred';
+            
+            if (error?.message) {
+                // Standard Error object
+                errorMessage = error.message;
+            } 
+            
+            addNotification({
+                message: `Failed to start game instance: ${errorMessage}`,
+                type: 'error'
+            });
+        });
+
+    };
+
+    const getGameTypeColor = (type: string) => {
+        return type === "Lotto" ? "badge-custom-pink" : "badge-custom-light-blue";
+    };
+
+    // Filter templates that don't have active games
+    const availableTemplates = templates.filter(
+        template => !activeGames.some(game => game.template?.id === template.id)
+    );
+    
+    return (
+        <div className="container mx-auto ">
+            <div className="space-y-8">
+                {/* Header */}
+                <div className="flex items-center gap-4 pb-4 border-b-2 border-primary">
+                    <div className="flex-1">
+                        <h1 className="text-4xl font-bold text-primary">Start Game</h1>
+                        <p className="text-base text-base-content/70 mt-1">Create new game instances from templates</p>
+                    </div>
+                    <NavLink to="/admin/games/overview" className="btn btn-ghost">
+                        ← Back to Overview
+                    </NavLink>
+                </div>
+
+                {/* Available Templates */}
+                <div className="card bg-base-200 shadow-lg">
+                    <div className="card-body">
+                        <div className="flex justify-between items-center mb-4">
+                            <h2 className="card-title text-2xl">Game Templates</h2>
+                            <NavLink to="/admin/games/templates/create" className="btn btn-primary btn-sm">
+                                + Create New Template
+                            </NavLink>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {templates.map((template) => {
+                                const hasActiveGame = activeGames.some(
+                                    game => game.template?.id === template.id
+                                );
+                                
+                                return (
+                                    <div 
+                                        key={template.id} 
+                                        className={`card bg-base-100 shadow-md ${hasActiveGame ? 'opacity-50' : ''}`}
+                                    >
+                                        <div className="card-body">
+                                            <div className="flex justify-between items-start">
+                                                <h3 className="card-title text-lg">{template.name}</h3>
+                                                <span className={`badge ${getGameTypeColor(template.gameType)}`}>
+                                                    {template.gameType}
+                                                </span>
+                                            </div>
+                                            <p className="text-sm text-base-content/70">{template.description}</p>
+                                            
+                                            <div className="divider my-2"></div>
+                                            
+                                            <div className="grid grid-cols-2 gap-2 text-sm">
+                                                <div>
+                                                    <p className="text-base-content/60">Pool</p>
+                                                    <p className="font-semibold">1-{template.poolOfNumbers}</p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-base-content/60">Winning #</p>
+                                                    <p className="font-semibold">{template.maxWinningNumbers}</p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-base-content/60">Ticket Range</p>
+                                                    <p className="font-semibold">
+                                                        {template.minNumbersPerTicket}-{template.maxNumbersPerTicket}
+                                                    </p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-base-content/60">Base Price</p>
+                                                    <p className="font-semibold">{template.basePrice} DKK</p>
+                                                </div>
+                                            </div>
+                                            
+                                            {hasActiveGame && (
+                                                <div className="mt-2">
+                                                    <div className="badge badge-success badge-sm">Currently Active</div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                        
+                        {templates.length === 0 && (
+                            <div className="text-center py-8 text-base-content/60">
+                                <p className="text-lg">No templates available</p>
+                                <p className="text-sm mb-4">Create a template first to start games</p>
+                                <NavLink to="/admin/games/templates/create" className="btn btn-primary btn-sm">
+                                    Create Template
+                                </NavLink>
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                {/* Start New Game Form */}
+                <div className="card bg-base-200 shadow-lg max-w-4xl mx-auto">
+                    <div className="card-body">
+                        <h2 className="card-title text-2xl mb-4">Start New Game Instance</h2>
+                        
+                        <form onSubmit={handleStartGame} className="space-y-4">
+                            {/* Template Selection */}
+                            <div className="form-control">
+                                <label className="label">
+                                    <span className="label-text font-medium">Select Game Template</span>
+                                    <span className="label-text-alt text-error">*</span>
+                                </label>
+                                <select 
+                                    className="select select-bordered w-full"
+                                    value={selectedTemplate}
+                                    onChange={(e) => setSelectedTemplate(e.target.value)}
+                                    required
+                                >
+                                    <option value="">Choose a template...</option>
+                                    {availableTemplates.map(template => (
+                                        <option key={template.id} value={template.id}>
+                                            {template.name} ({template.gameType})
+                                        </option>
+                                    ))}
+                                </select>
+                                {availableTemplates.length === 0 && (
+                                    <label className="label">
+                                        <span className="label-text-alt text-warning">
+                                            All templates have active games. Complete or end existing games first.
+                                        </span>
+                                    </label>
+                                )}
+                            </div>
+
+                            
+                            {/* Auto Repeatable */}
+                            <div className="form-control">
+                                <label className="label cursor-pointer justify-start gap-4">
+                                    <input 
+                                        type="checkbox"
+                                        className="checkbox checkbox-primary"
+                                        checked={isAutoRepeatable}
+                                        onChange={(e) => setIsAutoRepeatable(e.target.checked)}
+                                    />
+                                    <div>
+                                        <span className="label-text font-medium">Auto-Repeatable</span>
+                                        <p className="text-sm text-base-content/60">
+                                            Automatically create a new game instance after this one completes
+                                        </p>
+                                    </div>
+                                </label>
+                            </div>
+
+                            {/* Expiration Fields */}
+                            {!isAutoRepeatable ? (
+                                // Show date and time when NOT auto-repeatable
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="form-control">
+                                        <label className="label">
+                                            <span className="label-text font-medium">Draw Date</span>
+                                            <span className="label-text-alt text-error">*</span>
+                                        </label>
+                                        <input 
+                                            type="date"
+                                            className="input input-bordered w-full"
+                                            value={drawDate}
+                                            onChange={(e) => setDrawDate(e.target.value)}
+                                            required
+                                        />
+                                    </div>
+                                    
+                                    <div className="form-control">
+                                        <label className="label">
+                                            <span className="label-text font-medium">Draw Time</span>
+                                            <span className="label-text-alt text-error">*</span>
+                                        </label>
+                                        <input 
+                                            type="time"
+                                            className="input input-bordered w-full"
+                                            value={drawTime}
+                                            onChange={(e) => setDrawTime(e.target.value)}
+                                            required
+                                        />
+                                        <label className="label">
+                                            <span className="label-text-alt">Use 24-hour format (e.g., 17:00 for 5 PM)</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            ) : (
+                                // Show day of week and time when auto-repeatable
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="form-control">
+                                        <label className="label">
+                                            <span className="label-text font-medium">Draw Day of Week</span>
+                                            <span className="label-text-alt text-error">*</span>
+                                        </label>
+                                        <select 
+                                            className="select select-bordered w-full"
+                                            value={drawDayOfWeek}
+                                            onChange={(e) => setDrawDayOfWeek(Number(e.target.value))}
+                                            required
+                                        >
+                                            <option value={0}>Sunday</option>
+                                            <option value={1}>Monday</option>
+                                            <option value={2}>Tuesday</option>
+                                            <option value={3}>Wednesday</option>
+                                            <option value={4}>Thursday</option>
+                                            <option value={5}>Friday</option>
+                                            <option value={6}>Saturday</option>
+                                        </select>
+                                    </div>
+
+                                    <div className="form-control">
+                                        <label className="label">
+                                            <span className="label-text font-medium">Draw Time of Day</span>
+                                            <span className="label-text-alt text-error">*</span>
+                                        </label>
+                                        <input 
+                                            type="time"
+                                            className="time input input-bordered w-full"
+                                            value={drawTimeOfDay}
+                                            onChange={(e) => setDrawTimeOfDay(e.target.value)}
+                                            step="3600"
+                                            placeholder="17:00"
+                                            required
+                                        />
+                                        <label className="label">
+                                            <span className="label-text-alt">Use 24-hour format (e.g., 17:00 for 5 PM)</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Selected Template Info */}
+                            {selectedTemplate && (
+                                <div className="bg-gradient-to-r from-primary/10 to-secondary/10 border-2 border-primary/30 rounded-lg p-6">
+                                    {(() => {
+                                        const template = templates.find(t => t.id === selectedTemplate);
+                                        const currentWeek = Math.ceil(
+                                            (new Date().getTime() - new Date(new Date().getFullYear(), 0, 1).getTime()) / 
+                                            (1000 * 60 * 60 * 24 * 7)
+                                        );
+                                        return template ? (
+                                            <div className="space-y-4">
+                                                <div className="flex items-center gap-3">
+                                                    <h3 className="font-bold text-xl text-primary">{template.name}</h3>
+                                                </div>
+                                                <p className="text-base text-base-content/80">{template.description}</p>
+                                                
+                                                <div className="divider my-2"></div>
+                                                
+                                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                                    <div className="bg-base-100 p-3 rounded-lg">
+                                                        <p className="text-xs text-base-content/60 mb-1">Number Pool</p>
+                                                        <p className="font-bold text-lg">1-{template.poolOfNumbers}</p>
+                                                    </div>
+                                                    <div className="bg-base-100 p-3 rounded-lg">
+                                                        <p className="text-xs text-base-content/60 mb-1">Winning Numbers</p>
+                                                        <p className="font-bold text-lg">{template.maxWinningNumbers}</p>
+                                                    </div>
+                                                    <div className="bg-base-100 p-3 rounded-lg">
+                                                        <p className="text-xs text-base-content/60 mb-1">Pick Range</p>
+                                                        <p className="font-bold text-lg">{template.minNumbersPerTicket}-{template.maxNumbersPerTicket}</p>
+                                                    </div>
+                                                    <div className="bg-base-100 p-3 rounded-lg">
+                                                        <p className="text-xs text-base-content/60 mb-1">Base Price</p>
+                                                        <p className="font-bold text-lg text-success">{template.basePrice} DKK</p>
+                                                    </div>
+                                                </div>
+                                                
+                                                <div className="flex items-center gap-2 text-sm text-base-content/70 bg-base-100 p-3 rounded-lg">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                    </svg>
+                                                    <span>This game will be created for <strong>Week {currentWeek}</strong> of the current year</span>
+                                                </div>
+                                            </div>
+                                        ) : null;
+                                    })()}
+                                </div>
+                            )}
+
+                            {/* Submit Button */}
+                            <div className="flex gap-2 justify-end">
+                                <button 
+                                    type="submit" 
+                                    className="btn btn-primary"
+                                    disabled={availableTemplates.length === 0}
+                                >
+                                    Start Game
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};

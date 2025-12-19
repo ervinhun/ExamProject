@@ -19,7 +19,6 @@ export default {
                 },
             },
 
-            // Keep other built-in themes if you want:
             "light",
             "dark",
         ],

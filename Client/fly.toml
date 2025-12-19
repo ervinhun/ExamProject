@@ -1,12 +1,15 @@
-# fly.toml app configuration file generated for client-dawn-sea-3102 on 2025-11-13T10:26:26+01:00
+# fly.toml app configuration file generated for client-green-meadow-8302 on 2025-12-18T17:30:29+01:00
 #
 # See https://fly.io/docs/reference/configuration/ for information about how to use this file.
 #
 
-app = 'client-dawn-sea-3102'
+app = 'client-green-meadow-8302'
 primary_region = 'arn'
 
 [build]
+
+[env]
+  VITE_API_HOST = "https://server-quiet-shape-9076.fly.dev"
 
 [http_service]
   internal_port = 8080

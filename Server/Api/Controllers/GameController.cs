@@ -1,65 +1,135 @@
-using Api.Dto.test;
-using Api.Services.Auth;
+using Api.Dto.Game;
+using Api.Services.Management;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
+using Utils.Exceptions;
 
-namespace Api.Controllers.Game;
+namespace Api.Controllers;
 
     
 [Authorize(Roles = "superadmin,admin,player")]
 [ApiController]
 [Route("api/games")]
-public class GameController
+public class GameController(IGameManagementService gameManagementService) : ControllerBase
 {
 
-    [HttpGet("all")]
+    [HttpGet("all-games")]
     public async Task<ActionResult<List<GameInstanceDto>>> GetAllGamesAsync()
     {
-        return null;
+        try
+        {
+            var games = await gameManagementService.GetAllGames();
+            return Ok(games);
+        }
+        catch (ServiceException e)
+        {
+            return Conflict(new { message = e.Message });
+        }
     }
 
-    [HttpGet("active")]
-    public async Task<ActionResult<List<GameInstanceDto>>> GetAllActiveGamesAsync()
+    [HttpGet("active-games")]
+    public async Task<IActionResult> GetAllActiveGamesAsync()
+    {
+        try
+        {
+            var activeGames = await gameManagementService.GetAllActiveGamesAsync();
+            return Ok(activeGames);
+        }
+        catch (ServiceException ex)
+        {
+            return Conflict(new {message = ex.Message});
+        }
+    }
+
+    [Authorize(Roles = "superadmin,admin")]
+    [HttpPost("start-game")]
+    public async Task<IActionResult> StartGameInstanceAsync([FromBody] GameInstanceDto gameInstanceDto)
+    {
+        try
+        {
+            await gameManagementService.StartGameInstance(gameInstanceDto);
+            return Ok(new { message = "Game instance started successfully" });
+        }
+        catch (ServiceException serviceException)
+        {
+            return StatusCode(500, new { message = serviceException.Message });
+        }
+        catch(Exception ex)
+        {
+            return Conflict(new { message = ex.Message });
+        }
+    }
+    
+    [Authorize(Roles = "admin,superadmin")]
+    [HttpGet("templates/all-templates")]
+    public async Task<IActionResult> GetAllTemplatesAsync()
+    {
+        try
+        {
+            var templates = await gameManagementService.GetGameTemplatesAsync();
+            return Ok(templates);
+        }
+        catch (ServiceException ex)
+        {
+            return Conflict(new { message = ex.Message });
+        }
+    }
+
+    [Authorize(Roles = "admin,superadmin")]
+    [HttpGet("templates/get-template/{templateId:guid}")]
+    public async Task<IActionResult> GetTemplateByIdAsync(Guid templateId)
     {
         return null;
     }
     
     [Authorize(Roles = "admin,superadmin")]
-    [HttpGet("templates")]
-    public async Task<ActionResult<List<GameTemplateResponseDto>>> GetAllTemplatesAsync()
+    [HttpPost("templates/create-template")]
+    public async Task<IActionResult> CreateGameTemplate([FromBody] CreateGameTemplateRequestDto dto)
     {
-        return null;
+        try
+        {
+            await gameManagementService.CreateGameTemplate(dto);
+            return Ok(dto);
+        }
+        catch (ServiceException ex)
+        {
+            return Conflict(new {message = ex.Message});
+        }
     }
 
     [Authorize(Roles = "admin,superadmin")]
-    [HttpGet("templates/{templateId:guid}")]
-    public async Task<ActionResult<GameTemplateResponseDto>> GetTemplateByIdAsync(Guid templateId)
-    {
-        return null;
-    }
-    
-    [Authorize(Roles = "admin,superadmin")]
-    [HttpPost("templates/create")]
-    public async Task<ActionResult> CreateGameTemplate([FromBody] CreateGameTemplateRequestDto dto)
-    {
-        return null;
-    }
-
-    [Authorize(Roles = "admin,superadmin")]
-    [HttpPut("templates/update/{templateId:guid}")]
-    public async Task<ActionResult<GameTemplateResponseDto>> UpdateGameTemplateByIdAsync(Guid templateId,
+    [HttpPut("templates/update-template/{templateId:guid}")]
+    public async Task<IActionResult> UpdateGameTemplateByIdAsync(Guid templateId,
         [FromBody] CreateGameTemplateRequestDto gameTemplateRequestDto)
     {
         return null;
     }
 
     [Authorize(Roles = "admin,superadmin")]
-    [HttpDelete("templates/delete/{templateId:guid}")]
+    [HttpDelete("templates/delete-template/{templateId:guid}")]
     public async Task<ActionResult> DeleteGameTemplateByIdAsync(Guid templateId)
     {
         return null;
         
+    }
+
+    [Authorize(Roles = "admin,superadmin")]
+    [HttpPost("draw-numbers/{gameId:guid}")]
+    public async Task<IActionResult> DrawNumbersAsync(Guid gameId, [FromBody] int[] numbers)
+    {
+        try
+        {
+            await gameManagementService.DrawWinningNumbersForGameInstance(new DrawWinningNumbersDto
+            {
+                GameInstanceId = gameId,
+                WinningNumbers = numbers
+            });
+            return Ok(200);
+        }
+        catch (ServiceException ex)
+        {
+            return Conflict(new { message = ex.Message });
+        }
     }
 
     
